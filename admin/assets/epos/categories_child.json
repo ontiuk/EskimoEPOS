@@ -1,0 +1,29 @@
+[
+  {
+    "Eskimo_Category_ID": "38|product",
+    "ParentID": "9|product",
+    "ShortDescription": "Crewneck",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 31
+  },
+  {
+    "Eskimo_Category_ID": "42|product",
+    "ParentID": "9|product",
+    "ShortDescription": "Cardigan",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 120
+  },
+  {
+    "Eskimo_Category_ID": "67|product",
+    "ParentID": "9|product",
+    "ShortDescription": "V-neck",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 10
+  }
+]

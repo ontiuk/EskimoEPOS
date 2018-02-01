@@ -1,0 +1,17 @@
+[
+  {
+    "ID": "001-000002",
+    "Forename": "William",
+    "Surname": "Gates",
+    "CompanyName": "Microsoft",
+    "Notes": "Here are some notes about the customer",
+    "Telephone": "01234 123456",
+    "Mobile": "07740 123123",
+    "EmailAddress": "bill@microsoft.com",
+    "ActiveAccount": true,
+    "Address": "1234 High Street\r\nEdinburgh",
+    "PostCode": "EH1 3SS",
+    "TitleID": 0,
+    "CountryCode": "GB"
+  }
+]

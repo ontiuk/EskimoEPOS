@@ -1,0 +1,27 @@
+{
+  "ProductInfo": {
+    "BarCodes": [
+      "05275",
+      "10018768"
+    ],
+    "Description": "S/ACRYL CARDI",
+    "Colour": "Black",
+    "Size": "32"
+  },
+  "CurrentYear": {
+    "SalesTotal": 0,
+    "GoodsInwardTotal": 0
+  },
+  "PreviousYear": {
+    "SalesTotal": 0,
+    "GoodsInwardTotal": 0
+  },
+  "MinusTwoYears": {
+    "SalesTotal": 0,
+    "GoodsInwardTotal": 0
+  },
+  "CurrentStock1": 0,
+  "CurrentStock2": 0,
+  "CurrentStock3": 0,
+  "GroupStock": 0
+}

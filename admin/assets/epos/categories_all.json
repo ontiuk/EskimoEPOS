@@ -1,0 +1,1262 @@
+[
+  {
+    "Eskimo_Category_ID": "1|tradecustomertop",
+    "ParentID": null,
+    "ShortDescription": "Trade Customer",
+    "LongDescription": "Trade Customer",
+    "OrderByValue": 1,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "1|product",
+    "ParentID": null,
+    "ShortDescription": "Group 0",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 275
+  },
+  {
+    "Eskimo_Category_ID": "2|product",
+    "ParentID": null,
+    "ShortDescription": "Dancewear",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 368
+  },
+  {
+    "Eskimo_Category_ID": "3|product",
+    "ParentID": null,
+    "ShortDescription": "Sportswear",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 303
+  },
+  {
+    "Eskimo_Category_ID": "4|product",
+    "ParentID": null,
+    "ShortDescription": "Guide Association",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 67
+  },
+  {
+    "Eskimo_Category_ID": "5|product",
+    "ParentID": null,
+    "ShortDescription": "Printed Matter",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "6|product",
+    "ParentID": null,
+    "ShortDescription": "Accessories",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 420
+  },
+  {
+    "Eskimo_Category_ID": "7|product",
+    "ParentID": null,
+    "ShortDescription": "Socks",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 45
+  },
+  {
+    "Eskimo_Category_ID": "8|product",
+    "ParentID": null,
+    "ShortDescription": "Shoes",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "9|product",
+    "ParentID": null,
+    "ShortDescription": "Sweatshirts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 161
+  },
+  {
+    "Eskimo_Category_ID": "10|product",
+    "ParentID": null,
+    "ShortDescription": "Trousers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 73
+  },
+  {
+    "Eskimo_Category_ID": "11|product",
+    "ParentID": null,
+    "ShortDescription": "Communion Wear",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "12|product",
+    "ParentID": null,
+    "ShortDescription": "Skirts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 68
+  },
+  {
+    "Eskimo_Category_ID": "13|product",
+    "ParentID": null,
+    "ShortDescription": "Dresses",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 29
+  },
+  {
+    "Eskimo_Category_ID": "14|product",
+    "ParentID": null,
+    "ShortDescription": "Polo Shirts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 36
+  },
+  {
+    "Eskimo_Category_ID": "15|product",
+    "ParentID": null,
+    "ShortDescription": "Knitwear",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "16|product",
+    "ParentID": null,
+    "ShortDescription": "Scout Association",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 71
+  },
+  {
+    "Eskimo_Category_ID": "17|product",
+    "ParentID": null,
+    "ShortDescription": "Shirts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 12
+  },
+  {
+    "Eskimo_Category_ID": "18|product",
+    "ParentID": null,
+    "ShortDescription": "Blouses",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 19
+  },
+  {
+    "Eskimo_Category_ID": "19|product",
+    "ParentID": null,
+    "ShortDescription": "Rugby",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "20|product",
+    "ParentID": null,
+    "ShortDescription": "Outerwear",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 91
+  },
+  {
+    "Eskimo_Category_ID": "21|product",
+    "ParentID": null,
+    "ShortDescription": "Blazers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "22|product",
+    "ParentID": null,
+    "ShortDescription": "Tights",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 52
+  },
+  {
+    "Eskimo_Category_ID": "23|product",
+    "ParentID": null,
+    "ShortDescription": "Miscellaneous",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "24|product",
+    "ParentID": null,
+    "ShortDescription": "Fancy Dress",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "25|product",
+    "ParentID": null,
+    "ShortDescription": "Special Sales",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 2
+  },
+  {
+    "Eskimo_Category_ID": "26|product",
+    "ParentID": null,
+    "ShortDescription": "Group 1",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "27|product",
+    "ParentID": null,
+    "ShortDescription": "To Be Deleted",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "28|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Department",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 133
+  },
+  {
+    "Eskimo_Category_ID": "29|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Tap",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 8
+  },
+  {
+    "Eskimo_Category_ID": "30|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Gym",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 88
+  },
+  {
+    "Eskimo_Category_ID": "31|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Sports Shoes",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 6
+  },
+  {
+    "Eskimo_Category_ID": "32|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Swimming Accessories",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 21
+  },
+  {
+    "Eskimo_Category_ID": "33|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Stationery",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 22
+  },
+  {
+    "Eskimo_Category_ID": "34|product",
+    "ParentID": "2|product",
+    "ShortDescription": "Bags",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 127
+  },
+  {
+    "Eskimo_Category_ID": "35|product",
+    "ParentID": "6|product",
+    "ShortDescription": "Hair",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 98
+  },
+  {
+    "Eskimo_Category_ID": "36|product",
+    "ParentID": "7|product",
+    "ShortDescription": "Ankle",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 31
+  },
+  {
+    "Eskimo_Category_ID": "37|product",
+    "ParentID": "8|product",
+    "ShortDescription": "Wellingtons",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "38|product",
+    "ParentID": "9|product",
+    "ShortDescription": "Crewneck",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 31
+  },
+  {
+    "Eskimo_Category_ID": "39|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Bottles",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 5
+  },
+  {
+    "Eskimo_Category_ID": "40|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Girls Trousers - Bootleg",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 18
+  },
+  {
+    "Eskimo_Category_ID": "41|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Girls Trousers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 11
+  },
+  {
+    "Eskimo_Category_ID": "42|product",
+    "ParentID": "9|product",
+    "ShortDescription": "Cardigan",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 120
+  },
+  {
+    "Eskimo_Category_ID": "43|product",
+    "ParentID": "3|product",
+    "ShortDescription": "T-shirts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 38
+  },
+  {
+    "Eskimo_Category_ID": "44|product",
+    "ParentID": "12|product",
+    "ShortDescription": "A-line",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 18
+  },
+  {
+    "Eskimo_Category_ID": "45|product",
+    "ParentID": "13|product",
+    "ShortDescription": "Pinafores - Plain",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 4
+  },
+  {
+    "Eskimo_Category_ID": "46|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Girls Trousers - Straight Leg",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "47|product",
+    "ParentID": "13|product",
+    "ShortDescription": "Summer Dresses - Aline",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 14
+  },
+  {
+    "Eskimo_Category_ID": "48|product",
+    "ParentID": "13|product",
+    "ShortDescription": "Pinafores - Pleated",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 7
+  },
+  {
+    "Eskimo_Category_ID": "49|product",
+    "ParentID": "6|product",
+    "ShortDescription": "Ties",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 30
+  },
+  {
+    "Eskimo_Category_ID": "50|product",
+    "ParentID": "12|product",
+    "ShortDescription": "Pleated",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 50
+  },
+  {
+    "Eskimo_Category_ID": "51|product",
+    "ParentID": "14|product",
+    "ShortDescription": "Short Sleeved",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 36
+  },
+  {
+    "Eskimo_Category_ID": "52|product",
+    "ParentID": "2|product",
+    "ShortDescription": "Ballet",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 125
+  },
+  {
+    "Eskimo_Category_ID": "53|product",
+    "ParentID": "6|product",
+    "ShortDescription": "School Bags",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 41
+  },
+  {
+    "Eskimo_Category_ID": "54|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Jumpers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 21
+  },
+  {
+    "Eskimo_Category_ID": "55|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Slipovers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 4
+  },
+  {
+    "Eskimo_Category_ID": "56|product",
+    "ParentID": "7|product",
+    "ShortDescription": "Knee High",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 14
+  },
+  {
+    "Eskimo_Category_ID": "57|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Books",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 7
+  },
+  {
+    "Eskimo_Category_ID": "58|product",
+    "ParentID": "6|product",
+    "ShortDescription": "Labels",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 7
+  },
+  {
+    "Eskimo_Category_ID": "59|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Lunchbags",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "60|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Football",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 24
+  },
+  {
+    "Eskimo_Category_ID": "61|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Cyclewear",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 11
+  },
+  {
+    "Eskimo_Category_ID": "62|product",
+    "ParentID": "17|product",
+    "ShortDescription": "Standard - Long Sleeve",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 5
+  },
+  {
+    "Eskimo_Category_ID": "63|product",
+    "ParentID": "17|product",
+    "ShortDescription": "Standard - Short Sleeve",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 7
+  },
+  {
+    "Eskimo_Category_ID": "64|product",
+    "ParentID": "18|product",
+    "ShortDescription": "Classic Collar - Short Sleeve",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 6
+  },
+  {
+    "Eskimo_Category_ID": "65|product",
+    "ParentID": "18|product",
+    "ShortDescription": "Classic Collar - Long Sleeve",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 8
+  },
+  {
+    "Eskimo_Category_ID": "66|product",
+    "ParentID": "18|product",
+    "ShortDescription": "Rever - Short Sleeve",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "67|product",
+    "ParentID": "9|product",
+    "ShortDescription": "V-neck",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 10
+  },
+  {
+    "Eskimo_Category_ID": "68|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Boys Trousers - Sturdy Fit",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 7
+  },
+  {
+    "Eskimo_Category_ID": "69|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Boys Trousers - Classic",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 17
+  },
+  {
+    "Eskimo_Category_ID": "70|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Tracksuits",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 30
+  },
+  {
+    "Eskimo_Category_ID": "71|product",
+    "ParentID": "18|product",
+    "ShortDescription": "Rever - Long Sleeve",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 2
+  },
+  {
+    "Eskimo_Category_ID": "72|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Beavers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 14
+  },
+  {
+    "Eskimo_Category_ID": "73|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Inner Band",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "74|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Rain Jackets",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 8
+  },
+  {
+    "Eskimo_Category_ID": "75|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Fleeces",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 30
+  },
+  {
+    "Eskimo_Category_ID": "76|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Polyester Blazers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 23
+  },
+  {
+    "Eskimo_Category_ID": "77|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Sport Shorts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 4
+  },
+  {
+    "Eskimo_Category_ID": "78|product",
+    "ParentID": "6|product",
+    "ShortDescription": "Book Bags",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 26
+  },
+  {
+    "Eskimo_Category_ID": "79|product",
+    "ParentID": "6|product",
+    "ShortDescription": "P.e. Bags",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 30
+  },
+  {
+    "Eskimo_Category_ID": "80|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Boys Trousers - Fashion",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "81|product",
+    "ParentID": "6|product",
+    "ShortDescription": "Aprons",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 7
+  },
+  {
+    "Eskimo_Category_ID": "82|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Shorts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 10
+  },
+  {
+    "Eskimo_Category_ID": "83|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Scouts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 22
+  },
+  {
+    "Eskimo_Category_ID": "84|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Swimming - School",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 9
+  },
+  {
+    "Eskimo_Category_ID": "85|product",
+    "ParentID": "2|product",
+    "ShortDescription": "Jazz",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 20
+  },
+  {
+    "Eskimo_Category_ID": "86|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Boys Trousers - Slim Fit",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "87|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Woggles",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 8
+  },
+  {
+    "Eskimo_Category_ID": "88|product",
+    "ParentID": "4|product",
+    "ShortDescription": "Brownies",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 20
+  },
+  {
+    "Eskimo_Category_ID": "89|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Cricket",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 6
+  },
+  {
+    "Eskimo_Category_ID": "90|product",
+    "ParentID": "22|product",
+    "ShortDescription": "Cotton",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "91|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Caps",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 10
+  },
+  {
+    "Eskimo_Category_ID": "92|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Sports Shorts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 32
+  },
+  {
+    "Eskimo_Category_ID": "93|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Belts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 10
+  },
+  {
+    "Eskimo_Category_ID": "94|product",
+    "ParentID": "22|product",
+    "ShortDescription": "70 Denier",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 12
+  },
+  {
+    "Eskimo_Category_ID": "95|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Book",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "96|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Football Socks",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 11
+  },
+  {
+    "Eskimo_Category_ID": "97|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Cubs",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 6
+  },
+  {
+    "Eskimo_Category_ID": "98|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Badges",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "99|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Coats",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 26
+  },
+  {
+    "Eskimo_Category_ID": "100|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Sea Scouts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 2
+  },
+  {
+    "Eskimo_Category_ID": "101|product",
+    "ParentID": "4|product",
+    "ShortDescription": "Guides",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 22
+  },
+  {
+    "Eskimo_Category_ID": "102|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Misc",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 10
+  },
+  {
+    "Eskimo_Category_ID": "103|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Games Skirts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 9
+  },
+  {
+    "Eskimo_Category_ID": "104|product",
+    "ParentID": "4|product",
+    "ShortDescription": "Guide Leader",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 12
+  },
+  {
+    "Eskimo_Category_ID": "105|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Hooded",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 2
+  },
+  {
+    "Eskimo_Category_ID": "106|product",
+    "ParentID": "13|product",
+    "ShortDescription": "Summer Dresses - Drop Waist",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 4
+  },
+  {
+    "Eskimo_Category_ID": "107|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Hats",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 9
+  },
+  {
+    "Eskimo_Category_ID": "108|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Gloves",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 4
+  },
+  {
+    "Eskimo_Category_ID": "109|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Long Sleeved",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "110|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Swimming - Leisure",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 2
+  },
+  {
+    "Eskimo_Category_ID": "111|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Fully Reversible",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "112|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Scout Leader",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 4
+  },
+  {
+    "Eskimo_Category_ID": "113|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Wool Blazers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "114|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Rain Jacket",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 5
+  },
+  {
+    "Eskimo_Category_ID": "115|product",
+    "ParentID": "16|product",
+    "ShortDescription": "Air Scouts",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 5
+  },
+  {
+    "Eskimo_Category_ID": "116|product",
+    "ParentID": "4|product",
+    "ShortDescription": "Rainbows",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 13
+  },
+  {
+    "Eskimo_Category_ID": "117|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Safety",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "118|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Scarves",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 4
+  },
+  {
+    "Eskimo_Category_ID": "119|product",
+    "ParentID": "6|product",
+    "ShortDescription": "Purses",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 2
+  },
+  {
+    "Eskimo_Category_ID": "120|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Non Fitted",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "121|product",
+    "ParentID": "22|product",
+    "ShortDescription": "40 Denier",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 37
+  },
+  {
+    "Eskimo_Category_ID": "122|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Braces",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "123|product",
+    "ParentID": "20|product",
+    "ShortDescription": "Rain Trousers",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "124|product",
+    "ParentID": "1|product",
+    "ShortDescription": "Outfits",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 12
+  },
+  {
+    "Eskimo_Category_ID": "125|product",
+    "ParentID": "4|product",
+    "ShortDescription": "Guide Badges",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "126|product",
+    "ParentID": "25|product",
+    "ShortDescription": "Special",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 2
+  },
+  {
+    "Eskimo_Category_ID": "127|product",
+    "ParentID": "19|product",
+    "ShortDescription": "Rugby Items",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 1
+  },
+  {
+    "Eskimo_Category_ID": "128|product",
+    "ParentID": "8|product",
+    "ShortDescription": "Shoe Department",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "129|product",
+    "ParentID": "10|product",
+    "ShortDescription": "Trousers Department",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 5
+  },
+  {
+    "Eskimo_Category_ID": "130|product",
+    "ParentID": "6|product",
+    "ShortDescription": "Accessories Department",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 179
+  },
+  {
+    "Eskimo_Category_ID": "131|product",
+    "ParentID": "7|product",
+    "ShortDescription": "Socks Department",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "132|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Rugby Sportswear",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 9
+  },
+  {
+    "Eskimo_Category_ID": "133|product",
+    "ParentID": "2|product",
+    "ShortDescription": "Shoes Dance",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 96
+  },
+  {
+    "Eskimo_Category_ID": "134|product",
+    "ParentID": "3|product",
+    "ShortDescription": "Socks Sports",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 9
+  },
+  {
+    "Eskimo_Category_ID": "135|product",
+    "ParentID": "26|product",
+    "ShortDescription": "Trousers Dept",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "136|product",
+    "ParentID": "23|product",
+    "ShortDescription": "Misc Dept",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 3
+  },
+  {
+    "Eskimo_Category_ID": "137|product",
+    "ParentID": "27|product",
+    "ShortDescription": "Delete Products",
+    "LongDescription": "",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 0
+  },
+  {
+    "Eskimo_Category_ID": "1000001|brand",
+    "ParentID": null,
+    "ShortDescription": "Brands",
+    "LongDescription": "Brands",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 116
+  },
+  {
+    "Eskimo_Category_ID": "1|brand",
+    "ParentID": "1000001|brand",
+    "ShortDescription": "test",
+    "LongDescription": "test",
+    "OrderByValue": 0,
+    "Web_ID": null,
+    "Product_Count": 116
+  }
+]
