@@ -129,7 +129,7 @@ class Eskimo_API {
         $curl->setHeader( 'Authorization', 'Bearer ' . $access_token );
         $curl->post( $api_url, $api_opts );
         
-        return ( $curl->error ) ? $this->api_error( $curl->response ) : $curl->response;    
+        return ( $curl->error ) ? false : $curl->response;    
     }
 
     //--------------------------------------------------
@@ -282,6 +282,10 @@ class Eskimo_API {
     	return ( false === $api_data ) ? false : $api_data;
     }
     
+    //--------------------------------------------------
+    //  Eskimo API Functions: Products ImpEX
+    //--------------------------------------------------
+
     /**
      * Get product list
      *
@@ -343,6 +347,10 @@ class Eskimo_API {
     	return ( false === $api_data ) ? false : $api_data;
     }
 
+    //--------------------------------------------------
+    //  Eskimo API Functions: Tax ImpEX
+    //--------------------------------------------------
+
     /**
      * Get EPOS Tax Codes optionally by ID
      *
@@ -361,6 +369,10 @@ class Eskimo_API {
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : $api_data;
     }
+
+    //--------------------------------------------------
+    //  Eskimo API Functions: SKU ImpEX
+    //--------------------------------------------------
 
     /**
      * Get EPOS SKUs
@@ -419,6 +431,10 @@ class Eskimo_API {
     	return ( false === $api_data ) ? false : $api_data;
     }
 
+    //--------------------------------------------------
+    //  Eskimo API Functions: Images ImpEX
+    //--------------------------------------------------
+
     /**
      * Get EPOS product image links
      *
@@ -459,6 +475,10 @@ class Eskimo_API {
     	return ( false === $api_data ) ? false : $api_data;
     }
 
+    //--------------------------------------------------
+    //  Eskimo API Functions: Shops ImpEX
+    //--------------------------------------------------
+
     /**
      * Get all current EPOS shops
      *
@@ -495,6 +515,10 @@ class Eskimo_API {
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : $api_data;
     }
+
+    //--------------------------------------------------
+    //  Eskimo API Functions: Customers ImpEX
+    //--------------------------------------------------
 
     /**
      * Get EPOS customer data by ID
@@ -554,7 +578,11 @@ class Eskimo_API {
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : $api_data;
     }
-    
+
+    //--------------------------------------------------
+    //  Eskimo API Functions: Orders ImpEX
+    //--------------------------------------------------
+
     /**
      * Insert remote EPOS order from web data post paid
      *
@@ -574,32 +602,4 @@ class Eskimo_API {
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : $api_data;
     }   
-
-    //----------------------------------------------
-    // Eskimo API Error Handling
-    //----------------------------------------------
-
-    /**
-     * Curl API error
-     *
-     * @param object cUrl instance
-     */ 
-    public function api_error( $curl ) {
-
-        // Log errors if debugging active
-        if ( $this->debug ) {
-            $request_headers    = ( isset( $curl->request_headers ) ) ? $curl->request_headers : '';
-            $response_headers   = ( isset( $curl->response_headers ) ) ? $curl->response_headers : '';
-            if ( $this->debug ) { 
-                error_log( 'cUrl Headers[' . print_r( $request_headers, true ) . ']' );
-                error_log( 'cUrl Response[' . print_r( $response_headers, true ) . ']' );        
-                error_log( 'cUrl Message[' . $curl->Message . ']' );
-            }
-            if ( isset( $curl->ExceptionMessage ) ) {
-                error_log( 'cUrl Exception[' . $curl->ExceptionMessage . ']' );
-            }
-        }
-
-        return false;
-    }
 }
