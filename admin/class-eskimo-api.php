@@ -106,7 +106,7 @@ class Eskimo_API {
         $curl->setHeader( 'Authorization', 'Bearer ' . $access_token );
         $curl->get( $api_url, $api_opts );
         
-        return ( $curl->error ) ? $this->api_error( $curl->response ) : $curl->response;    
+        return ( $curl->error ) ? false : $curl->response;    
     }
     
     /**

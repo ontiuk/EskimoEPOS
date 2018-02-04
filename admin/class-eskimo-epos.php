@@ -125,6 +125,7 @@ class Eskimo_EPOS {
      * @return  boolean
      */
     protected function authenticate() {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // authenticated?
         $auth = get_transient( 'eskimo_access_authenticated' );
@@ -154,6 +155,7 @@ class Eskimo_EPOS {
      * @return  boolean
      */
     protected function get_access_token() {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Get current settings
         $oauth_data = $this->get_oauth_params();
@@ -194,6 +196,7 @@ class Eskimo_EPOS {
      * @return  boolean
      */
     public function connect() {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
         return $this->authenticate();
     }
 
@@ -207,6 +210,7 @@ class Eskimo_EPOS {
      * @param   object  cUrl instance
      */ 
     public function api_error( $curl ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Log if debugging is active
         if ( $this->debug ) {
@@ -231,6 +235,7 @@ class Eskimo_EPOS {
      * Bad EPOS Settings 
      */
     public function settings_error() {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
         $error_msg = __( 'Eskimo EPOS Settings are required. Please update.', 'eskimo' );
         echo sprintf( '<div class="notice notice-warning"><p>%s</p></div>', $error_msg );
     }
@@ -239,6 +244,7 @@ class Eskimo_EPOS {
      * Bad EPOS API Connection 
      */
     public function connect_error() {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
         $error_msg = __( 'Error Creating Eskimo EPOS Connection', 'eskimo' );
         echo sprintf( '<div class="notice notice-error"><p>%s</p></div>', $error_msg );
     }
@@ -247,6 +253,7 @@ class Eskimo_EPOS {
      * Bad REST API Settings 
      */
     public function rest_api_settings_error() {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
         $error_msg = __( 'Woocommerce REST API is required. Please activate in Woocommerce settings.', 'eskimo' );
         echo sprintf( '<div class="notice notice-warning"><p>%s</p></div>', $error_msg );
     }
