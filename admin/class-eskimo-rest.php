@@ -580,7 +580,55 @@ class Eskimo_REST {
 
         // Process Woocommerce Import
         return ( $force ) ? $this->wc->get_products_specific_ID( $api_data ) : $api_data;
-    }
+	}
+
+    /**
+     * Get remote API product by ID
+     *
+     * @param   string  $id
+     * @param   boolean $force  Force import default true
+     * @return  boolean
+     */
+    public function get_products_import_ID( $id = '', $path = '', $force = true ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . '] Path[' . $path . '] Force[' . (int) $force . ']' ); }
+
+		// Valid paths
+		$paths = [ 'stock', 'tax', 'price',	'category', 'categories' ];
+		
+		// Test paths
+		if ( empty( $path ) || !in_array( $path, $paths ) ) {
+            return $this->api_error( 'Invalid Product Path[' . $path . ']' );
+		}			
+
+        // Test Product
+        if ( empty( $id ) ) {
+            return $this->api_error( 'Invalid Product ID' );
+        }
+
+        // Test connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+        // Get remote data
+        $api_data = $this->api->products_specific_ID( $id );
+
+        // Validate API data
+        if ( false === $api_data || empty( $api_data ) ) {
+            return $this->api_rest_error();
+        }
+
+        // OK process data
+        $api_count = count( $api_data );
+        if ( $this->debug ) { error_log( 'Product ID [' . $id . '] Path [' . $path . '] Count[' . $api_count . ']' ); }
+
+        // Add Product SKU
+        $api_data->sku = $this->get_sku_specific_ID( $api_data->eskimo_identifier, false );
+        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+
+        // Process Woocommerce Import
+        return ( $force ) ? $this->wc->get_products_import_ID( $api_data, $path ) : $api_data;
+	}
 
     //----------------------------------------------
     // Woocommerce Category & Product WebID Export

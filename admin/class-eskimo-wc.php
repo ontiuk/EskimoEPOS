@@ -633,6 +633,64 @@ class Eskimo_WC {
     }
 
     /**
+     * Get remote API product by ID
+     *
+     * @param   array   $api_data
+     * @param   array   $path
+     * @return  boolean
+     */
+    public function get_products_import_ID( $api_prod, $path ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ':' . $path ); }
+
+        // Validate API data
+        if ( empty( $api_prod ) ) {
+            return $this->api_rest_error();
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process Product[' . count( $api_prod ) . '] path[' . $path . ']' ); }
+
+        // Product Categories Only
+        if ( !preg_match( '/product$/', $api_prod->eskimo_category_id ) ) { return false; }
+
+        // Dodgy Title?
+        if ( empty( $api_prod->title ) ) {
+            if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' ); }
+            return false; 
+        }
+
+        // Requires that the Eskimo Category has been imported
+        if ( empty( $api_prod->web_category_id ) || $api_prod->web_category_id === '0' ) { 
+            if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->eskimo_category_id . '] NOT Exists Cat Web_ID' ); }
+            return false; 
+        }
+
+        // Requires that the Eskimo Product has NOT been imported
+        if ( empty( $api_prod->web_id ) || $api_prod->web_id == '0' ) { 
+            if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Not Exists [' . $api_prod->web_id . ']' ); }
+            return false; 
+        }
+
+        // Required valid product sku data
+        if ( empty( $api_prod->sku ) ) { 
+            if ( $this->debug ) { error_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']' ); }
+            return false; 
+        }
+
+		// Due process by path  
+        $prod = $this->update_category_product_rest( $api_prod, $path );
+        if ( false === $prod || is_wp_error ( $prod ) ) { return false; }
+
+        // OK, done 
+        return [
+            [
+				'Eskimo_Identifier' => $api_prod->eskimo_identifier,
+                'Web_ID'            => $api_prod->web_id
+            ]
+        ];
+    }
+
+    /**
      * Get remote API products by category
      *
      * @param   array   $api_data
@@ -1103,12 +1161,13 @@ class Eskimo_WC {
         if ( $this->debug ) { error_log( 'SKUs[' . print_r( $skus, true ) . ']' ); }
         if ( true === $this->get_product_check_sku( $skus, true ) ) { return false; }
 
-        // Set term args
+        // Set term args @todo: set_manage_stock as option for variations
         $args = [ 
             'name'              => $data->title,
             'type'              => 'variable',
             'description'       => ( empty( $data->long_description ) ) ? $data->short_description : $data->long_description,
             'short_description' => $data->short_description,
+            'manage_stock'      => false, 
             'parent_id'         => 0
         ];            
 
@@ -1139,7 +1198,328 @@ class Eskimo_WC {
         if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
 
         return is_wp_error( $res ) ? false : $res->data;
+	}
+
+    /**
+     * Insert category into WooCommerce and return the new term details
+     *
+	 * @param   object  $data
+	 * @param	string	$path
+     * @param   boolean $parent
+     * @return  object  new term or error
+     */
+    protected function update_category_product_rest( $data, $path ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']' ); }
+
+        // Set product type: simple or variable by sku count
+        $type = $this->get_product_type( $data );
+        if ( $this->debug ) { error_log( 'Type[' . $type . ']' ); }
+
+        // Treat simple & variable products a bit differently
+        switch( $type ) {
+            case 'simple':
+                return $this->update_category_product_simple( $data, $path );
+            case 'variable':
+                return $this->update_category_product_variable( $data, $path );
+            default: // Bad SKU
+                return false;                
+        }
     }
+
+    /**
+     * Add category product: Simple Product
+     *
+	 * @param   object  $data
+	 * @param	string	$path
+     * @return  boolean|object
+     */
+    protected function update_category_product_simple( $data, $path ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']' ); }
+
+        // Single SKU OK?
+        $sku = array_shift( $data->sku );
+        if ( $this->debug ) { error_log( 'SKU:' . print_r( $sku, true ) ); }
+        if ( false === $this->get_product_check_sku( $sku->sku_code ) ) { return false; }        
+
+		// Get product
+		$product_id = $this->get_product_by_sku( $sku->sku_code, false );
+        if ( $this->debug ) { error_log( 'product ID[' . $product_id . ']' ); }
+		if ( false === $product_id ) { return false; }
+		
+		// Update product attributes, sku, stock for Simple products
+		$args = $this->update_category_product_simple_args( $path, $data, $sku, $product_id );
+        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+
+        // Set up REST process
+        $products_controller = new WC_REST_Products_Controller();
+        $wp_rest_request = new WP_REST_Request( 'POST' );
+        $wp_rest_request->set_body_params( $args );
+        $res = $products_controller->update_item( $wp_rest_request );
+        
+        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+
+        return is_wp_error( $res ) ? false : $res->data;
+    }
+
+    /**
+     * Add category product: Simple Product
+     *
+	 * @param   object  $data
+	 * @param	string	$path
+     * @return  boolean|object
+     */
+    protected function update_category_product_variable( $data, $path ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']' ); }
+       
+        // Initial check. Already posted SKU?
+        $skus = array_map( function( $sku ) { return $sku->sku_code; }, $data->sku );
+        if ( $this->debug ) { error_log( 'SKUs[' . print_r( $skus, true ) . ']' ); }
+        if ( false === $this->get_product_check_sku( $skus, true ) ) { return false; }
+
+		// Get product
+		$product_id = $this->get_product_by_id( $data->eskimo_identifier, false );
+        if ( $this->debug ) { error_log( 'product ID[' . $product_id . '][' . $data->eskimo_identifier . ']' ); }
+		if ( false === $product_id ) { return false; }
+
+        // Set term args
+		if ( $path === 'all' ) {
+	        $args = [ 
+    	        'name'              => $data->title,
+        	    'type'              => 'variable',
+            	'description'       => ( empty( $data->long_description ) ) ? $data->short_description : $data->long_description,
+            	'short_description' => $data->short_description,
+				'parent_id'         => 0,
+				'id'				=> $product_id
+        	];            
+		} else { $args = [ 'id' => $product_id ]; }
+
+		// Set product category
+		if ( $path === 'all' || $path === 'category' || $path === 'categories' ) {
+			$cat_id = $this->get_category_by_id( $data );
+    	    $args['categories'] = ( false === $cat_id ) ? [] : $cat_id; 
+		}
+
+		// Set variant globals
+		if ( $path === 'stock' ) {
+	        $args['stock_quantity'] = $this->get_product_variable_stock( $data );
+		}
+        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+
+        // Set up REST process
+        $wp_rest_request = new WP_REST_Request( 'POST' );
+        $wp_rest_request->set_body_params( $args );
+        
+        $products_controller = new WC_REST_Products_Controller();
+        $res = $products_controller->update_item( $wp_rest_request );
+
+        // Add product variations
+        foreach ( $data->sku as $sku ) {
+            $sku->product_id = $product_id;
+            $res_var = $this->update_category_product_variation( $sku, $data, $path );
+        }
+
+        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+
+        return is_wp_error( $res ) ? false : $res->data;
+	}
+
+    /**
+     * Add a variation to a just created variable product
+     *
+	 * @param   object  $sku
+	 * @param   object  $data
+	 * @param	string	$path
+     * @return  object|boolean
+     */
+    protected function update_category_product_variation( $sku, $data, $path ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $sku->product_id . ']' ); }
+
+		// Get product
+		$product_id = $this->get_product_by_sku( $sku->sku_code, true );
+        if ( $this->debug ) { error_log( 'product ID[' . $product_id . ']' ); }
+		if ( false === $product_id ) { return false; }
+
+		// Update product attributes, sku, stock for Variable products
+		$args = $this->update_category_product_variable_args( $path, $data, $sku, $product_id );
+        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+
+        // Set up REST process
+        $products_controller = new WC_REST_Product_Variations_Controller();
+        $wp_rest_request = new WP_REST_Request( 'POST' );
+        $wp_rest_request->set_body_params( $args );
+        $res = $products_controller->update_item( $wp_rest_request );
+        
+        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        
+        return is_wp_error( $res ) ? false : $res->data;
+    }
+
+	/**
+	 * Generate args list for product update - simple
+	 *
+	 * @param	string	$path
+	 * @param	object	$data
+	 * @param	object	$sku
+	 * @param	integer	$product_id
+	 * @return 	array
+	 */
+	protected function update_category_product_simple_args( $path, $data, $sku, $product_id ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . '] productID[' . $product_id . ']' ); }
+
+        // Set term args
+		if ( $path === 'all' ) {
+			$args = [ 
+				'id'				=> $product_id,
+    	        'name'              => $data->title,
+        	    'type'              => 'simple',
+            	'description'       => ( empty( $data->long_description ) ) ? $data->short_description : $data->long_description,
+	            'short_description' => $data->short_description,
+    	        'regular_price'     => $data->from_price,
+        	    'manage_stock'      => true,
+				'parent_id'         => 0,
+				'sku'				=> $sku->sku_code,
+    	    	'stock_quantity' 	=> $sku->StockAmount,
+        		'tax_class'      	=> $this->get_product_tax_class( $sku ),
+        		'attributes'     	=> $this->get_product_attributes( $sku ),
+			];
+			$cat_id = $this->get_category_by_id( $data );
+        	$args['categories'] = ( false === $cat_id ) ? [] : $cat_id; 
+		} else { $args = [ 'id' => $product_id ]; }
+
+		// Targetted
+		switch( $path ) {
+			case 'stock':
+		        $args['stock_quantity'] = $sku->StockAmount;
+				break;
+			case 'tax':
+		        $args['tax_class'] = $this->get_product_tax_class( $sku );
+				break;
+			case 'price':
+				$args['regular_price'] = $data->from_price;	
+				break;
+			case 'category':
+			case 'categories':
+		    	$cat_id = $this->get_category_by_id( $data );
+				$args['categories'] = ( false === $cat_id ) ? [] : $cat_id;
+			   	break;	
+			default:
+				return $args;
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Generate args list for product update - simple
+	 *
+	 * @param	string	$path
+	 * @param	object	$data
+	 * @param	object	$sku
+	 * @param	integer	$product_id
+	 * @return 	array
+	 */
+	protected function update_category_product_variable_args( $path, $data, $sku, $product_id ) {
+
+		// Set variation args
+		if ( $path === 'all' ) {
+			$args = [
+			   	'id' 				=> $product_id,	
+    	        'product_id'        => $sku->product_id,
+        	    'name'              => $data->title,
+            	'description'       => ( empty( $data->long_description ) ) ? $data->short_description : $data->long_description,
+	            'regular_price'     => $sku->SellPrice,
+    	        'manage_stock'      => true
+        	];            
+		} else { 
+			$args = [ 
+				'product_id' => $sku->product_id, 
+				'id' => $product_id 
+			]; 
+		}
+			
+		// Update product stock for Simple products
+		switch ( $path ) {
+			case 'stock':
+				$args['stock_quantity'] = $sku->StockAmount;
+				break;
+			case 'tax':
+				$args['tax_class'] = $this->get_product_tax_class( $sku );
+				break;
+			case 'price':
+				$args['regular_price'] = $sku->SellPrice;
+				break;
+		}
+
+		return $args;
+	}
+
+    /**
+     * Get product ID by SKU
+     *
+     * @param   string  $code
+     * @param   boolean $variation
+     * @return  boolean
+     */
+    protected function get_product_by_sku( $code, $variation = false ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        
+        // Set up query
+        $args = [
+            'post_type'     => ( $variation ) ? 'product_variation' : 'product',
+            'post_status'   => 'publish',
+            'nopaging'      => true,
+            'cache_results' => false
+        ];
+
+        // Test array or string
+        $args['meta_query'] = [
+            [
+		        'key'     => '_sku',
+		        'value'   => $code,
+		        'compare' => '='
+            ]
+        ];
+
+        // Process query
+        $the_query = new WP_Query( $args );
+
+        // Found post sku?
+        return ( $the_query->found_posts > 0 ) ? $the_query->posts[0]->ID : false;
+	}
+
+    /**
+     * Get product ID by EPOS ID
+     *
+     * @param   string  $code
+     * @param   boolean $variation
+     * @return  boolean
+     */
+    protected function get_product_by_id( $id, $variation = false ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']'  ); }
+        
+        // Set up query
+        $args = [
+            'post_type'     => ( $variation ) ? 'product_variation' : 'product',
+            'post_status'   => 'publish',
+            'nopaging'      => true,
+            'cache_results' => false
+        ];
+
+        // Test array or string
+        $args['meta_query'] = [
+            [
+		        'key'     => '_eskimo_product_id',
+		        'value'   => $id,
+		        'compare' => '='
+            ]
+        ];
+
+        // Process query
+        $the_query = new WP_Query( $args );
+
+        // Found post sku?
+        return ( $the_query->found_posts > 0 ) ? $the_query->posts[0]->ID : false;
+	}
 
     /**
      * Base SKU import check to test if product SKU exists
@@ -1149,7 +1529,7 @@ class Eskimo_WC {
      * @return  boolean
      */
     protected function get_product_check_sku( $code, $variable = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': variable[' . (int) $variable . ']' ); }
         
         // Set up query
         $args = [
@@ -1180,6 +1560,7 @@ class Eskimo_WC {
 
         // Process query
         $the_query = new WP_Query( $args );
+		if ( $this->debug ) { error_log( 'Found[' . $the_query->found_posts . ']' ); }
 
         // Found post sku?
         return ( $the_query->found_posts > 0 ) ? true : false;
@@ -1321,8 +1702,9 @@ class Eskimo_WC {
 
         // EPOS defaults
         $epos = [
-            '1' => 'Standard',
-            '2'	=> 'Zero Rated'
+            '1' => 'standard', 		// Standard
+            '2'	=> 'zero-rate',		// Zero Rated
+            '3'	=> 'reduced-rate',	// Reduced Rate
         ];
 
         // Get tax code as string
