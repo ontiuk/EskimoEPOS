@@ -818,16 +818,13 @@ class Eskimo_REST {
      * Get remote API customer data
      *
      * @param   string  $id default ''
-     * @return  boolean
+     * @return  boolean | string
      */
     public function get_customers_specific_ID( $id = '' ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
-        // Demo defaults
-        $id = '';
-
         // Test Options
-        if ( empty( $id ) ) {
+        if ( empty( $id )) {
             return $this->api_error( 'Invalid Customer ID' );
         }
 
@@ -837,7 +834,7 @@ class Eskimo_REST {
         }
 
         // Get remote data
-        $api_data = $this->api->customers_specific_ID( $id );
+        $api_data = $this->api->customers_specific_ID( $id, false );
 
         // Validate API data
         if ( false === $api_data ) {
@@ -846,39 +843,41 @@ class Eskimo_REST {
 
         // OK process data
         $api_count = count( $api_data );
-        if ( $this->debug ) { error_log( 'Customers Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { 
+			error_log( 'Customer Count[' . $api_count . ']' );
+			error_log( 'Customer Data: ' . print_r( $api_data, true ) ); 
+		}
 
-        // Process data
-        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
-
-        // Process Woocommerce Import
-        return $this->wc->get_customers_specific_ID( $api_data );
+        // Process user update
+        return $this->wc->get_customers_specific_ID( $api_data, true );
     }
 
     /**
-     * Update EPOS customers WebIDs
-     * - Not yet implemented
+     * Insert WC user to EPOS
      *
-     * @return boolena
+     * @param   string  $id default ''
+     * @return  boolean | string
      */
-    public function get_customers_create() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+    public function get_customers_create( $id = '' ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
-        // Test options
-        $api_opts = [];
-
-        // Validate Options
-        if ( empty( $api_opts ) ) {
-            return $this->api_error( 'Invalid Customer API Otions' );
+        // Test Options
+        if ( empty( $id ) || $id <= 0 ) {
+            return $this->api_error( 'Invalid Customer ID[' . $id . ']' );
         }
 
         // Validate Customer Data
+		$api_opts = $this->wc->get_customers_insert_ID( $id );
+        if ( ! is_array( $api_opts ) ) {
+			return $this->api_error( $api_opts );
+		}
+		if ( $this->debug ) { error_log( 'Customer Data: ' . print_r( $api_opts, true ) ); }
 
         // Test connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
-
+		
         // Get remote data
         $api_data = $this->api->customers_create( $api_opts );
 
@@ -889,39 +888,44 @@ class Eskimo_REST {
 
         // OK process data
         $api_count = count( $api_data );
-        if ( $this->debug ) { error_log( 'Customer Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { 
+			error_log( 'Customer Count[' . $api_count . ']' );
+			error_log( 'Customer Data: ' . print_r( $api_data, true ) ); 
+		}
 
         // Process data
         if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
 
         // Default OK
-        return true;
+        return $this->wc->get_customers_epos_ID( $id, $api_data, true );
     }
 
     /**
-     * Update EPOS customer data
-     * - Not yet implemented
+     * Update WC user to EPOS
      *
-     * @return boolean
+     * @param   string  $id default ''
+     * @return  boolean | string
      */
-    public function get_customers_update() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+    public function get_customers_update( $id = '' ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
-        // Test options
-        $api_opts = [];
-
-        // Validate Options
-        if ( empty( $api_opts ) ) {
-            return $this->api_error( 'Invalid Customer API Otions' );
+        // Test Options
+        if ( empty( $id ) || $id <= 0 ) {
+            return $this->api_error( 'Invalid Customer ID[' . $id . ']' );
         }
 
         // Validate Customer Data
+		$api_opts = $this->wc->get_customers_update_ID( $id );
+        if ( ! is_array( $api_opts ) ) {
+			return $this->api_error( $api_opts );
+		}
+		if ( $this->debug ) { error_log( 'Customer Data: ' . print_r( $api_opts, true ) ); }
 
         // Test connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
-
+		
         // Get remote data
         $api_data = $this->api->customers_update( $api_opts );
 
@@ -932,13 +936,108 @@ class Eskimo_REST {
 
         // OK process data
         $api_count = count( $api_data );
-        if ( $this->debug ) { error_log( 'Customer Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { 
+			error_log( 'Customer Count[' . $api_count . ']' );
+			error_log( 'Customer Data: ' . print_r( $api_data, true ) ); 
+		}
 
         // Process data
         if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
 
         // Default OK
-        return true;
+        return $this->wc->get_customers_epos_ID( $id, $api_data, false );
+    }
+
+    //----------------------------------------------
+    // Woocommerce Order Export
+    //----------------------------------------------
+
+    /**
+	 * Import EPOS WebOrder into Woocommerce
+	 * - not yet implemented
+     *
+     * @param   array   $id
+     * @return  boolean
+     */
+    public function get_orders_specific_ID( $id = '' ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+
+        // Test Options
+        if ( empty( $id )) {
+            return $this->api_error( 'Invalid Order ID' );
+        }
+
+        // Test connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+        // Get remote data
+        $api_data = $this->api->orders_specific_ID( $id, false );
+
+        // Validate API data
+        if ( false === $api_data ) {
+            return $this->api_rest_error();
+        }
+
+        // OK process data
+        $api_count = count( $api_data );
+		if ( $this->debug ) { 
+			error_log( 'Order Count[' . $api_count . ']' );
+			error_log( 'Order Data: ' . print_r( $api_data, true ) ); 
+		}
+
+        // Process user update
+        return $this->wc->get_orders_specific_ID( $api_data, true );
+    }
+
+    /**
+     * Export Woocommerce order to  EPOS WebOrder
+     *
+     * @param   array   $id
+     * @return  boolean
+     */
+    public function get_orders_create( $id = '' ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+
+        // Test Options
+        if ( empty( $id ) || $id <= 0 ) {
+            return $this->api_error( 'Invalid Order ID[' . $id . ']' );
+        }
+
+        // Validate Order Data
+		$api_opts = $this->wc->get_orders_insert_ID( $id );
+		//$api_opts = $this->get_order_data();
+        if ( ! is_array( $api_opts ) ) {
+			return $this->api_error( $api_opts );
+		}
+		if ( $this->debug ) { error_log( 'Order Data: ' . print_r( $api_opts, true ) ); }
+
+        // Test connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+        // Get remote data
+        $api_data = $this->api->orders_insert( $api_opts );
+
+        // Validate API data
+        if ( false === $api_data ) {
+            return $this->api_rest_error();
+        }
+
+        // OK process data
+        $api_count = count( $api_data );
+		if ( $this->debug ) { 
+			error_log( 'Orders Count[' . $api_count . ']' );
+			error_log( 'Orders Data: ' . print_r( $api_data, true ) ); 
+		}
+
+        // Process data
+        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+
+        // Default OK
+        return $this->wc->get_orders_epos_ID( $id, $api_data, true );
     }
 
     //----------------------------------------------
@@ -1285,49 +1384,6 @@ class Eskimo_REST {
     }
 
     //----------------------------------------------
-    // Woocommerce Order Export
-    //----------------------------------------------
-
-    /**
-     * Update EPOS product WebIDs
-     * - not yet implemented
-     *
-     * @param   array   $api_opts
-     * @return  boolean
-     */
-    public function get_orders_insert( $api_opts ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
-
-        // Validate Options
-        if ( empty( $api_opts ) ) {
-            return $this->api_error( 'Invalid Order API Options' );
-        }
-
-        // Test connection
-        if ( false === $this->api->init() ) {
-            return $this->api_connect_error();
-        }
-
-        // Get remote data
-        $api_data = $this->api->orders_insert( $api_opts );
-
-        // Validate API data
-        if ( false === $api_data ) {
-            return $this->api_rest_error();
-        }
-
-        // OK process data
-        $api_count = count( $api_data );
-        if ( $this->debug ) { error_log( 'Order Count[' . $api_count . ']' ); }
-
-        // Process data
-        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
-
-        // Default OK
-        return true;
-    }
-
-    //----------------------------------------------
     // API Error
     //----------------------------------------------
 
@@ -1340,7 +1396,8 @@ class Eskimo_REST {
         if ( $this->debug ) { 
             error_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']' );
             error_log( $error ); 
-        }
+		}
+		return $error;
     }
 
     /**
@@ -1350,7 +1407,8 @@ class Eskimo_REST {
         if ( $this->debug ) { 
             error_log( __CLASS__ . ':' . __METHOD__ );
             error_log( __( 'API Error: Could Not Connect To API', 'eskimo' ) ); 
-        }
+		}
+		return __( 'API Error: Could Not Connect To API', 'eskimo' );
     }
 
     /**
@@ -1360,6 +1418,7 @@ class Eskimo_REST {
         if ( $this->debug ) { 
             error_log( __CLASS__ . ':' . __METHOD__ ); 
             error_log( __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ) ); 
-        }
+		}
+		return __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ); 
     }
 }

@@ -331,57 +331,19 @@ final class Eskimo_Route extends WP_REST_Controller {
     	//----------------------------------------------
 
         // Customers: Get EPOS customer by ID or email
-        register_rest_route( $namespace, '/customer/(?P<cust_type>[\w-]+)/(?P<cust_value>[\w-]+)', [
+        register_rest_route( $namespace, '/customer/(?P<cust_id>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_customer' ],
+                'callback'              => [ $this, 'get_customers_specific_ID' ],
                 //'permission_callback'   => [ $this, 'rest_permissions_check' ],
                 //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
                 'args'                  => [
-					'cust_type' => [
+                    'cust_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(id|email){1}/', $param );
-                        }
-                    ],
-                    'cust_value' => [
-                        'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_@\.)+/', $param );
+                            return preg_match( '/(a-zA-Z0-9-)+/', $param );
                         }
                     ]
                 ]
-            ] 
-        ] );
-
-        // Customers: Update EPOS customer by ID or email
-        register_rest_route( $namespace, '/customer-update/(?P<cust_type>[\w-]+)/(?P<cust_value>[\w-]+)', [
-            [
-                'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_customer_update' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
-                'args'                  => [
-					'cust_type' => [
-                        'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(id|email){1}/', $param );
-                        }
-                    ],
-                    'cust_value' => [
-                        'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_@\.)+/', $param );
-                        }
-                    ]
-                ]
-            ] 
-        ] );
-
-        // Customers: Export all Woocommerce users to EPOS
-        register_rest_route( $namespace, '/customers-create', [
-            [
-                'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_customers_create_all' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
-                'args'                  => []
             ] 
         ] );
 
@@ -395,34 +357,50 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
                     'cust_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9)+/', $param );
+                            return preg_match( '/(a-zA-Z0-9-)+/', $param );
                         }
                     ]
                 ]
             ] 
         ] );
 
-
-	    //----------------------------------------------
-    	// WordPress REST Routes - Orders
-    	//----------------------------------------------
-
-        // Orders: Export all Woocommerce orders to EPOS
-        register_rest_route( $namespace, '/orders', [
+        // Customers: Export Woocommerce user to EPOS by WordPress user ID
+        register_rest_route( $namespace, '/customer-update/(?P<cust_id>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_orders_create_all' ],
+                'callback'              => [ $this, 'get_customers_update' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+                    'cust_id' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return preg_match( '/(a-zA-Z0-9-)+/', $param );
+                        }
+                    ]
+                ]
+            ] 
+        ] );
+
+        // Customers: Export all Woocommerce users to EPOS
+        register_rest_route( $namespace, '/customers', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_customers' ],
                 //'permission_callback'   => [ $this, 'rest_permissions_check' ],
                 //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
                 'args'                  => []
             ] 
         ] );
 
-        // Order: Export Woocommerce order to EPOS by ID
+	    //----------------------------------------------
+    	// WordPress REST Routes - Orders
+    	//----------------------------------------------
+
+        // Order: Import EPOS order to Woocommerce by ID
         register_rest_route( $namespace, '/order/(?P<order_id>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_order_create' ],
+                'callback'              => [ $this, 'get_orders_specific_ID' ],
                 //'permission_callback'   => [ $this, 'rest_permissions_check' ],
                 //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
                 'args'                  => [
@@ -430,28 +408,27 @@ final class Eskimo_Route extends WP_REST_Controller {
                         'validate_callback' => function( $param, $request, $key ) {
                             return preg_match( '/(a-zA-Z0-9)+/', $param );
                         }
-                    ],
+                    ]
                 ]
             ] 
 		] );
 
-        // Order: Import EPOS order to Woocommerce by ID
-        register_rest_route( $namespace, '/order-import/(?P<order_id>[\w-]+)', [
+        // Order: Export Woocommerce order to EPOS by ID
+        register_rest_route( $namespace, '/order-create/(?P<order_id>[\d]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_order_import' ],
+                'callback'              => [ $this, 'get_orders_create' ],
                 //'permission_callback'   => [ $this, 'rest_permissions_check' ],
                 //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
                 'args'                  => [
                     'order_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9)+/', $param );
+                            return is_numeric( $param );
                         }
-                    ],
+                    ]
                 ]
             ] 
 		] );
-
     }
 
     /**
@@ -955,30 +932,164 @@ final class Eskimo_Route extends WP_REST_Controller {
     }
 
     //----------------------------------------------
-    // ImpEx CallBack Functions: Category Products
+    // ImpEx CallBack Functions: Customers
     //----------------------------------------------
 
-    /**
-     * Synchronise web orders with EPOS
-     * - No import required
+	/**
+     * Get and import an EPOS customer by type: email, id
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
-    public function update_orders_id( WP_REST_Request $request ) {
+	public function get_customers_specific_ID( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $cust_id  = sanitize_text_field( $request->get_param( 'cust_id' ) );
+        if ( $this->debug ) { error_log( 'Customer ID[' . $cust_id . ']' ); }
+
+        // Response data
+        $data = [
+            'route'     => 'customer',
+            'params'    => 'ID: ' . $cust_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_customers_specific_ID( $cust_id );
+        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+     * Get and insert a Woocommerce customer ID to EPOS customer
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+	public function get_customers_create( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $cust_id  = (int) $request->get_param( 'cust_id' );
+        if ( $this->debug ) { error_log( 'Customer ID[' . $cust_id . ']' ); }
+
+        // Response data
+        $data = [
+            'route'     => 'customer_create',
+            'params'    => 'ID: ' . $cust_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_customers_create( $cust_id );
+        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+     * Get and update a Woocommerce customer to EPOS customer by type: email, id
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+	public function get_customers_update( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $cust_id  = (int) $request->get_param( 'cust_id' );
+        if ( $this->debug ) { error_log( 'Customer ID[' . $cust_id . ']' ); }
+
+        // Response data
+        $data = [
+            'route'     => 'customer_update',
+            'params'    => 'ID: ' . $cust_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_customers_update( $cust_id );
+        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    //----------------------------------------------
+    // ImpEx CallBack Functions: Orders
+    //----------------------------------------------
+
+    /**
+     * Synchronise EPOS WebOrder with Woocommerce
+     * - limited functionality
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_orders_specific_ID( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $order_id  = sanitize_text_field( $request->get_param( 'cust_id' ) );
+        if ( $this->debug ) { error_log( 'Order ID[' . $order_id . ']' ); }
+
+        // Response data
+        $data = [
+            'route'     => 'order',
+            'params'    => 'Order ID: ' . $order_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_orders_specific_ID( $order_id );
+        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
     }
 
     /**
-     * Synchronise web order with EPOS
-     * - No import required
+     * Create EPOS web order from Woocommerce order 
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
-    public function update_order_id( WP_REST_Request $request ) {
+    public function get_orders_create( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $order_id  = (int) $request->get_param( 'order_id' );
+        if ( $this->debug ) { error_log( 'Order ID #[' . $order_id . ']' ); }
+
+        // Response data
+        $data = [
+            'route'     => 'order_create',
+            'params'    => 'Order ID: #' . $order_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_orders_create( $order_id );
+        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );

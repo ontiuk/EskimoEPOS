@@ -590,16 +590,17 @@ class Eskimo_API {
      * @return  array|boolean
      */
    	public function orders_insert( $api_opts ) {
-
+		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+   
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-    	$api_url    = $oauth['domain'] . 'api/Orders/Insert';	
-    	$api_opts   = json_encode( $api_opts );
-        $api_data   = $this->post_data( $api_url, $api_opts );
+    	$api_url    = $oauth['domain'] . 'api/Orders/Insert';
+    	$api_opts   = json_encode( $api_opts ); 
+		$api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : $api_data;
-    }   
+	}   
 }

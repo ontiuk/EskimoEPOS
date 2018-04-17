@@ -775,9 +775,388 @@ class Eskimo_WC {
         // Process data
         if ( $this->debug ) { error_log( 'Process Customer[' . count( $api_data ) . ']' ); }
 
+		// Email exists?
+		$email = filter_var( $api_data->EmailAddress, FILTER_SANITIZE_EMAIL );
+		if ( ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
+			return $this->api_error( 'Invalid Customer Email[' . esc_html( $email ) . ']' );
+		}
+
+		// Set up address	
+		$addr 	= explode( PHP_EOL, $api_data->Address );
+		$addr_1 = array_shift( $addr );
+		$city	= ( count( $addr ) ) ? $addr[0] : '';
+        if ( $this->debug ) { error_log( 'Customer Addr[' . $addr_1 . '] city[' . $city . ']' ); }
+
+		// Set up user with format forename.surname
+		$username = $api_data->Forename . '.' . $api_data->Surname;
+			
+		// Generate WC user if possible - autogenerate password
+		$user_id = wc_create_new_customer( $email, $username );
+		if ( is_wp_error( $user_id ) ) {
+			return $this->api_error( $user_id->get_error_message() );
+		}
+
+		// Tweak user
+		$user_info = [
+			'ID' 		 => $user_id, 
+			'first_name' => $api_data->Forename,
+			'last_name'  => $api_data->Surname
+		];
+
+		$user_id = wp_update_user( $user_info );
+		if ( is_wp_error( $user_id ) ) {
+			return $this->api_error( $user_id->get_error_message() );
+		}
+        if ( $this->debug ) { error_log( 'OK Customer ID[' . $user_id . ']' ); }
+
+		// User meta
+		add_user_meta( $user_id, 'epos_id', $api_data->ID );
+		add_user_meta( $user_id, 'epos_notes', $api_data->Notes );
+
+		// OK, got new user, add billing details
+		add_user_meta( $user_id, 'billing_first_name', $api_data->Forename );
+		add_user_meta( $user_id, 'billing_last_name', $api_data->Surname );
+		add_user_meta( $user_id, 'billing_company', $api_data->CompanyName );
+		add_user_meta( $user_id, 'billing_address_1', $addr_1 );
+		add_user_meta( $user_id, 'billing_city', $city );
+		add_user_meta( $user_id, 'billing_postcode', $api_data->PostCode );
+		add_user_meta( $user_id, 'billing_country', 'GB' );
+		add_user_meta( $user_id, 'billing_email', $api_data->EmailAddress );
+		add_user_meta( $user_id, 'billing_phone', $api_data->Telephone );
+		add_user_meta( $user_id, 'billing_mobile', $api_data->Mobile );
+
+		// OK, got new user, add shipping details, assume same as billing
+		add_user_meta( $user_id, 'shipping_first_name', $api_data->Forename );
+		add_user_meta( $user_id, 'shipping_last_name', $api_data->Surname );
+		add_user_meta( $user_id, 'shipping_company', $api_data->CompanyName );
+		add_user_meta( $user_id, 'shipping_address_1', $addr_1 );
+		add_user_meta( $user_id, 'shipping_city', $city );
+		add_user_meta( $user_id, 'shipping_postcode', $api_data->PostCode );
+		add_user_meta( $user_id, 'shipping_country', 'GB' );
+		add_user_meta( $user_id, 'shipping_email', $api_data->EmailAddress );
+		add_user_meta( $user_id, 'shipping_phone', $api_data->Telephone );
+		add_user_meta( $user_id, 'shipping_mobile', $api_data->Mobile );
+
         // OK, done
-        return true;
-    }
+        return 'User ID[' . $user_id . '] Username[' . $username . ']';
+	}
+
+    /**
+     * Get remote API customer data for insert
+     *
+     * @param   array   $api_data
+     * @return  boolean
+     */
+    public function get_customers_insert_ID( $id = '' ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
+
+        // Validate API data
+        if ( empty( $id ) || $id <= 0 ) {
+            return $this->api_error( 'Insert: Invalid user ID' );
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process Customer ID[' . $id . ']' ); }
+
+		// User?
+		$user_data = get_user_by( 'ID', $id );
+		if ( false === $user_data ) { return $this->api_error( 'Invalid WP user ID[' . $id . ']' ); }
+
+		// OK, got user id
+		$user_id = absint( $user_data->ID );
+		if ( $user_data === 0 ) { return $this->api_error( 'Invalid WP user ID[' . $user_id . ']' ); }
+
+		// First test... EPOS ID
+		$epos_id = get_user_meta( $user_id, 'epos_id', true );
+		if ( ! empty( $epos_id ) ) { return $this->api_error( 'EPOS user exists ID[' . $user_id . '] EPOS ID[' . $epos_id . ']' ); }
+
+		// Set up data
+		$data = [ 
+			'ActiveAccount' => true,
+			'EmailAddress'  => $user_data->user_email,
+			'TitleID'		=> 1,
+			'CountryCode'	=> 'GB'
+		];
+
+		// Set up address
+		$addr_1	= get_user_meta( $user_id, 'billing_address_1', true );
+		$addr_2	= get_user_meta( $user_id, 'billing_address_2', true );
+		$city 	= get_user_meta( $user_id, 'billing_city', true );
+		$state 	= get_user_meta( $user_id, 'billing_state', true );
+
+		// Get meta data... assume billing rules
+		$data['Forename']		= get_user_meta( $user_id, 'billing_first_name', true );
+		$data['Surname']		= get_user_meta( $user_id, 'billing_last_name', true );
+		$data['CompanyName']	= get_user_meta( $user_id, 'billing_company', true );
+		$data['Notes']			= get_user_meta( $user_id, 'epos_notes', true );
+		$data['Address']		= $address = $addr_1 . '\r\n' . $addr_2 . '\r\n' . $city . '\r\n' . $state; 
+		$data['Postcode']		= get_user_meta( $user_id, 'billing_postcode', true );
+		$data['Telephone']		= get_user_meta( $user_id, 'billing_phone', true );
+		$data['Mobile']			= get_user_meta( $user_id, 'billing_mobile', true );
+
+        // OK, done
+        return $data;
+	}
+
+    /**
+     * Get remote API customer data
+     *
+     * @param   array   $api_data
+     * @return  boolean
+     */
+    public function get_customers_update_ID( $id = '' ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . 'ID[' . $id . ']' ); }
+
+        // Validate API data
+        if ( empty( $id ) ) {
+            return $this->api_error( 'Insert: Invalid user ID' );
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process Customer ID[' . $id . ']' ); }
+
+		$user_data = get_user_by( 'ID', $id );
+		if ( false === $user_data ) { return $this->api_error( 'Invalid WP user ID[' . $id . ']' ); }
+
+		// OK, got user id
+		$user_id = absint( $user_data->ID );
+		if ( $user_data === 0 ) { return $this->api_error( 'Invalid WP user ID[' . $user_id . ']' ); }
+
+		// First test... EPOS ID
+		$epos_id = get_user_meta( $user_id, 'epos_id', true );
+		if ( empty( $epos_id ) ) { return $this->api_error( 'EPOS user not exists ID[' . $user_id . ']' ); }
+
+		// Set up data
+		$data = [ 
+			'ActiveAccount' => true,
+			'ID'			=> $epos_id,
+			'EmailAddress'  => $user_data->user_email,
+			'TitleID'		=> 1,
+			'CountryCode'	=> 'GB'
+		];
+
+		// Set up address
+		$addr_1	= get_user_meta( $user_id, 'billing_address_1', true );
+		$city 	= get_user_meta( $user_id, 'billing_city', true );
+
+		// Get meta data... assume billing rules
+		$data['Forename']		= get_user_meta( $user_id, 'billing_first_name', true );
+		$data['Surname']		= get_user_meta( $user_id, 'billing_last_name', true );
+		$data['CompanyName']	= get_user_meta( $user_id, 'billing_company', true );
+		$data['Notes']			= get_user_meta( $user_id, 'epos_notes', true );
+		$data['Address']		= $address = $addr_1 .  '\r\n' . $city; 
+		$data['Postcode']		= get_user_meta( $user_id, 'billing_postcode', true );
+		$data['Telephone']		= get_user_meta( $user_id, 'billing_phone', true );
+		$data['Mobile']			= get_user_meta( $user_id, 'billing_mobile', true );
+
+        // OK, done
+        return $data;
+	}
+
+    /**
+     * Post insert EPOS data user update
+     *
+     * @param   array   $id
+     * @param   array   $data
+     * @return  boolean
+     */
+    public function get_customers_epos_ID( $id, $data, $update = false ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . ']' ); }
+
+        // Validate API data
+        if ( empty( $data ) ) {
+            return $this->api_error( 'Insert: Invalid EPOS data' );
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process Customer ID[' . $id . ']EPOS ID[' . $data->ID . ']' ); }
+
+		// Process update
+		return ( $update === true ) ? ( update_user_meta( $id, 'epos_id', $data->ID ) ) ? 'ID[' . $id . '] EPOS ID[' . $data->ID . ']' : false : $data->ID;
+	}
+
+    //----------------------------------------------
+    // Woocommerce Customer Import & Export
+    //----------------------------------------------
+
+    /**
+     * Get remote API order data
+     *
+     * @param   array   $api_data
+     * @return  boolean
+     */
+    public function get_orders_specific_ID( $api_data ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Validate API data
+        if ( empty( $api_data ) ) {
+            return $this->api_rest_error();
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process Order[' . count( $api_data ) . ']' ); }
+
+		// Validate content? order, customer
+
+		// Set up order 	
+		if ( $this->debug ) { error_log( 'Order [' . ']' ); }
+
+		// Set up customer
+		$username = $api_data->Forename . '.' . $api_data->Surname;
+			
+		// Generate WC user if possible - autogenerate password
+		$order_id = wc_create_order( $email, $username );
+		if ( is_wp_error( $user_id ) ) {
+			return $this->api_error( $order_id->get_error_message() );
+		}
+
+		// Order lines / products
+
+		// Order meta data
+
+        if ( $this->debug ) { error_log( 'OK Order ID[' . $order_id . ']' ); }
+
+		// Order meta
+		add_post_meta( $user_id, 'epos_id', $api_data->ID );
+
+		// OK, done
+        return 'Order ID[' . $order_id . ']';
+	}
+
+    /**
+     * Get woocommerce order data for EPOS insert
+     *
+     * @param   array   $api_data
+     * @return  boolean
+     */
+    public function get_orders_insert_ID( $id = '' ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
+
+        // Validate API data
+        if ( empty( $id ) || $id <= 0 ) {
+            return $this->api_error( 'Insert: Invalid user ID' );
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process Order ID[' . $id . ']' ); }
+
+		// Order?
+		$order = wc_get_order( $id );
+		if ( false === $order ) { return $this->api_error( 'Invalid Order ID[' . $id . ']' ); }
+
+		// OK, got user id
+		$order_id = absint( $order->get_id() );
+		if ( $order_id === 0 ) { return $this->api_error( 'Invalid WC Order ID[' . $order_id . ']' ); }
+
+		// First test... EPOS ID
+		$web_order_id = get_post_meta( $order_id, '_web_order_id', true );
+		if ( ! empty( $web_order_id ) ) { return $this->api_error( 'EPOS Order exists ID[' . $order_id . '] EPOS Web Order ID[' . $web_order_id . ']' ); }
+
+		// Get order items
+		$order_items = $order->get_items();
+		if ( $this->debug ) { error_log( 'Order Items: ' . count( $order_items ) ); }
+		
+		// Get the customer
+		$cust_id 	= $order->get_customer_id();
+		$epos_id 	= get_user_meta( $cust_id, 'epos_id', true );
+
+		// Order reference
+		$epos_ei = get_option( 'eskimo_api_customer' );
+		$epos_ei = ( empty( $epos_ei ) ) ? $epos_id . '-' . $cust_id . '-' . $order_id : $epos_ei . $epos_id . '-' . $cust_id . '-' . $order_id;  
+		if ( $this->debug ) { error_log( 'Customer ID: [' . $cust_id . '] EPOS ID[' . $epos_id . ']' ); }
+
+		// Notes
+		$order_note = ( $order->get_customer_order_notes() ) ? $order->get_customer_order_notes()[0]->comment_content : '';
+		if ( empty( $order_note ) ) {
+			$order_note = get_the_excerpt( $order_id );
+		}
+
+		// Set up data
+		$data = [
+			'order_id' 				=> $order_id,
+			'eskimo_customer_id' 	=> $epos_id,
+			'order_date' 			=> $order->get_date_completed()->date('Y-m-d H:i:s'),
+			'invoice_amount' 		=> $order->get_total(),
+			'amount_paid' 			=> $order->get_total(),
+			'OrderType'				=> 2, //WebOrder,
+			'ExternalIdentifier'	=> $epos_ei
+		];
+
+		// Set up order items
+		$items = [];
+
+		// Iterating through each WC_Order_Item_Product objects
+		foreach ( $order_items as $k => $order_item ) {
+			$item = [];
+ 			
+			$product_id = $order_item->get_product_id(); 
+			$product 	= $order_item->get_product(); 
+   
+			$item['sku_code'] 				= $product->get_sku();
+			$item['qty_purchased']			= $order_item->get_quantity();
+			$item['unit_price']				= $product->get_price();
+			$item['line_discount_amount']	= $order_item->get_total() - $order_item->get_subtotal();
+			$item['item_note']				= null;			
+			$items[] = $item;
+		}
+
+		// Set up shipping
+		$shipping = [
+			'FAO'			=>	$order->get_shipping_first_name() . ' ' . $order->get_billing_last_name(),
+			'AddressLine1' 	=>	$order->get_shipping_address_1(),
+			'AddressLine2' 	=>	$order->get_shipping_address_2(),
+			'AddressLine3' 	=>	null,
+			'PostalTown'	=>	$order->get_shipping_city(),
+			'County'		=>	$order->get_shipping_state(),
+			'CountryCode'	=>	$order->get_shipping_country(),
+			'PostCode'		=>	$order->get_shipping_postcode()
+		];
+
+		// Set up billing
+		$billing = [
+			'FAO'			=>	$order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+			'AddressLine1' 	=>	$order->get_billing_address_1(),
+			'AddressLine2' 	=>	$order->get_billing_address_2(),
+			'AddressLine3' 	=>	null,
+			'PostalTown'	=>	$order->get_billing_city(),
+			'County'		=>	$order->get_billing_state(),
+			'CountryCode'	=>	$order->get_billing_country(),
+			'PostCode'		=>	$order->get_billing_postcode()
+		];
+
+		$data['DeliveryAddress']		= $shipping;
+		$data['InvoiceAddress']			= $billing;
+		$data['OrderedItems']			= $items;
+		$data['CustomerReference'] 		= null;
+		$data['DeliveryNotes'] 			= $order_note;
+		$data['ShippingRateID'] 		= 1;
+		$data['ShippingAmountGross'] 	= $order->get_shipping_total();
+
+        // OK, done
+        return $data;
+	}
+
+    /**
+     * Post insert EPOS reference update
+     *
+     * @param   array   $id
+     * @param   array   $data
+     * @return  boolean
+     */
+    public function get_orders_epos_ID( $id, $data, $update = false ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . ']' ); }
+
+        // Validate API data
+        if ( empty( $data ) ) {
+            return $this->api_error( 'Insert: Invalid EPOS data' );
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process Order ID[' . $id . ']EPOS ID[' . $data->ExternalIdentifier . ']' ); }
+
+		// Process update
+		return ( $update === true ) ? ( update_post_meta( $id, '_web_order_id', $data->ExternalIdentifier ) ) ? 'ID[' . $id . '] EPOS WebOrder ID[' . $data->ExternalIdentifier . ']' : false : $data->ExternalIdentifier;
+	}
 
     //----------------------------------------------
     // Woocommerce SKU Import
@@ -1853,6 +2232,31 @@ class Eskimo_WC {
      */
     protected function api_rest_error() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
-        if ( $this->debug ) { error_log( __( 'API Error: Could Not Process REST data from API', 'eskimo' ) ); }
-    }
+		if ( $this->debug ) { error_log( __( 'API Error: Could Not Process REST data from API', 'eskimo' ) ); }
+		return __( 'API Error: Could Not Process REST data from API', 'eskimo' );
+	}
+
+    /**
+     * Log API Error
+     *
+     * @param   string  $error
+     */
+    protected function api_error( $error ) {
+        if ( $this->debug ) { 
+            error_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']' );
+            error_log( $error ); 
+		}
+		return $error;
+	}
+
+	/**
+	 * External identifier for WebOrder
+	 *
+	 * @param integer $length default 10
+	 * @param integer $start default 0
+	 * @return string
+	 */
+	protected function keygen( $length = 10, $start = 0 ) {
+		return substr( str_shuffle( sha1( microtime( true ). mt_rand( 10000,90000 ) ) ), $start, $length );
+	}
 }
