@@ -1010,11 +1010,7 @@ class Eskimo_WC {
 			return $this->api_error( $order_id->get_error_message() );
 		}
 
-		// Order lines / products
-
-		// Order meta data
-
-        if ( $this->debug ) { error_log( 'OK Order ID[' . $order_id . ']' ); }
+     	if ( $this->debug ) { error_log( 'OK Order ID[' . $order_id . ']' ); }
 
 		// Order meta
 		add_post_meta( $user_id, 'epos_id', $api_data->ID );

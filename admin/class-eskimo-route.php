@@ -1,7 +1,7 @@
 <?php
 
 /**
- * WordPress REST API Endpoints and EPOS API integration
+ * WordPress REST API Endpoints and EskimoEPOS API integration
  *
  * @link       https://on.tinternet.co.uk
  * @package    Eskimo
@@ -9,7 +9,7 @@
  */
 
 /**
- * WordPress REST API Endpoints and EPOS Integration
+ * WordPress REST API Endpoints and EskimoEPOS Integration
  * 
  * @package    Eskimo
  * @subpackage Eskimo/admin
@@ -82,11 +82,11 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function register_routes() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // First check is EPOS API enabled?
+        // First check: EskimoEPOS API enabled?
         $eskimo_api_enabled = get_option( 'eskimo_api_enabled', 'no' );
         if ( $eskimo_api_enabled !== 'yes' ) { return; }
 
-        // Default Eskimo EPOS REST namespace
+        // Default EskimoEPOS REST namespace
         $namespace = 'eskimo/v1';
 
 	    //----------------------------------------------
@@ -140,7 +140,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
-        // Categories Update: Reset all EPOS category Web_IDs
+        // Categories Update: Reset all EskimoEPOS category Web_IDs
         register_rest_route( $namespace, '/categories-update', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -151,7 +151,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
-        // Category Update: Reset EPOS category Web_ID
+        // Category Update: Reset EskimoEPOS category Web_ID
         register_rest_route( $namespace, '/category-update/(?P<cat_id>[\w-]+)/(?P<cat_value>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -282,7 +282,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
-        // Product Update - Update EPOS product ID with new value: Web_ID
+        // Product Update - Update EskimoEPOS product ID with new value: Web_ID
         register_rest_route( $namespace, '/product-update/(?P<prod_id>[\w-]+)/(?P<prod_value>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -314,7 +314,7 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
    					'prod_type' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(stock|tax){1}/', $param );
+                            return preg_match( '/(stock|price|tax){1}/', $param );
                         }
                     ],
                     'prod_id' => [
@@ -330,7 +330,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     	// WordPress REST Routes - Customers
     	//----------------------------------------------
 
-        // Customers: Get EPOS customer by ID or email
+        // Customers: Get EskimoEPOS customer by ID or email
         register_rest_route( $namespace, '/customer/(?P<cust_id>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -347,7 +347,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
-        // Customers: Export Woocommerce user to EPOS by WordPress user ID
+        // Customers: Export Woocommerce user to EskimoEPOS by WordPress user ID
         register_rest_route( $namespace, '/customer-create/(?P<cust_id>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -364,7 +364,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
-        // Customers: Export Woocommerce user to EPOS by WordPress user ID
+        // Customers: Export Woocommerce user to EskimoEPOS by WordPress user ID
         register_rest_route( $namespace, '/customer-update/(?P<cust_id>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -381,7 +381,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
-        // Customers: Export all Woocommerce users to EPOS
+        // Customers: Export all Woocommerce users to EskimoEPOS
         register_rest_route( $namespace, '/customers', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -396,7 +396,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     	// WordPress REST Routes - Orders
     	//----------------------------------------------
 
-        // Order: Import EPOS order to Woocommerce by ID
+        // Order: Import EskimoEPOS order to Woocommerce by ID
         register_rest_route( $namespace, '/order/(?P<order_id>[\w-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -413,7 +413,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
 		] );
 
-        // Order: Export Woocommerce order to EPOS by ID
+        // Order: Export Woocommerce order to EskimoEPOS by ID
         register_rest_route( $namespace, '/order-create/(?P<order_id>[\d]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -715,7 +715,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     //----------------------------------------------
 
     /**
-     * Process EPOS products import
+     * Process EskimoEPOS products import
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -748,7 +748,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     }
 
     /**
-     * Process EPOS products import
+     * Process EskimoEPOS products import
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -791,7 +791,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     }
 
     /**
-     * Process EPOS products import
+     * Process EskimoEPOS products import
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -825,7 +825,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 	}
 
     /**
-     * Process EPOS products import
+     * Process EskimoEPOS products import
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -893,7 +893,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     }
 
     /**
-     * Update an EPOS product Web_ID
+     * Update an EskimoEPOS product Web_ID
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -936,7 +936,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     //----------------------------------------------
 
 	/**
-     * Get and import an EPOS customer by type: email, id
+     * Get and import an EskimoEPOS customer by type: email, id
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -967,7 +967,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 	}
 
 	/**
-     * Get and insert a Woocommerce customer ID to EPOS customer
+     * Get and insert a Woocommerce customer ID to EskimoEPOS customer
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -998,7 +998,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 	}
 
 	/**
-     * Get and update a Woocommerce customer to EPOS customer by type: email, id
+     * Get and update a Woocommerce customer to EskimoEPOS customer by type: email, id
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -1033,7 +1033,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     //----------------------------------------------
 
     /**
-     * Synchronise EPOS WebOrder with Woocommerce
+     * Synchronise EskimoEPOS WebOrder with Woocommerce
      * - limited functionality
      * 
      * @param   WP_REST_Request     $request Request object
@@ -1065,7 +1065,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     }
 
     /**
-     * Create EPOS web order from Woocommerce order 
+     * Create EskimoEPOS web order from Woocommerce order 
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object

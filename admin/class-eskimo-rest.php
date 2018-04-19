@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Import & Export via the Eskimo EPOS API
+ * Import & Export via the EskimoEPOS API
  *
  * @link       https://on.tinternet.co.uk
  * @package    Eskimo
@@ -9,7 +9,7 @@
  */
 
 /**
- * Eskimo EPOS product, category, customer, and order processing and sync
+ * EskimoEPOS product, category, customer, and order processing and sync
  * 
  * @package    Eskimo
  * @subpackage Eskimo/admin
@@ -664,7 +664,7 @@ class Eskimo_REST {
     }
 
     /**
-     * Update EPOS category Web_ID Update
+     * Update EskimoEPOS category Web_ID Update
      *
      * @param   array   $api_data
      * @return  boolean
@@ -773,7 +773,7 @@ class Eskimo_REST {
     }
 
     /**
-     * Update EPOS product WebIDs
+     * Update EskimoEPOS product WebIDs
      *
      * @param   array   $api_data
      * @return  boolean
@@ -853,7 +853,7 @@ class Eskimo_REST {
     }
 
     /**
-     * Insert WC user to EPOS
+     * Insert WC user to EskimoEPOS
      *
      * @param   string  $id default ''
      * @return  boolean | string
@@ -901,7 +901,7 @@ class Eskimo_REST {
     }
 
     /**
-     * Update WC user to EPOS
+     * Update WC user to EskimoEPOS
      *
      * @param   string  $id default ''
      * @return  boolean | string
@@ -953,7 +953,7 @@ class Eskimo_REST {
     //----------------------------------------------
 
     /**
-	 * Import EPOS WebOrder into Woocommerce
+	 * Import EskimoEPOS WebOrder into Woocommerce
 	 * - not yet implemented
      *
      * @param   array   $id
@@ -992,7 +992,7 @@ class Eskimo_REST {
     }
 
     /**
-     * Export Woocommerce order to  EPOS WebOrder
+     * Export Woocommerce order to EskimoEPOS WebOrder
      *
      * @param   array   $id
      * @return  boolean
