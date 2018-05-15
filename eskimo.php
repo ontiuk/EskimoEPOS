@@ -30,9 +30,6 @@ GNU General Public License for more details.
  
 You should have received a copy of the GNU General Public License
 along with EskimoEPOS. If not, see http://www.gnu.org/licenses/gpl-2.0.txt.
-You have purchased a support contract for the duration of one year from the date 
-of purchase that entitles you access to updates of WC Vendors Pro and support 
-for WC Vendors Pro. 
 */
 
 // If this file is called directly, abort.

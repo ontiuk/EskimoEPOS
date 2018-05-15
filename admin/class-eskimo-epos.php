@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Get the Eskimo EPOS settings and create a connection to the remote API
+ * Get the EskimoEPOS settings and create a connection to the remote API
  *
  * @link       https://on.tinternet.co.uk
  * @package    Eskimo
@@ -12,15 +12,15 @@
 use \Curl\Curl;
 
 /**
- * Eskimo EPOS API creation 
+ * EskimoEPOS API creation 
  *
- * Gets the Eskimo API settings and creates the remote API connection
+ * Gets the EskimoEPOS API settings and creates the remote API connection
  *
  * @package    Eskimo
  * @subpackage Eskimo/admin
  * @author     Stephen Betley <on@tinternet.co.uk>
  */
-class Eskimo_EPOS {
+final class Eskimo_EPOS {
 
 	/**
 	 * The ID of this plugin
@@ -88,7 +88,7 @@ class Eskimo_EPOS {
 	}
     
     //----------------------------------------------
-    // Eskimo EPOS Settings & Connection
+    // EskimoEPOS Settings & Connection
     //----------------------------------------------
 
     /**

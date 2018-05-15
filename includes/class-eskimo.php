@@ -75,6 +75,18 @@ class Eskimo {
 		$this->load_dependencies();
 		$this->set_locale();
     
+		// Admin Objects
+        $this->eskimo_admin = new Eskimo_Admin( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+
+		// Public Objects
+		$this->eskimo_public = new Eskimo_Public( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+
+		// Shared Objects
+        $this->eskimo_epos  = new Eskimo_EPOS( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+        $this->eskimo_api   = new Eskimo_API( $this->eskimo_epos, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+        $this->eskimo_rest  = new Eskimo_REST( $this->eskimo_api, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+        $this->eskimo_route = new Eskimo_Route( $this->eskimo_rest, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+   
         $this->define_admin_hooks();
 		$this->define_public_hooks();
         $this->define_shared_hooks();
@@ -147,27 +159,21 @@ class Eskimo {
 	 */
 	private function define_admin_hooks() {
 
-        // Load on admin page only
-        if ( !is_admin() ) { return; }
-
-        // Load the Admin classes in logical sequence
-        $plugin_admin = new Eskimo_Admin( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-
 	//	$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+		$this->loader->add_action( 'admin_enqueue_scripts', $this->eskimo_admin, 'enqueue_scripts' );
         
         // Woocommerce Eskimo Settings & Tab
-        $this->loader->add_action( 'init', $plugin_admin, 'init' );
+        $this->loader->add_action( 'init', $this->eskimo_admin, 'init' );
 
         // Product Category Custom Category ID
-		$this->loader->add_action( 'product_cat_add_form_fields', $plugin_admin, 'add_eskimo_category_id',  10, 2  );
-		$this->loader->add_action( 'product_cat_edit_form_fields', $plugin_admin, 'edit_eskimo_category_id',  10, 2  );
-		$this->loader->add_action( 'created_product_cat', $plugin_admin, 'save_eskimo_category_id',  10, 2  );
-		$this->loader->add_action( 'edited_product_cat', $plugin_admin, 'update_eskimo_category_id',  10, 2  );
+		$this->loader->add_action( 'product_cat_add_form_fields', $this->eskimo_admin, 'add_eskimo_category_id',  10, 2  );
+		$this->loader->add_action( 'product_cat_edit_form_fields', $this->eskimo_admin, 'edit_eskimo_category_id',  10, 2  );
+		$this->loader->add_action( 'created_product_cat', $this->eskimo_admin, 'save_eskimo_category_id',  10, 2  );
+		$this->loader->add_action( 'edited_product_cat', $this->eskimo_admin, 'update_eskimo_category_id',  10, 2  );
 
-        $this->loader->add_action( 'manage_edit-product_cat_columns', $plugin_admin, 'add_eskimo_category_column' );
-        $this->loader->add_action( 'manage_product_cat_custom_column', $plugin_admin, 'add_eskimo_category_column_content',  10, 3  );
-        $this->loader->add_action( 'manage_edit-product_cat_sortable_columns', $plugin_admin, 'add_eskimo_category_column_sortable' );
+        $this->loader->add_action( 'manage_edit-product_cat_columns', $this->eskimo_admin, 'add_eskimo_category_column' );
+        $this->loader->add_action( 'manage_product_cat_custom_column', $this->eskimo_admin, 'add_eskimo_category_column_content',  10, 3  );
+        $this->loader->add_action( 'manage_edit-product_cat_sortable_columns', $this->eskimo_admin, 'add_eskimo_category_column_sortable' );
 	}
 
 	/**
@@ -175,14 +181,11 @@ class Eskimo {
 	 */
 	private function define_public_hooks() {
 
-        // No need for admin
-        if ( is_admin() ) { return; }
+//		$this->loader->add_action( 'wp_enqueue_scripts', $this->eskimo_public, 'enqueue_styles' );
+		$this->loader->add_action( 'wp_enqueue_scripts', $this->eskimo_public, 'enqueue_scripts' );
 
-        // Load the Public classes
-		$plugin_public = new Eskimo_Public( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-
-//		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
+        // REST API Init
+		$this->loader->add_action( 'rest_api_init', $this->eskimo_route, 'register_routes' );
 	}
 
 	/**
@@ -190,20 +193,8 @@ class Eskimo {
 	 */
 	private function define_shared_hooks() {
     
-        // Settings 
-        $plugin_epos  = new Eskimo_EPOS( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-        $plugin_api   = new Eskimo_API( $plugin_epos, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-        $plugin_rest  = new Eskimo_REST( $plugin_api, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-        $plugin_route = new Eskimo_Route( $plugin_rest, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-
         // Woocommerce Settings & Eskimo EPOS Integration
-		$this->loader->add_action( 'init', $plugin_epos, 'init' );
-
-        // Front-end only
-        if ( is_admin() ) { return; }
-
-        // Woocommerce data load
-		$this->loader->add_action( 'rest_api_init', $plugin_route, 'register_routes' );
+		$this->loader->add_action( 'init', $this->eskimo_epos, 'init' );
     }
 
 	/**

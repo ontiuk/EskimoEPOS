@@ -15,7 +15,7 @@
  * @subpackage Eskimo/admin
  * @author     Stephen Betley <on@tinternet.co.uk>
  */
-class Eskimo_Admin {
+final class Eskimo_Admin {
 
 	/**
 	 * The ID of this plugin

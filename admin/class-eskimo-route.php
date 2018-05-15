@@ -55,10 +55,10 @@ final class Eskimo_Route extends WP_REST_Controller {
 	/**
 	 * Initialize the class and set its properties
 	 *
-     * @param   object    $rest       Eskimo_REST instance
-	 * @param   string    $eskimo     The name of this plugin
-	 * @param   string    $version    The version of this plugin
-	 * @param   string    $version    Plugin debugging mode, default false
+     * @param   object    $rest     Eskimo_REST instance
+	 * @param   string    $eskimo   The name of this plugin
+	 * @param   string    $version  The version of this plugin
+	 * @param   string    $debug	Plugin debugging mode, default false
 	 */
 	public function __construct( Eskimo_REST $rest, $eskimo, $version, $debug = false ) {
         if ( $debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -76,8 +76,6 @@ final class Eskimo_Route extends WP_REST_Controller {
 
     /**
      * Register the routes for the objects of the controller
-     *
-     * @return void
      */
     public function register_routes() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -104,8 +102,8 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
-        // Category ID
-        register_rest_route( $namespace, '/category/(?P<cat_id>[\w-]+)', [
+        // Category: ID
+        register_rest_route( $namespace, '/category/(?P<cat_id>[\w-_]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_categories_specific_id' ],
@@ -115,15 +113,15 @@ final class Eskimo_Route extends WP_REST_Controller {
 					'required'	=> true,
 					'cat_id' 	=> [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_)+/', $param );
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
                         }
                     ]
                 ]
             ] 
         ] );
 
-        // Child categories by parent ID
-        register_rest_route( $namespace, '/child-categories/(?P<cat_id>[\w-]+)', [
+        // Categories: Child By Parent ID
+        register_rest_route( $namespace, '/child-categories/(?P<cat_id>[\w-_]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_categories_child_categories' ],
@@ -133,15 +131,26 @@ final class Eskimo_Route extends WP_REST_Controller {
 					'required'	=> true,
                     'cat_id' 	=> [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_)+/', $param );
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
                         }
                     ]
                 ]
             ] 
         ] );
 
-        // Categories Update: Reset all EskimoEPOS category Web_IDs
+        // Categories: Update All EskimoEPOS Category Web_IDs
         register_rest_route( $namespace, '/categories-update', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'update_categories_web_id' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => []
+            ] 
+		] );
+
+        // Categories: Reset All EskimoEPOS Category Web_IDs
+        register_rest_route( $namespace, '/categories-reset', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_categories_cart_id' ],
@@ -151,8 +160,19 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
-        // Category Update: Reset EskimoEPOS category Web_ID
-        register_rest_route( $namespace, '/category-update/(?P<cat_id>[\w-]+)/(?P<cat_value>[\w-]+)', [
+        // Categories: Update All EskimoEPOS Category Meta IDs
+        register_rest_route( $namespace, '/categories-meta', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'update_categories_meta_id' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => []
+            ] 
+		] );
+
+        // Category: Update EskimoEPOS Category Web_ID
+        register_rest_route( $namespace, '/category-update/(?P<cat_id>[\w-_]+)/(?P<cat_value>[\w-_]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_category_cart_id' ],
@@ -161,12 +181,56 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
                     'cat_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_)+/', $param );
+                            return (bool) preg_match( '/[a-zA-Z0-9-_]+/', $param );
                         }
                     ],
                     'cat_value' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_)+/', $param );
+                            return (bool) preg_match( '/[a-zA-Z0-9-_]+/', $param );
+                        }
+                    ]
+                ]
+            ] 
+        ] );
+
+	    //----------------------------------------------
+    	// WordPress REST Routes - Category Products
+    	//----------------------------------------------
+
+        // Category Products: Select Products By Range - Deprecated - Use 'products' Endpoint
+        register_rest_route( $namespace, '/category-products/(?P<start>[\d]+)/?(?P<records>[\d]*)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_category_products_all' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+                    'start' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return is_numeric( $param );
+                        }
+                    ],
+                    'records' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
+                        }
+                    ]    
+                ]
+            ] 
+		] );
+
+        // Category: ID
+        register_rest_route( $namespace, '/category-product/(?P<cat_id>[\w-_]+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_category_products_specific_category' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+					'required'	=> true,
+					'cat_id' 	=> [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
                         }
                     ]
                 ]
@@ -177,40 +241,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     	// WordPress REST Routes - Products
     	//----------------------------------------------
 
-        // Category Products: Range - select 20 products from starting point 'start' - Deprecated - use /products
-        register_rest_route( $namespace, '/category-products/(?P<start>[\d]+)/?(?P<records>[\d]*)', [
-            [
-                'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_category_products' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
-                'args'                  => [
-                    'start' => [
-                        'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(0-9)+/', $param );
-                        }
-                    ],
-                    'records' => [
-                        'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(0-9)+/', $param );
-                        }
-                    ]    
-                ]
-            ] 
-        ] );
-
-        // Category Products: All - Deprecated - use /products-all
-        register_rest_route( $namespace, '/category-products-all', [
-            [
-                'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_category_products_all' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
-                'args'                  => []
-            ] 
-        ] );
-
-        // Products: Range - select 20 products from starting point 'start'
+        // Products: Select Products By Range
         register_rest_route( $namespace, '/products/(?P<start>[\d]+)/?(?P<records>[\d]*)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -220,19 +251,51 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
                     'start' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(0-9)+/', $param );
+                            return is_numeric( $param );
                         }
                     ],
                     'records' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(0-9)+/', $param );
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
+                        }
+                    ]    
+                ]
+            ] 
+		] );
+
+        // Products Modified: Select Products By Range And Last Modified Date
+        register_rest_route( $namespace, '/products-modified/(?P<route>[\w]+)/(?P<modified>[\d]+)/?(?P<start>[\d]*)/?(?P<records>[\d]*)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_products_modified' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+                    'route' => [
+						'validate_callback' => function( $param, $request, $key ) {
+							return (bool) preg_match( '/^(seconds|minutes|hours|days|weeks|months|timestamp)$/', $param );
+                        }
+                    ],
+                    'modified' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return is_numeric( $param );
+                        }
+                    ],
+                    'start' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
+                        }
+                    ],
+                    'records' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
                         }
                     ]    
                 ]
             ] 
         ] );
 
-        // Products: All - Internal batch iteration
+        // Products: All
         register_rest_route( $namespace, '/products-all', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -244,7 +307,7 @@ final class Eskimo_Route extends WP_REST_Controller {
         ] );
 
         // Product: ID
-        register_rest_route( $namespace, '/product/(?P<prod_id>[\w-]+)', [
+        register_rest_route( $namespace, '/product/(?P<prod_id>[\w-_]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_specific_id' ],
@@ -253,15 +316,26 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
                     'prod_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_)+/', $param );
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
                         }
                     ],
                 ]
             ] 
-        ] );
+		] );
 
-        // Products Update: Reset all products Web_ID - Batch process Records number starting at Start
-        register_rest_route( $namespace, '/products-update/?(?P<start>[\d]*)/?(?P<records>[\d]*)', [
+        // Products Update: Update All EskimoEPOS Products Web_IDs from Woocommerce
+        register_rest_route( $namespace, '/products-update', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'update_products_web_id' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => []
+            ] 
+		] );
+
+        // Products Reset: Reset All EskimoEPOS Product Web_IDs
+        register_rest_route( $namespace, '/products-reset/?(?P<start>[\d]*)/?(?P<records>[\d]*)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_products_cart_id' ],
@@ -270,20 +344,20 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
                     'start' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(0-9)+/', $param );
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
                         }
                     ],
                     'records' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(0-9)+/', $param );
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
                         }
                     ]    
                 ]
             ] 
         ] );
 
-        // Product Update - Update EskimoEPOS product ID with new value: Web_ID
-        register_rest_route( $namespace, '/product-update/(?P<prod_id>[\w-]+)/(?P<prod_value>[\w-]+)', [
+        // Product Update: Update EskimoEPOS Product Web_ID
+        register_rest_route( $namespace, '/product-update/(?P<prod_id>[\w-_]+)/(?P<prod_value>[\w-_]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_product_cart_id' ],
@@ -292,20 +366,20 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
                     'prod_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_)+/', $param );
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
                         }
                     ],
                     'prod_value' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_)+/', $param );
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
                         }
                     ]
                 ]
             ] 
         ] );
 
-        // Product: ID
-        register_rest_route( $namespace, '/product-import/(?P<prod_type>[\w-]+)/(?P<prod_id>[\w-]+)', [
+        // Product Import: ID
+        register_rest_route( $namespace, '/product-import/(?P<prod_type>[\w-_]+)/(?P<prod_id>[\w-_]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_import_id' ],
@@ -314,14 +388,14 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
    					'prod_type' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(stock|price|tax){1}/', $param );
+                            return (bool) preg_match( '/^(stock|price|tax|category|adjust|all)$/', $param );
                         }
                     ],
                     'prod_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-_)+/', $param );
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
                         }
-                    ],
+                    ]
                 ]
             ] 
         ] );
@@ -330,8 +404,8 @@ final class Eskimo_Route extends WP_REST_Controller {
     	// WordPress REST Routes - Customers
     	//----------------------------------------------
 
-        // Customers: Get EskimoEPOS customer by ID or email
-        register_rest_route( $namespace, '/customer/(?P<cust_id>[\w-]+)', [
+        // Customer: Import EskimoEPOS customer By ID 
+        register_rest_route( $namespace, '/customer/(?P<cust_id>[\d-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_customers_specific_ID' ],
@@ -340,32 +414,49 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
                     'cust_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-)+/', $param );
+                            return (bool) preg_match( '/^\d{3}[-]\d{6}$/', $param );
+                        }
+                    ]
+                ]
+            ] 
+		] );
+		
+        // Customer Exists: Get EskimoEPOS Customer By Email
+        register_rest_route( $namespace, '/customer-exists/(?P<cust_email>[\w.\@\.]+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_customers_specific_email' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+                    'cust_email' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return is_email( $param );
                         }
                     ]
                 ]
             ] 
         ] );
 
-        // Customers: Export Woocommerce user to EskimoEPOS by WordPress user ID
-        register_rest_route( $namespace, '/customer-create/(?P<cust_id>[\w-]+)', [
+        // Customer Insert: Export Woocommerce User To EskimoEPOS By ID
+        register_rest_route( $namespace, '/customer-insert/(?P<cust_id>[\d]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_customers_create' ],
+                'callback'              => [ $this, 'get_customers_insert' ],
                 //'permission_callback'   => [ $this, 'rest_permissions_check' ],
                 //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
                 'args'                  => [
                     'cust_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-)+/', $param );
+                            return is_numeric( $param );
                         }
                     ]
                 ]
             ] 
         ] );
 
-        // Customers: Export Woocommerce user to EskimoEPOS by WordPress user ID
-        register_rest_route( $namespace, '/customer-update/(?P<cust_id>[\w-]+)', [
+        // Customer Update: Update EskimoEPOS By Woocommerce User ID
+        register_rest_route( $namespace, '/customer-update/(?P<cust_id>[\d]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_customers_update' ],
@@ -374,18 +465,18 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'args'                  => [
                     'cust_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9-)+/', $param );
+                            return is_numeric( $param );
                         }
                     ]
                 ]
             ] 
         ] );
 
-        // Customers: Export all Woocommerce users to EskimoEPOS
-        register_rest_route( $namespace, '/customers', [
+        // Customer Titles in EskimoEPOS
+        register_rest_route( $namespace, '/customer-titles', [
             [
                 'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_customers' ],
+                'callback'              => [ $this, 'get_customers_titles' ],
                 //'permission_callback'   => [ $this, 'rest_permissions_check' ],
                 //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
                 'args'                  => []
@@ -396,28 +487,28 @@ final class Eskimo_Route extends WP_REST_Controller {
     	// WordPress REST Routes - Orders
     	//----------------------------------------------
 
-        // Order: Import EskimoEPOS order to Woocommerce by ID
-        register_rest_route( $namespace, '/order/(?P<order_id>[\w-]+)', [
+        // Order: Import EskimoEPOS Order To Woocommerce By ID
+        register_rest_route( $namespace, '/order/(?P<order_id>[\w.-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_orders_specific_ID' ],
+                'callback'              => [ $this, 'get_orders_specific_id' ],
                 //'permission_callback'   => [ $this, 'rest_permissions_check' ],
                 //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
                 'args'                  => [
                     'order_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return preg_match( '/(a-zA-Z0-9)+/', $param );
+                            return preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
                         }
                     ]
                 ]
             ] 
 		] );
 
-        // Order: Export Woocommerce order to EskimoEPOS by ID
-        register_rest_route( $namespace, '/order-create/(?P<order_id>[\d]+)', [
+        // Order: Export Woocommerce Order To EskimoEPOS By ID
+        register_rest_route( $namespace, '/order-insert/(?P<order_id>[\d]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_orders_create' ],
+                'callback'              => [ $this, 'get_orders_insert' ],
                 //'permission_callback'   => [ $this, 'rest_permissions_check' ],
                 //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
                 'args'                  => [
@@ -429,7 +520,190 @@ final class Eskimo_Route extends WP_REST_Controller {
                 ]
             ] 
 		] );
+
+        // Order: Fulfilment Methods
+        register_rest_route( $namespace, '/order-methods', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_orders_methods' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => []
+            ] 
+		] );
+
+        // Orders: Search - Customer
+        register_rest_route( $namespace, '/order-search/customer/(?P<cust_id>[\d-]+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_orders_search_id' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+				'args'                  => [
+                    'cust_id' => [
+						'validate_callback' => function( $param, $request, $key ) {
+                            return (bool) preg_match( '/^\d{3}[-]\d{6}$/', $param );
+                        }
+                    ]
+                ]
+            ] 
+        ] );
+
+        // Orders: Search - Date, Customer, Type
+        register_rest_route( $namespace, '/order-search/type/(?P<type_id>[\d]+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_orders_search_type' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+				'args'                  => [
+                    'type_id' => [
+						'validate_callback' => function( $param, $request, $key ) {
+							return is_numeric( $param );
+                        }
+                    ]
+                ]
+            ] 
+        ] );
+
+        // Orders: Search - Date
+        register_rest_route( $namespace, '/order-search/date/(?P<route>[\w]+)/(?P<date_from>[\d-]+)/?(?P<date_to>[\d-]*)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_orders_search_date' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+				'args'                  => [
+                    'route' => [
+						'validate_callback' => function( $param, $request, $key ) {
+                            return (bool) preg_match( '/^(from|to|range)$/', $param );
+                     }
+                    ],
+                    'date_from' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return (bool) preg_match( '/^\d{4}[-]\d{2}[-]\d{2}$/', $param );
+                        }
+                    ],
+                    'date_to' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : (bool) preg_match( '/^\d{4}[-]\d{2}[-]\d{2}$/', $param );
+                        }
+                    ]
+                ]
+            ] 
+        ] );
+		
+	    //----------------------------------------------
+    	// WordPress REST Routes - SKUs
+    	//----------------------------------------------
+
+        // SKUs: Select EskimoEPOS Products By Range
+        register_rest_route( $namespace, '/skus/(?P<start>[\d]+)/?(?P<records>[\d]*)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_skus' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+                    'start' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return is_numeric( $param );
+                        }
+                    ],
+                    'records' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
+                        }
+                    ]    
+                ]
+            ] 
+		] );
+
+        // SKUs Modified: Select SKUs By Range And Last Modified Date
+        register_rest_route( $namespace, '/skus-modified/(?P<path>[\w]+)/(?P<route>[\w]+)/(?P<modified>[\d]+)/?(?P<start>[\d]*)/?(?P<records>[\d]*)/?(?P<import>[\d]*)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_skus_modified' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+                    'path' => [
+						'validate_callback' => function( $param, $request, $key ) {
+							return (bool) preg_match( '/^(all|stock|price)$/', $param );
+                        }
+                    ],
+                    'route' => [
+						'validate_callback' => function( $param, $request, $key ) {
+							return (bool) preg_match( '/^(seconds|minutes|hours|days|weeks|months|timestamp)$/', $param );
+                        }
+                    ],
+                    'modified' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return is_numeric( $param );
+                        }
+                    ],
+                    'start' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
+                        }
+                    ],
+                    'records' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
+                        }
+                    ],    
+                    'import' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
+                        }
+                    ]    
+                ]
+            ] 
+        ] );
+
+        // SKUs: ID
+        register_rest_route( $namespace, '/sku/(?P<sku_id>[\w-_]+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_skus_specific_code' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+                    'sku_id' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
+                        }
+                    ]
+                ]
+            ] 
+        ] );
+
+        // SKU Product: Product SKUs By Product ID
+        register_rest_route( $namespace, '/sku-product/(?P<prod_id>[\w-_]+)/?(?P<import>[\d]?)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_skus_specific_id' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => [
+                    'prod_id' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return (bool) preg_match( '/^[a-zA-Z0-9-_]+$/', $param );
+                        }
+                    ],
+                    'import' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return ( empty( $param ) ) ? true : is_numeric( $param );
+                        }
+                    ]
+                ]
+            ] 
+		] );
     }
+
+    //----------------------------------------------
+    // Class Functions
+    //----------------------------------------------
 
     /**
      * Rest permissions check minimum: admin level access
@@ -469,13 +743,16 @@ final class Eskimo_Route extends WP_REST_Controller {
     //----------------------------------------------
 
     /**
-     * Process epos categories import
+     * Process EskimoEPOS categories import
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
     public function get_categories_all( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
 
         // Response data
         $data = [
@@ -486,20 +763,28 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // OK, process data
         $data['result'] = $this->rest->get_categories_all();
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
-        // Process category update?
-        if ( false !== $data['result'] && !empty( $data['result'] ) ) {
-            $upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
-            if ( $this->debug ) { error_log( 'Upd Cat ID[' . $upd_cat_id . ']' ); }
-        }
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // Process category Web_ID update
+		$upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
+		if ( is_wp_error( $upd_cat_id ) ) {
+			return $this->rest_error( $upd_cat_id, $data );
+		} 
+
+		if ( $this->debug ) { error_log( 'UPD Cat ID[' . $upd_cat_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
     }
 
     /**
-     * Process epos categories import
+     * Process EskimoEPOS categories import by ID
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -507,7 +792,10 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function get_categories_specific_id( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // Get ID param
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Get Cat ID
         $cat_id = str_replace( [ '-', '_' ], '|', $request->get_param( 'cat_id' ) );
         if ( $this->debug ) { error_log( 'Cat ID[' . $cat_id . ']' ); }
 
@@ -519,27 +807,38 @@ final class Eskimo_Route extends WP_REST_Controller {
         ];
         
         // OK, process data
-        $data['result'] = $this->rest->get_categories_specific_ID( $cat_id );
+		$data['result'] = $this->rest->get_categories_specific_ID( $cat_id );
+
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+
         if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
-        // Process category update?
-        if ( false !== $data['result'] && !empty( $data['result'] ) ) {
-            $upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
-            if ( $this->debug ) { error_log( 'Upd Cat ID[' . $upd_cat_id . ']' ); }
-        }
+        // Process category Web_ID Update
+		$upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
+		if ( is_wp_error( $upd_cat_id ) ) {
+			return $this->rest_error( $upd_cat_id, $data );
+		} 
+
+		if ( $this->debug ) { error_log( 'UPD Cat ID[' . $upd_cat_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
     }
 
     /**
-     * Process epos categories import
+     * Process EskimoEPOS Child Categories import by parent ID
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
     public function get_categories_child_categories( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
 
         // Get ID param
         $cat_id = str_replace( [ '-', '_' ], '|', $request->get_param( 'cat_id' ) );
@@ -554,26 +853,37 @@ final class Eskimo_Route extends WP_REST_Controller {
         
         // OK, process data
         $data['result'] = $this->rest->get_categories_child_categories_ID( $cat_id );
+
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+
         if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
-        // Process category update?
-        if ( false !== $data['result'] && !empty( $data['result'] ) ) {
-            $upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
-            if ( $this->debug ) { error_log( 'Upd Cat ID[' . $upd_cat_id . ']' ); }
-        }
+        // Process category Web_ID update
+		$upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
+		if ( is_wp_error( $upd_cat_id ) ) {
+			return $this->rest_error( $upd_cat_id, $data );
+		} 
+		
+		if ( $this->debug ) { error_log( 'UPD Cat ID[' . $upd_cat_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
     }
 
     /**
-     * Process epos categories import
+     * Process EskimoEPOS Categories Web_ID update
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
-    public function update_categories_cart_id( WP_REST_Request $request ) {
+    public function update_categories_web_id( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
 
         // Response data
         $data = [
@@ -583,19 +893,118 @@ final class Eskimo_Route extends WP_REST_Controller {
         ];
         
         // OK, process data
-        $data['result'] = $this->rest->get_categories_cart_ID();
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+		$data['result'] = $this->rest->get_categories_web_ID();
 
-        // Process category update?
-        $upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
-        if ( $this->debug ) { error_log( 'Upd Cat ID[' . $upd_cat_id . ']' ); }
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+		
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+   
+		// Batch update
+		$batch = [];
+		foreach ( $data['result'] as $result ) {
+			$batch[] = $result;
+
+			$batch_count = count( $batch );
+			if ( $batch_count === 25 ) {
+		
+				if ( $this->debug ) { error_log( 'Response[' . print_r( $batch, true ) . ']' ); }
+
+				// Process category Web_ID Update
+				$upd_cat_id = $this->rest->get_categories_update_cart_ID( $batch );
+				if ( is_wp_error( $upd_cat_id ) ) {
+					return $this->rest_error( $upd_cat_id, $data );
+				} 
+		
+		        if ( $this->debug ) { error_log( 'UPD Cat ID[' . $upd_cat_id . ']' ); }
+
+				$batch = [];
+				sleep(6);
+			}
+		}
 
         // REST output
         return new WP_REST_Response( $data, 200 );
-    }
+	}
 
     /**
-     * Process epos categories import
+     * Process EskimoEPOS Categories Web_ID reset
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function update_categories_cart_id( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Response data
+        $data = [
+            'route'     => 'categories-reset',
+            'params'    => 'all',
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+        
+        // OK, process data - reset
+		$data['result'] = $this->rest->get_categories_cart_ID();
+
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+		
+        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // Process category Web_ID Update
+		$upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
+		if ( is_wp_error( $upd_cat_id ) ) {
+			return $this->rest_error( $upd_cat_id, $data );
+		} 
+		
+        if ( $this->debug ) { error_log( 'Reset Cat ID[' . $upd_cat_id . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    /**
+     * Process EskimoEPOS Categories meta ID update
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function update_categories_meta_id( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Response data
+        $data = [
+            'route'     => 'categories-meta',
+            'params'    => 'all',
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+        
+        // OK, process data
+		$data['result'] = $this->rest->get_categories_meta_ID();
+
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+		
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    /**
+     * Process EskimoEPOS Categories Web_ID update
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -603,9 +1012,12 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function update_category_cart_id( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
         // Get ID param
-        $cat_id     = str_replace( [ '-', '_' ], '|', $request->get_param( 'cat_id' ) );
-        $cat_value  = $request->get_param( 'cat_value' );
+        $cat_id     = str_replace( [ '-', '_' ], '|', sanitize_text_field( $request->get_param( 'cat_id' ) ) );
+        $cat_value  = sanitize_text_field( $request->get_param( 'cat_value' ) );
         if ( $this->debug ) { error_log( 'Cat ID[' . $cat_id . '][' . $cat_value . ']' ); }
 
         // Response data
@@ -619,15 +1031,19 @@ final class Eskimo_Route extends WP_REST_Controller {
         $data['result'] = [
             [
                 'Eskimo_Category_ID' => $cat_id,
-                'Web_ID'             => ( $cat_value == 0 ) ? '0' : $cat_value
+                'Web_ID'             => ( $cat_value === '0' ) ? '' : $cat_value
             ]
         ];
 
         if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
-        // Process category update?
+        // Process category Web_ID update
         $upd_cat_id = $this->rest->get_categories_update_cart_ID( $data['result'] );
-        if ( $this->debug ) { error_log( 'Upd Cat ID[' . $upd_cat_id . ']' ); }
+		if ( is_wp_error( $upd_cat_id ) ) {
+			return $this->rest_error( $upd_cat_id, $data );
+		} 
+		
+        if ( $this->debug ) { error_log( 'UPD Cat ID[' . $upd_cat_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
@@ -638,8 +1054,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     //----------------------------------------------
 
     /**
-     * Process epos category products import
-     * - Deprecated
+     * Process EskimoEPOS category products import - Deprecated
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -647,37 +1062,8 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function get_category_products_all( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // Response data
-        $data = [
-            'route'     => 'category_products',
-            'params'    => 'all',
-            'range'     => '1,20',
-            'nonce'     => wp_create_nonce( 'wp_rest' ),
-        ];
-
-        // OK, process data
-        $data['result'] = $this->rest->get_category_products_all();
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
-
-        // Process category update?
-        if ( false !== $data['result'] && !empty( $data['result'] ) ) {
-            $upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
-            if ( $this->debug ) { error_log( 'Upd Prod ID[' . $upd_prod_id . ']' ); }
-        }
-
-        // REST output
-        return new WP_REST_Response( $data, 200 );
-    }
-
-    /**
-     * Process epos categories import
-     * - Deprecated
-     * 
-     * @param   WP_REST_Request     $request Request object
-     * @return  WP_REST_Response    Response object
-     */
-    public function get_category_products( WP_REST_Request $request ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        // Force timeout limit 0
+        $this->api_set_timeout();
 
         // Get ID param
         $start      = absint( $request->get_param( 'start' ) );
@@ -685,8 +1071,8 @@ final class Eskimo_Route extends WP_REST_Controller {
         if ( $this->debug ) { error_log( 'Start[' . $start . '] Records[' . $records . ']' ); }
 
         // Validate Range
-        if ( $start === 0 ) { return; }
-        $records = ( $records === 0 || $records > 50 ) ? 20 : $records;
+		$start	 	= ( $start === 0 ) ? 1 : $start;
+        $records 	= ( $records === 0 || $records > 250 ) ? 250 : $records;
 
         // Response data
         $data = [
@@ -697,14 +1083,51 @@ final class Eskimo_Route extends WP_REST_Controller {
         ];
         
         // OK, process data
-        $data['result'] = $this->rest->get_category_products( $start, $records );
+        $data['result'] = $this->rest->get_category_products_all( $start, $records );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+		
         if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
-        // Process category update?
-        if ( false !== $data['result'] && !empty( $data['result'] ) ) {
-            $upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
-            if ( $this->debug ) { error_log( 'Upd Prod ID[' . $upd_prod_id . ']' ); }
-        }
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    /**
+     * Retrieve EskimoEPOS category products by ID
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_category_products_specific_category( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Get Cat ID
+        $cat_id = str_replace( [ '-', '_' ], '|', $request->get_param( 'cat_id' ) );
+        if ( $this->debug ) { error_log( 'Cat ID[' . $cat_id . ']' ); }
+
+        // Response data
+        $data = [
+            'route'     => 'category-product',
+            'params'    => 'cat_id: ' . $cat_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+        
+        // OK, process data
+		$data['result'] = $this->rest->get_category_products_specific_category( $cat_id );
+
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+
+        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
@@ -713,6 +1136,57 @@ final class Eskimo_Route extends WP_REST_Controller {
     //----------------------------------------------
     // ImpEx CallBack Functions: Products
     //----------------------------------------------
+
+    /**
+     * Process EskimoEPOS products import
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_products( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Get ID param
+        $start      = absint( $request->get_param( 'start' ) );
+        $records    = absint( $request->get_param( 'records' ) );
+        if ( $this->debug ) { error_log( 'Start[' . $start . '] Records[' . $records . ']' ); }
+
+        // Validate Range
+        if ( $start === 0 ) { return; }
+        $records = ( $records === 0 || $records > 50 ) ? 25 : $records;
+
+        // Response data
+        $data = [
+            'route'     => 'products',
+            'params'    => 'range',
+            'range'     => $start . ',' . $records,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_products( $start, $records );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // Process product update?
+		$upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
+		if ( is_wp_error( $upd_prod_id ) ) {
+			return $this->rest_error( $upd_prod_id, $data );
+		} 
+		
+		if ( $this->debug ) { error_log( 'UPD Prod ID[' . $upd_prod_id . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+    }
 
     /**
      * Process EskimoEPOS products import
@@ -735,60 +1209,70 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // OK, process data
         $data['result'] = $this->rest->get_products_all();
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // Process product update?
-        if ( false !== $data['result'] && !empty( $data['result'] ) ) {
-            $upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
-            if ( $this->debug ) { error_log( 'Upd Prod ID[' . $upd_prod_id . ']' ); }
-        }
+		$upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
+		if ( is_wp_error( $upd_prod_id ) ) {
+			return $this->rest_error( $upd_prod_id, $data );
+		} 
+
+		if ( $this->debug ) { error_log( 'UPD Prod ID[' . $upd_prod_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
-    }
+	}
 
     /**
-     * Process EskimoEPOS products import
+     * Process EskimoEPOS products import by timeline
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
-    public function get_products( WP_REST_Request $request ) {
+    public function get_products_modified( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Force timeout limit 0
         $this->api_set_timeout();
 
         // Get ID param
+        $route   	= sanitize_text_field( $request->get_param( 'route' ) );
+        $modified   = absint( $request->get_param( 'modified' ) );
         $start      = absint( $request->get_param( 'start' ) );
         $records    = absint( $request->get_param( 'records' ) );
-        if ( $this->debug ) { error_log( 'Start[' . $start . '] Records[' . $records . ']' ); }
+        if ( $this->debug ) { error_log( 'Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']' ); }
 
         // Validate Range
-        if ( $start === 0 ) { return; }
-        $records = ( $records === 0 || $records > 50 ) ? 20 : $records;
+        $start = ( $start === 0 ) ? 1 : $start;
+        $records = ( $records === 0 || $records > 250 ) ? 100 : $records;
 
         // Response data
         $data = [
-            'route'     => 'products',
+			'route'     => 'products-modified',
             'params'    => 'range',
-            'range'     => $start . ',' . $records,
+            'range'     => $route . ',' . $modified . ',' . $start . ',' . $records,
             'nonce'     => wp_create_nonce( 'wp_rest' )
         ];
 
         // OK, process data
-        $data['result'] = $this->rest->get_products( $start, $records );
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+        $data['result'] = $this->rest->get_products_modified( $route, $modified, $start, $records );
 
-        // Process product update?
-        if ( false !== $data['result'] && !empty( $data['result'] ) ) {
-            $upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
-            if ( $this->debug ) { error_log( 'Upd Prod ID[' . $upd_prod_id . ']' ); }
-        }
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
-    }
+    }	
 
     /**
      * Process EskimoEPOS products import
@@ -799,8 +1283,11 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function get_products_specific_id( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
         // Get Prod ID param
-        $prod_id = str_replace( [ '-', '_' ], '|', $request->get_param( 'prod_id' ) );
+        $prod_id = str_replace( [ '-', '_' ], '|', sanitize_text_field( $request->get_param( 'prod_id' ) ) );
         if ( $this->debug ) { error_log( 'Prod ID[' . $prod_id . ']' ); }
 
         // Response data
@@ -812,13 +1299,21 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // OK, process data
         $data['result'] = $this->rest->get_products_specific_ID( $prod_id );
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // Process product update?
-        if ( false !== $data['result'] && !empty( $data['result'] ) ) {
-            $upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
-            if ( $this->debug ) { error_log( 'Upd Prod ID[' . $upd_prod_id . ']' ); }
-        }
+		$upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
+		if ( is_wp_error( $upd_prod_id ) ) {
+			return $this->rest_error( $upd_prod_id, $data );
+		} 
+
+		if ( $this->debug ) { error_log( 'UPD Prod ID[' . $upd_prod_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
@@ -833,14 +1328,17 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function get_products_import_id( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
         // Get Prod ID param
-        $prod_id 	= str_replace( [ '-', '_' ], '|', $request->get_param( 'prod_id' ) );
+        $prod_id 	= str_replace( [ '-', '_' ], '|', sanitize_text_field( $request->get_param( 'prod_id' ) ) );
         $prod_type 	= sanitize_text_field( $request->get_param( 'prod_type' ) );
         if ( $this->debug ) { error_log( 'Prod ID[' . $prod_id . ']Path[' . $prod_type . ']' ); }
 
         // Response data
         $data = [
-            'route'     => 'product',
+            'route'     => 'product-import',
             'path'     	=> $prod_type,
             'params'    => 'prod_id: ' . $prod_id,
             'nonce'     => wp_create_nonce( 'wp_rest' )
@@ -848,20 +1346,70 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // OK, process data
         $data['result'] = $this->rest->get_products_import_ID( $prod_id, $prod_type );
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
-    }
+	}
 
     /**
-     * Process epos categories import
+     * Process EskimoEPOS Products Web_ID update
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function update_products_web_id( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Response data
+        $data = [
+            'route'     => 'products-update',
+            'params'    => 'all',
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+		$data['result'] = $this->rest->get_products_web_ID();
+
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+		
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+   
+        // Process product update?
+        $upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
+		if ( is_wp_error( $upd_prod_id ) ) {
+			return $this->rest_error( $upd_prod_id, $data );
+		} 
+
+		if ( $this->debug ) { error_log( 'UPD Prod ID[' . $upd_prod_id . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    /**
+     * Process Web_ID update
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
     public function update_products_cart_id( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
 
         // Get ID param
         $start      = absint( $request->get_param( 'start' ) );
@@ -870,23 +1418,33 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // Validate Range
         $start   = ( $start === 0 ) ? 1 : $start;
-        $records = ( $records === 0 || $records > 100 ) ? 50 : $records;
+        $records = ( $records === 0 || $records > 250 ) ? 250 : $records;
 
         // Response data
         $data = [
-            'route'     => 'products-update',
+            'route'     => 'products-reset',
             'params'    => 'range',
             'range'     => $start . ',' . $records,
             'nonce'     => wp_create_nonce( 'wp_rest' )
         ];
 
         // OK, process data
-        $data['result'] = $this->rest->get_products_cart_ID( $start, $records );
+		$data['result'] = $this->rest->get_products_cart_ID( $start, $records );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+		
         if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // Process product update?
         $upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
-        if ( $this->debug ) { error_log( 'Upd Prod ID[' . $upd_prod_id . ']' ); }
+		if ( is_wp_error( $upd_prod_id ) ) {
+			return $this->rest_error( $upd_prod_id, $data );
+		} 
+
+		if ( $this->debug ) { error_log( 'UPD Prod ID[' . $upd_prod_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
@@ -901,15 +1459,18 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function update_product_cart_id( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
         // Get ID param
-        $prod_id     = str_replace( [ '-', '_' ], '|', $request->get_param( 'prod_id' ) );
-        $prod_value  = $request->get_param( 'prod_value' );
-        if ( $this->debug ) { error_log( 'Prod ID[' . $prod_id . '][' . $prod_value . '][' . $cat_value . ']' ); }
+        $prod_id     = str_replace( [ '-', '_' ], '|', sanitize_text_field( $request->get_param( 'prod_id' ) ) );
+        $prod_value  = sanitize_text_field( $request->get_param( 'prod_value' ) );
+        if ( $this->debug ) { error_log( 'Prod ID[' . $prod_id . '][' . $prod_value . ']' ); }
 
         // Response data
         $data = [
             'route'     => 'product-update',
-            'params'    => 'prod_id: ' . $prod_id . ' prod_value: ' . $prod_value . ' cat_value: ' . $cat_value,
+            'params'    => 'prod_id: ' . $prod_id . ' prod_value: ' . $prod_value,
             'nonce'     => wp_create_nonce( 'wp_rest' )
         ];
         
@@ -917,7 +1478,7 @@ final class Eskimo_Route extends WP_REST_Controller {
         $data['result'] = [
             [
                 'Eskimo_Identifier' => $prod_id,
-                'Web_ID'            => ( $prod_value == 0 ) ? '0' : $prod_value
+                'Web_ID'            => ( $prod_value === '0' ) ? '' : $prod_value
             ]
         ];
 
@@ -925,7 +1486,11 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // Process category update?
         $upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
-        if ( $this->debug ) { error_log( 'Upd Prod ID[' . $upd_prod_id . ']' ); }
+		if ( is_wp_error( $upd_prod_id ) ) {
+			return $this->rest_error( $upd_prod_id, $data );
+		} 
+
+		if ( $this->debug ) { error_log( 'UPD Prod ID[' . $upd_prod_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
@@ -936,7 +1501,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     //----------------------------------------------
 
 	/**
-     * Get and import an EskimoEPOS customer by type: email, id
+     * Get and import an EskimoEPOS customer by ID
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -959,8 +1524,58 @@ final class Eskimo_Route extends WP_REST_Controller {
         ];
 
         // OK, process data
-        $data['result'] = $this->rest->get_customers_specific_ID( $cust_id );
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+		$data['result'] = $this->rest->get_customers_specific_ID( $cust_id );
+		
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+     * Get and import an EskimoEPOS customer by type: email, id
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+	public function get_customers_specific_email( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get email
+		$cust_email = filter_var( $request->get_param( 'cust_email' ), FILTER_SANITIZE_EMAIL );
+
+        // Response data
+        $data = [
+            'route'     => 'customer-exists',
+            'params'    => 'Email: ' . $cust_email,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+		// Validate e-mail
+		if ( ! filter_var( $cust_email, FILTER_VALIDATE_EMAIL ) ) {
+			$data['result'] = 'Invalid Email[' . $cust_email . ']';
+	        if ( $this->debug ) { error_log( 'Invalid email[' . $cust_email . ']' ); }
+	        return new WP_REST_Response( $data, 200 );
+		}
+        if ( $this->debug ) { error_log( 'Customer Email[' . $cust_email . ']' ); }
+
+        // OK, process data
+        $data['result'] = $this->rest->get_customers_specific_email( $cust_email );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
@@ -972,25 +1587,31 @@ final class Eskimo_Route extends WP_REST_Controller {
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
-	public function get_customers_create( WP_REST_Request $request ) {
+	public function get_customers_insert( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Force timeout limit 0
         $this->api_set_timeout();
 
 		// Get ID param
-        $cust_id  = (int) $request->get_param( 'cust_id' );
+        $cust_id  = absint( $request->get_param( 'cust_id' ) );
         if ( $this->debug ) { error_log( 'Customer ID[' . $cust_id . ']' ); }
 
         // Response data
         $data = [
-            'route'     => 'customer_create',
+            'route'     => 'customer_insert',
             'params'    => 'ID: ' . $cust_id,
             'nonce'     => wp_create_nonce( 'wp_rest' )
         ];
 
         // OK, process data
-        $data['result'] = $this->rest->get_customers_create( $cust_id );
+        $data['result'] = $this->rest->get_customers_insert( $cust_id );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+		
         if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
@@ -1010,7 +1631,7 @@ final class Eskimo_Route extends WP_REST_Controller {
         $this->api_set_timeout();
 
 		// Get ID param
-        $cust_id  = (int) $request->get_param( 'cust_id' );
+        $cust_id  = absint( $request->get_param( 'cust_id' ) );
         if ( $this->debug ) { error_log( 'Customer ID[' . $cust_id . ']' ); }
 
         // Response data
@@ -1022,7 +1643,46 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // OK, process data
         $data['result'] = $this->rest->get_customers_update( $cust_id );
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+     * Get EskimoEPOS customer titles
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+	public function get_customers_titles( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Response data
+        $data = [
+            'route'     => 'customer_titles',
+            'params'    => 'none',
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_customers_titles();
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
@@ -1039,14 +1699,14 @@ final class Eskimo_Route extends WP_REST_Controller {
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
-    public function get_orders_specific_ID( WP_REST_Request $request ) {
+    public function get_orders_specific_id( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Force timeout limit 0
         $this->api_set_timeout();
 
 		// Get ID param
-        $order_id  = sanitize_text_field( $request->get_param( 'cust_id' ) );
+        $order_id  = sanitize_text_field( $request->get_param( 'order_id' ) );
         if ( $this->debug ) { error_log( 'Order ID[' . $order_id . ']' ); }
 
         // Response data
@@ -1057,44 +1717,394 @@ final class Eskimo_Route extends WP_REST_Controller {
         ];
 
         // OK, process data
-        $data['result'] = $this->rest->get_orders_specific_ID( $order_id );
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+		$data['result'] = $this->rest->get_orders_specific_ID( $order_id );
+		
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
     }
 
     /**
-     * Create EskimoEPOS web order from Woocommerce order 
+     * Insert EskimoEPOS WebOrder from Woocommerce Order 
      * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
      */
-    public function get_orders_create( WP_REST_Request $request ) {
+    public function get_orders_insert( WP_REST_Request $request ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Force timeout limit 0
         $this->api_set_timeout();
 
 		// Get ID param
-        $order_id  = (int) $request->get_param( 'order_id' );
+        $order_id  = absint( $request->get_param( 'order_id' ) );
         if ( $this->debug ) { error_log( 'Order ID #[' . $order_id . ']' ); }
 
         // Response data
         $data = [
-            'route'     => 'order_create',
+            'route'     => 'order_insert',
             'params'    => 'Order ID: #' . $order_id,
             'nonce'     => wp_create_nonce( 'wp_rest' )
         ];
 
         // OK, process data
-        $data['result'] = $this->rest->get_orders_create( $order_id );
-        if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+        $data['result'] = $this->rest->get_orders_insert( $order_id );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    /**
+     * Insert EskimoEPOS WebOrder from Woocommerce Order 
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_orders_methods( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Response data
+        $data = [
+            'route'     => 'order_methods',
+            'params'    => 'none',
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_orders_methods();
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+    }
+	
+    /**
+     * EskimoEPOS Order Search: Customer ID 
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_orders_search_id( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $cust_id  = sanitize_text_field( $request->get_param( 'cust_id' ) );
+        if ( $this->debug ) { error_log( 'Customer ID #[' . $cust_id . ']' ); }
+
+        // Response data
+        $data = [
+			'route'     => 'order-search',
+			'path'		=> 'customer',
+            'params'    => 'Customer ID: #' . $cust_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_orders_search_ID( $cust_id );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+     * EskimoEPOS Order Search: Customer ID 
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_orders_search_type( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $type_id  = sanitize_text_field( $request->get_param( 'type_id' ) );
+        if ( $this->debug ) { error_log( 'Type ID #[' . $type_id . ']' ); }
+
+        // Response data
+        $data = [
+			'route'     => 'order-search',
+			'path'		=> 'type',
+            'params'    => 'Type ID: #' . $type_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_orders_search_type( $type_id );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+     * EskimoEPOS Order Search: Date 
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_orders_search_date( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $route 		= sanitize_text_field( $request->get_param( 'route' ) );
+        $date_from	= sanitize_text_field( $request->get_param( 'date_from' ) );
+        $date_to	= sanitize_text_field( $request->get_param( 'date_to' ) );
+        if ( $this->debug ) { error_log( 'Route[' . $route . '] DateFrom[' . $date_from . '] DateTo[' . $date_to . ']' ); }
+
+        // Response data
+        $data = [
+			'route'     => 'order-search',
+			'path'     	=> 'date',
+			'method'	=> $route,
+            'params'    => 'From: ' . $date_from . ' To: ' . $date_to,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_orders_search_date( $route, $date_from, $date_to );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+
+    //----------------------------------------------
+    // ImpEx CallBack Functions: SKUs
+    //----------------------------------------------
+
+    /**
+     * Process EskimoEPOS skus import
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_skus( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Get ID param
+        $start      = absint( $request->get_param( 'start' ) );
+        $records    = absint( $request->get_param( 'records' ) );
+        if ( $this->debug ) { error_log( 'Start[' . $start . '] Records[' . $records . ']' ); }
+
+        // Validate Range
+        if ( $start === 0 ) { return; }
+        $records = ( $records === 0 || $records > 100 ) ? 100 : $records;
+
+        // Response data
+        $data = [
+            'route'     => 'skus',
+            'params'    => 'range',
+            'range'     => $start . ',' . $records,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_skus( $start, $records );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // Process product update?
+//		$upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
+//		if ( is_wp_error( $upd_prod_id ) ) {
+//			return $this->rest_error( $upd_prod_id, $data );
+//		} 
+		
+//		if ( $this->debug ) { error_log( 'UPD Prod ID[' . $upd_prod_id . ']' ); }
 
         // REST output
         return new WP_REST_Response( $data, 200 );
     }
 
+    /**
+     * Process EskimoEPOS skus import by timeline
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_skus_modified( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Get ID param
+        $path   	= sanitize_text_field( $request->get_param( 'path' ) );
+        $route   	= sanitize_text_field( $request->get_param( 'route' ) );
+        $modified   = absint( $request->get_param( 'modified' ) );
+        $start      = absint( $request->get_param( 'start' ) );
+        $records    = absint( $request->get_param( 'records' ) );
+        $import     = absint( $request->get_param( 'import' ) );
+        if ( $this->debug ) { error_log( 'Route' . $route . '] Modified' . $modified . '] Start[' . $start . '] Records[' . $records . '] Import[' . $import . ']' ); }
+
+        // Validate Range
+        $start = ( $start === 0 ) ? 1 : $start;
+        $records = ( $records === 0 || $records > 1000 ) ? 1000 : $records;
+
+        // Response data
+        $data = [
+			'route'     => 'skus-modified',
+            'params'    => 'range',
+            'range'     => $path . ',' . $route . ',' . $modified . ',' . $start . ',' . $records . ',' . $import,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_skus_modified( $path, $route, $modified, $start, $records, $import );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+    }	
+
+    /**
+     * Process EskimoEPOS sku import
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_skus_specific_code( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Get Prod ID param
+        $sku_id =  sanitize_text_field( $request->get_param( 'sku_id' ) );
+        if ( $this->debug ) { error_log( 'SKU ID[' . $sku_id . ']' ); }
+
+        // Response data
+        $data = [
+			'route'     => 'sku',
+			'path'		=> 'code',
+            'params'    => 'sku_id: ' . $sku_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_skus_specific_code( $sku_id );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // Process product update?
+//		$upd_prod_id = $this->rest->get_products_update_cart_ID( $data['result'] );
+//		if ( is_wp_error( $upd_prod_id ) ) {
+//			return $this->rest_error( $upd_prod_id, $data );
+//		} 
+
+//		if ( $this->debug ) { error_log( 'UPD Prod ID[' . $upd_prod_id . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    /**
+     * Process EskimoEPOS sku import by product
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_skus_specific_id( WP_REST_Request $request ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Get Prod ID param
+        $prod_id = str_replace( [ '-', '_' ], '|', sanitize_text_field( $request->get_param( 'prod_id' ) ) );
+        $import  = absint( $request->get_param( 'import' ) );
+        if ( $this->debug ) { error_log( 'SKU Prod ID[' . $prod_id . '] Import[' . $import . ']' ); }
+
+        // Response data
+        $data = [
+			'route'     => 'sku',
+			'path'		=> 'product',
+            'params'    => 'prod_id: ' . $prod_id . ', import: ' . $import,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_skus_specific_ID( $prod_id, $import );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+	
     //----------------------------------------------
     // API Timeout
     //----------------------------------------------
@@ -1102,8 +2112,8 @@ final class Eskimo_Route extends WP_REST_Controller {
     /**
      * Override timeout limits on long scripts
      */
-    protected function api_set_timeout() {
-        set_time_limit( 0 );
+    protected function api_set_timeout( $timeout = 0 ) {
+        set_time_limit( $timeout );
     }
 
     //----------------------------------------------
@@ -1116,20 +2126,36 @@ final class Eskimo_Route extends WP_REST_Controller {
      * @param   string  $error
      */
     protected function api_error( $error ) {
-        if ( $this->debug ) { error_log( $error ); }
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . $error ); }
+		return new WP_Error( 'data', $error );
     }
 
     /**
      * Log API Connection Error
      */
     protected function api_connect_error() {
-        if ( $this->debug ) { error_log( 'API Error: Could Not Connect To API' ); }
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not connect to API', 'eskimo' ) ); }
+		return new WP_Error( 'api', __( 'API Error: Could Not connect to API', 'eskimo' ) );
     }
 
     /**
      * Log API REST Process Error
      */
     protected function api_rest_error() {
-        if ( $this->debug ) { error_log( 'API Error: Could Not Retrieve REST data from API' ); }
-    }
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ) ); }
+		return new WP_Error( 'rest', __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ) );
+	}
+
+	/**
+	 * Process REST Error
+	 *
+	 * @param	string 	$result
+	 * @param	array	$data
+	 * @return 	object 	WP_REST_Response
+	 */
+	protected function rest_error( $result, $data ) {
+		$data['result'] = strtoupper( $result->get_error_code() ) . ': ' . $result->get_error_message(); 
+		if ( $this->debug ) { error_log( 'Response[' . print_r( $data, true ) . ']' ); }
+		return new WP_REST_Response( $data, 200 );
+	}
 }

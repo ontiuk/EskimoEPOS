@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Import & Export from Woocommerce via the Eskimo EPOS API Data
+ * Import & Export from Woocommerce via the EskimoEPOS API Data
  *
  * @link       https://on.tinternet.co.uk
  * @package    Eskimo
@@ -9,7 +9,7 @@
  */
 
 /**
- * Eskimo EPOS product, category, customer and order processing and sync
+ * EskimoEPOS product, category, customer and order processing and sync
  * 
  * Woocommerce import and export for caregories, products, customers and orders
  *
@@ -17,7 +17,7 @@
  * @subpackage Eskimo/admin
  * @author     Stephen Betley <on@tinternet.co.uk>
  */
-class Eskimo_WC {
+final class Eskimo_WC {
 
 	/**
 	 * The ID of this plugin
@@ -94,7 +94,7 @@ class Eskimo_WC {
         // Get parent & child categories
         foreach ( $api_data as $api_cat ) {
 
-            // Product Categories Only
+            // Product Categories Only... Change depending on implementation
             if ( !preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { continue; }
             
             // Already with a Web_ID so pre-existing in WC & Temp 'zero' reset
@@ -103,7 +103,7 @@ class Eskimo_WC {
                 continue; 
             }
 
-            // Use category
+            // Use category: parent or child?
             if ( empty( $api_cat->ParentID ) ) {
                 $parent[] = $api_cat;
             } else {
@@ -196,9 +196,9 @@ class Eskimo_WC {
         if ( !preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { return false; }
             
         // Already with a Web_ID so pre-existing in WC
-        if ( !empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) { 
+        if ( ! empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) { 
             if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Exists [' . $api_cat->Web_ID . ']' ); }
-            return false; 
+            return $this->api_error( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Alreadt Imported [' . $api_cat->Web_ID . ']' );
         }
 
         // Parent or Child
@@ -208,7 +208,7 @@ class Eskimo_WC {
         $cat_term = $this->add_product_category_rest( $api_cat, !$parent );
         if ( empty( $cat_term ) || is_wp_error( $cat_term ) ) {
             if ( $this->debug ) { error_log( 'Bad term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']' ); }
-            return false;
+			return $this->api_error( 'Bad category term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']' );
         }
         
         if ( $this->debug ) { error_log( 'Cat Term[' . print_r( $cat_term, true )  . ']' ); }
@@ -325,7 +325,7 @@ class Eskimo_WC {
         foreach ( $api_data as $api_cat ) {
 
             // Product Categories Only
-            if ( !preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { continue; }
+            if ( ! preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { continue; }
             
             // Already with a Web_ID so pre-existing in WC
             if ( empty( $api_cat->Web_ID ) ) { 
@@ -347,26 +347,59 @@ class Eskimo_WC {
             // Load into response list. Zero Reset
             $result[] = [
                 'Eskimo_Category_ID'    => $api_cat->Eskimo_Category_ID,
-                'Web_ID'                => '0'
+                'Web_ID'                => ''
             ];
         }
 
         // OK, done
         return $result;
-    }
+	}
 
-    //----------------------------------------------
-    // Woocommerce Category Product Import
-    //----------------------------------------------
+	/**
+	 * Retrieve current Woocommerce product categories
+	 *
+	 * @return	array
+	 */
+	public function get_categories_web_ID() {
+
+		// Default category args
+		$args = [
+			'taxonomy'     => 'product_cat',
+			'orderby'      => 'name',
+			'show_count'   => 0,
+			'pad_counts'   => 0,
+			'hierarchical' => 0,
+			'title_li'     => '',
+			'hide_empty'   => 0
+		];
+
+		// Get the cats
+		$the_cats 	= get_categories( $args );
+        $web_prefix = get_option( 'eskimo_api_category' ); 
+
+		// Construct web_id results
+        $result = [];
+		foreach ( $the_cats as $cat ) {
+
+			$eskimo_cat_id 	= get_term_meta( $cat->term_id, 'eskimo_category_id', true );
+			if ( empty( $eskimo_cat_id ) ) { continue; }
+
+			$result[] = [
+                'Eskimo_Category_ID'    => $eskimo_cat_id,
+                'Web_ID'                => ( empty( $web_prefix ) ) ? $cat->term_id : $web_prefix . $cat->term_id
+			];			
+		}
+
+		return $result;
+	}
 
     /**
-     * Get remote API products by category
-     * - Deprecated
-     * 
+     * Get remote API categories
+     *
      * @param   array   $api_data
      * @return  boolean
      */
-    public function get_category_products_all( $api_data ) {
+    public function get_categories_meta_ID( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Validate API data
@@ -375,101 +408,54 @@ class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Category Products All[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { error_log( 'Process Categories ID[' . count( $api_data ) . ']' ); }
 
-        // Web_ID
-        $web_prefix = get_option( 'eskimo_api_product' ); 
-        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
-
-        // Process products
-        $products = [];
+        // Process parent & child categories
+        $categories = [];
 
         // Get parent & child categories
         foreach ( $api_data as $api_cat ) {
 
             // Product Categories Only
-            if ( !preg_match( '/product$/', $api_cat->eskimo_category_id ) ) { continue; }
-
-            // Requires that the Eskimo Category has been imported
-            if ( empty( $api_cat->web_category_id ) || $api_cat->web_category_id === '0' ) { 
-                if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->eskimo_category_id . '] NOT Exists Web_ID' ); }
-                continue; 
-            }
-
-            // Requires that the Eskimo Product has NOT been imported
-            if ( !empty( $api_cat->web_product_id ) && $api_cat->web_product_id !== '0' ) { 
-                if ( $this->debug ) { error_log( 'Prod ID[' . $api_cat->eskimo_product_identifier . '] Exists [' . $api_cat->web_product_id . ']' ); }
-                continue; 
-            }
-
-            // Required valid product data
-            if ( empty( $api_cat->product ) ) { 
-                if ( $this->debug ) { error_log( 'Product Not Set ID[' . $api_cat->eskimo_product_identifier . ']' ); }
-                continue; 
-            }
-
-            // OK add products
-            $products[] = $api_cat->product;
-        }
-
-        if ( $this->debug ) { error_log( 'EPOS Cat Prods: [' . count( $products ) . ']' ); }
-
-        // Something to do?        
-        if ( empty( $products ) ) { return false; }
-
-        if ( $this->debug ) { error_log( print_r( $products, true ) ); }
+            if ( ! preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { continue; }
+            
+            // Add cat
+            $categories[] = $api_cat;
+		}
+		
+		if ( $this->debug ) { 
+			error_log( 'EPOS Cats:' . count( $categories ) ); 
+			error_log( print_r( $categories, true ) );
+		}
 
         // Return data
         $result = [];
 
-        // Process parent categories first
-        foreach ( $products as $api_prod ) {
+		// Get category data
+		foreach ( $categories as $category ) {
+			$slug = sanitize_title( $category->ShortDescription );
+			error_log( 'Slug:' . $slug . ']' ); 
 
-            // Insert product post
-            $cat_prod = $this->add_category_product_rest( $api_prod );
-            if ( false === $cat_prod || is_wp_error ( $cat_prod ) ) { continue; }
+			$term = get_term_by('slug', $slug, 'product_cat');
+			
+			$results[] = [
+				'eskimo_category_id' => $category->Eskimo_Category_ID, 
+				'category_id'		 => $term->term_id
+			];
+		}
 
-            // Update Eskimo ProdID
-            $prod_meta_id = $this->add_post_meta_eskimo_id( $cat_prod['id'], $api_prod );
-            if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-                if ( $this->debug ) { error_log( 'Bad post meta insert[' . $cat_prod['id'] . ']' ); }
-            }
+		if ( empty( $results ) ) { 
+			return $this->api_error( 'No Categories to process' );
+		}
 
-            // Load into response list
-            $result[] = [
-                'Eskimo_Identifier' => $api_prod->eskimo_identifier,
-                'Web_ID'            => ( empty( $web_prefix ) ) ? $cat_prod['id'] : $web_prefix . $cat_prod['id']
-            ];
-        }
-
-        // OK, done
-        return $result;
-    }
-
-    /**
-     * Get remote API category by ID
-     * - Not yet implemented
-     *
-     * @param   array   $api_data
-     * @return  boolean
-     */
-    public function get_category_products_specific_category( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
-
-        // Validate API data
-        if ( empty( $api_data ) ) {
-            return $this->api_rest_error();
-        }
-
-        // Process data
-        if ( $this->debug ) { 
-            error_log( 'Process Category Products[' . count( $api_data ) . ']' ); 
-            error_log( print_r( $api_data, true ) );
-        }
+		// Update meta data
+		foreach ( $results as $result ) {
+			update_term_meta( $result['category_id'], 'eskimo_category_id', sanitize_text_field( $result['eskimo_category_id'] ) );
+		}
 
         // OK, done
-        return true;
-    }
+        return $results;
+	}
 
     //----------------------------------------------
     // Woocommerce Product Import
@@ -536,7 +522,7 @@ class Eskimo_WC {
         if ( $this->debug ) { error_log( 'EPOS Prods: [' . count( $products ) . ']' ); }
 
         // Something to do?        
-        if ( empty( $products ) ) { return false; }
+        if ( empty( $products ) ) { return $this->api_error( 'No Products To Process' ); }
 
         // Return data
         $result = [];
@@ -552,6 +538,18 @@ class Eskimo_WC {
             $prod_meta_id = $this->add_post_meta_eskimo_id( $prod['id'], $api_prod );
             if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
                 if ( $this->debug ) { error_log( 'Bad post meta insert[' . $prod['id'] . ']' ); }
+			}
+
+            // Update Eskimo ProdID
+            $prod_meta_id = $this->add_post_meta_extra( $prod['id'], $api_prod );
+            if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
+                if ( $this->debug ) { error_log( 'Bad post meta extra insert[' . $prod['id'] . ']' ); }
+            }
+
+			// Update Eskimo ProdID
+            $prod_meta_id = $this->add_post_meta_date( $prod['id'], $api_prod );
+            if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
+                if ( $this->debug ) { error_log( 'Bad post meta date insert[' . $prod['id'] . ']' ); }
             }
 
             // Load into response list
@@ -592,36 +590,48 @@ class Eskimo_WC {
         // Dodgy Title?
         if ( empty( $api_prod->title ) ) {
             if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' ); }
-            return false; 
+            return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title DOES NOT Exists' ); 
         }
 
         // Requires that the Eskimo Category has been imported
         if ( empty( $api_prod->web_category_id ) || $api_prod->web_category_id === '0' ) { 
             if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->eskimo_category_id . '] NOT Exists Cat Web_ID' ); }
-            return false; 
+            return $this->api_error( 'Cat ID[' . $api_cat->eskimo_category_id . '] NOT Exists Cat Web_ID' );; 
         }
 
         // Requires that the Eskimo Product has NOT been imported
         if ( !empty( $api_prod->web_id ) && $api_prod->web_id !== '0' ) { 
             if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']' ); }
-            return false; 
+            return $this->api_error( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']' ); 
         }
 
         // Required valid product sku data
         if ( empty( $api_prod->sku ) ) { 
             if ( $this->debug ) { error_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']' ); }
-            return false; 
+            return $this->api_error( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']' );; 
         }
 
         // Insert product post
         $prod = $this->add_category_product_rest( $api_prod );
-        if ( false === $prod || is_wp_error ( $prod ) ) { return false; }
+        if ( false === $prod || is_wp_error ( $prod ) ) { return $this->api_error( 'Bad Category Product Insert' ); }
 
         // Update Eskimo ProdID
         $prod_meta_id = $this->add_post_meta_eskimo_id( $prod['id'], $api_prod );
         if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
             if ( $this->debug ) { error_log( 'Bad post meta insert[' . $prod['id'] . ']' ); }
         }
+
+		// Update Eskimo ProdID
+		$prod_meta_id = $this->add_post_meta_extra( $prod['id'], $api_prod );
+		if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
+			if ( $this->debug ) { error_log( 'Bad post meta extra insert[' . $prod['id'] . ']' ); }
+		}
+
+		// Update Eskimo ProdID
+		$prod_meta_id = $this->add_post_meta_date( $prod['id'], $api_prod );
+		if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
+			if ( $this->debug ) { error_log( 'Bad post meta date insert[' . $prod['id'] . ']' ); }
+		}
 
         // OK, done 
         return [
@@ -656,30 +666,30 @@ class Eskimo_WC {
         // Dodgy Title?
         if ( empty( $api_prod->title ) ) {
             if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' ); }
-            return false; 
+            return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' );
         }
 
         // Requires that the Eskimo Category has been imported
         if ( empty( $api_prod->web_category_id ) || $api_prod->web_category_id === '0' ) { 
-            if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->eskimo_category_id . '] NOT Exists Cat Web_ID' ); }
-            return false; 
+            if ( $this->debug ) { error_log( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists: Cat Web_ID' ); }
+            return $this->api_error( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists: Cat Web_ID' ); 
         }
 
         // Requires that the Eskimo Product has NOT been imported
         if ( empty( $api_prod->web_id ) || $api_prod->web_id == '0' ) { 
             if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Not Exists [' . $api_prod->web_id . ']' ); }
-            return false; 
+            return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' );
         }
 
         // Required valid product sku data
         if ( empty( $api_prod->sku ) ) { 
             if ( $this->debug ) { error_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']' ); }
-            return false; 
+            return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' );
         }
 
 		// Due process by path  
         $prod = $this->update_category_product_rest( $api_prod, $path );
-        if ( false === $prod || is_wp_error ( $prod ) ) { return false; }
+        if ( false === $prod || is_wp_error ( $prod ) ) { return $this->api_error( 'Category Product Update Error' ); }
 
         // OK, done 
         return [
@@ -735,7 +745,7 @@ class Eskimo_WC {
         if ( $this->debug ) { error_log( 'EPOS Prods: [' . count( $products ) . ']' ); }
 
         // Something to do?        
-        if ( empty( $products ) ) { return false; }
+        if ( empty( $products ) ) { return $this->api_error( 'No Products To Process' ); }
 
         // Return data
         $result = [];
@@ -746,13 +756,61 @@ class Eskimo_WC {
             // Load into response list. Temp zero reset
             $result[] = [
                 'Eskimo_Identifier' => $api_prod->eskimo_identifier,
-                'Web_ID'            => '0'
+                'Web_ID'            => ''
             ];
         }
 
         // OK, done
         return $result;
-    }
+	}
+
+	/**
+	 * Retrieve current Woocommerce products
+	 *
+	 * @return	array
+	 */
+	public function get_products_web_ID() {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+		// Default category args
+		$args = [
+			'post_type'			=> 'product',
+			'posts_per_page'	=> -1,
+			'post_status'		=> 'publish',
+            'nopaging'      	=> true,
+            'cache_results' 	=> false
+        ];
+
+        // Process query
+        $the_query = new WP_Query( $args );
+
+        // Found post sku?
+		if ( $the_query->found_posts === 0 ) {
+			return $this->api_error( 'No products found' );
+		}
+
+        if ( $this->debug ) { error_log( 'Products[' . $the_query->found_posts . ']' ); }
+
+		// Get the product prefix
+        $web_prefix = get_option( 'eskimo_api_product' ); 
+
+		// Construct web_id results
+        $result = [];
+		foreach ( $the_query->posts as $product ) {
+
+			$eskimo_prod_id = get_post_meta( $product->ID, '_eskimo_product_id', true );
+	        if ( $this->debug ) { error_log( 'Product[' . $product->ID . '][' . $eskimo_prod_id . ']' ); }
+			
+			if ( empty( $eskimo_prod_id ) ) { continue; }
+
+			$result[] = [
+                'Eskimo_Identifier'	=> $eskimo_prod_id,
+                'Web_ID'            => ( empty( $web_prefix ) ) ? $product->ID : $web_prefix . $product->ID
+			];			
+		}
+
+		return $result;
+	}
 
     //----------------------------------------------
     // Woocommerce Customer Import & Export
@@ -782,7 +840,7 @@ class Eskimo_WC {
 		}
 
 		// Set up address	
-		$addr 	= explode( PHP_EOL, $api_data->Address );
+		$addr 	= explode( "\r\n", $api_data->Address );
 		$addr_1 = array_shift( $addr );
 		$city	= ( count( $addr ) ) ? $addr[0] : '';
         if ( $this->debug ) { error_log( 'Customer Addr[' . $addr_1 . '] city[' . $city . ']' ); }
@@ -812,6 +870,9 @@ class Eskimo_WC {
 		// User meta
 		add_user_meta( $user_id, 'epos_id', $api_data->ID );
 		add_user_meta( $user_id, 'epos_notes', $api_data->Notes );
+		add_user_meta( $user_id, 'epos_active', (int) $api_data->ActiveAccount );
+		add_user_meta( $user_id, 'epos_title', ( empty( $api_data->TitleID ) ) ? '' : (int) $api_data->TitleID );
+		add_user_meta( $user_id, 'epos_country', $api_data->CountryCode );
 
 		// OK, got new user, add billing details
 		add_user_meta( $user_id, 'billing_first_name', $api_data->Forename );
@@ -820,7 +881,8 @@ class Eskimo_WC {
 		add_user_meta( $user_id, 'billing_address_1', $addr_1 );
 		add_user_meta( $user_id, 'billing_city', $city );
 		add_user_meta( $user_id, 'billing_postcode', $api_data->PostCode );
-		add_user_meta( $user_id, 'billing_country', 'GB' );
+		add_user_meta( $user_id, 'billing_state', '' );
+		add_user_meta( $user_id, 'billing_country', $api_data->CountryCode ); //GB 
 		add_user_meta( $user_id, 'billing_email', $api_data->EmailAddress );
 		add_user_meta( $user_id, 'billing_phone', $api_data->Telephone );
 		add_user_meta( $user_id, 'billing_mobile', $api_data->Mobile );
@@ -832,7 +894,8 @@ class Eskimo_WC {
 		add_user_meta( $user_id, 'shipping_address_1', $addr_1 );
 		add_user_meta( $user_id, 'shipping_city', $city );
 		add_user_meta( $user_id, 'shipping_postcode', $api_data->PostCode );
-		add_user_meta( $user_id, 'shipping_country', 'GB' );
+		add_user_meta( $user_id, 'shipping_state', '' );
+		add_user_meta( $user_id, 'shipping_country', $api_data->CountryCode ); //GB
 		add_user_meta( $user_id, 'shipping_email', $api_data->EmailAddress );
 		add_user_meta( $user_id, 'shipping_phone', $api_data->Telephone );
 		add_user_meta( $user_id, 'shipping_mobile', $api_data->Mobile );
@@ -842,12 +905,12 @@ class Eskimo_WC {
 	}
 
     /**
-     * Get remote API customer data for insert
+     * Get customer data for insert
      *
      * @param   array   $api_data
      * @return  boolean
      */
-    public function get_customers_insert_ID( $id = '' ) {
+    public function get_customers_insert_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
 
         // Validate API data
@@ -870,26 +933,32 @@ class Eskimo_WC {
 		$epos_id = get_user_meta( $user_id, 'epos_id', true );
 		if ( ! empty( $epos_id ) ) { return $this->api_error( 'EPOS user exists ID[' . $user_id . '] EPOS ID[' . $epos_id . ']' ); }
 
+		// Pre-existing
+		$active 	= get_user_meta( $user_id, 'epos_active', true );
+		$titleID	= get_user_meta( $user_id, 'epos_title', true );
+		$country 	= get_user_meta( $user_id, 'epos_country', true );
+
 		// Set up data
 		$data = [ 
-			'ActiveAccount' => true,
+			'ActiveAccount' => ( $active === '' ) ? true : (boolean) $active,
 			'EmailAddress'  => $user_data->user_email,
-			'TitleID'		=> 1,
-			'CountryCode'	=> 'GB'
+			'TitleID'		=> ( $titleID === '' ) ? 1 : (int) $title,
+			'CountryCode'	=> ( empty( $country ) ) ? 'GB' : $country
 		];
 
 		// Set up address
-		$addr_1	= get_user_meta( $user_id, 'billing_address_1', true );
-		$addr_2	= get_user_meta( $user_id, 'billing_address_2', true );
-		$city 	= get_user_meta( $user_id, 'billing_city', true );
-		$state 	= get_user_meta( $user_id, 'billing_state', true );
+		$addr = [];
+		$addr[]	= get_user_meta( $user_id, 'billing_address_1', true );
+		$addr[]	= get_user_meta( $user_id, 'billing_address_2', true );
+		$addr[]	= get_user_meta( $user_id, 'billing_city', true );
+		$address = join( "\r\n", array_filter( $addr ) );  
 
 		// Get meta data... assume billing rules
 		$data['Forename']		= get_user_meta( $user_id, 'billing_first_name', true );
 		$data['Surname']		= get_user_meta( $user_id, 'billing_last_name', true );
 		$data['CompanyName']	= get_user_meta( $user_id, 'billing_company', true );
 		$data['Notes']			= get_user_meta( $user_id, 'epos_notes', true );
-		$data['Address']		= $address = $addr_1 . '\r\n' . $addr_2 . '\r\n' . $city . '\r\n' . $state; 
+		$data['Address']		= $address;
 		$data['Postcode']		= get_user_meta( $user_id, 'billing_postcode', true );
 		$data['Telephone']		= get_user_meta( $user_id, 'billing_phone', true );
 		$data['Mobile']			= get_user_meta( $user_id, 'billing_mobile', true );
@@ -899,13 +968,13 @@ class Eskimo_WC {
 	}
 
     /**
-     * Get remote API customer data
+     * Get customer data for update
      *
      * @param   array   $api_data
      * @return  boolean
      */
-    public function get_customers_update_ID( $id = '' ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . 'ID[' . $id . ']' ); }
+    public function get_customers_update_ID( $id ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
 
         // Validate API data
         if ( empty( $id ) ) {
@@ -926,25 +995,33 @@ class Eskimo_WC {
 		$epos_id = get_user_meta( $user_id, 'epos_id', true );
 		if ( empty( $epos_id ) ) { return $this->api_error( 'EPOS user not exists ID[' . $user_id . ']' ); }
 
+		// Pre-existing
+		$active 	= get_user_meta( $user_id, 'epos_active', true );
+		$titleID	= get_user_meta( $user_id, 'epos_title', true );
+		$country 	= get_user_meta( $user_id, 'epos_country', true );
+
 		// Set up data
 		$data = [ 
-			'ActiveAccount' => true,
+			'ActiveAccount' => ( $active === '' ) ? true : (boolean) $active,
 			'ID'			=> $epos_id,
 			'EmailAddress'  => $user_data->user_email,
-			'TitleID'		=> 1,
-			'CountryCode'	=> 'GB'
+			'TitleID'		=> ( $titleID === '' ) ? 1 : (int) $title,
+			'CountryCode'	=> ( empty( $country ) ) ? 'GB' : $country
 		];
 
 		// Set up address
-		$addr_1	= get_user_meta( $user_id, 'billing_address_1', true );
-		$city 	= get_user_meta( $user_id, 'billing_city', true );
+		$addr = [];
+		$addr[]	= get_user_meta( $user_id, 'billing_address_1', true );
+		$addr[]	= get_user_meta( $user_id, 'billing_address_2', true );
+		$addr[]	= get_user_meta( $user_id, 'billing_city', true );
+		$address = join( "\r\n", array_filter( $addr ) );  
 
 		// Get meta data... assume billing rules
 		$data['Forename']		= get_user_meta( $user_id, 'billing_first_name', true );
 		$data['Surname']		= get_user_meta( $user_id, 'billing_last_name', true );
 		$data['CompanyName']	= get_user_meta( $user_id, 'billing_company', true );
 		$data['Notes']			= get_user_meta( $user_id, 'epos_notes', true );
-		$data['Address']		= $address = $addr_1 .  '\r\n' . $city; 
+		$data['Address']		= $address; 
 		$data['Postcode']		= get_user_meta( $user_id, 'billing_postcode', true );
 		$data['Telephone']		= get_user_meta( $user_id, 'billing_phone', true );
 		$data['Mobile']			= get_user_meta( $user_id, 'billing_mobile', true );
@@ -976,11 +1053,213 @@ class Eskimo_WC {
 	}
 
     //----------------------------------------------
-    // Woocommerce Customer Import & Export
+    // Woocommerce SKUs
     //----------------------------------------------
 
     /**
-     * Get remote API order data
+     * Get remote API skus
+     *
+     * @param   array   $api_data
+     * @param   boolean	$import default true
+     * @return  boolean
+     */
+    public function get_skus_all( $api_data, $import = true ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+         // Validate API data
+        if ( empty( $api_data ) ) {
+            return $this->api_rest_error();
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process SKUs All[' . count( $api_data ) . ']' ); }
+
+        // Process products
+        $skus = [];
+
+        // Get products list
+        foreach ( $api_data as $api_sku ) {
+
+            // Required valid product sku data
+            if ( empty( $api_sku->eskimo_product_identifier ) ) { 
+                if ( $this->debug ) { error_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']' ); }
+                continue; 
+            }
+
+			// SKU already imported?
+			if ( true === $import ) {
+				$sku_exists = $this->get_sku_by_id( $api_sku->sku_code );
+				if ( true === $sku_exists ) { continue; }
+			}
+			
+            // OK add products
+            $skus[] = $api_sku;
+        }
+
+        if ( $this->debug ) { error_log( 'EPOS SKUs: [' . count( $skus ) . ']' ); }
+
+        // Something to do?        
+        if ( empty( $skus ) ) { return $this->api_error( 'No Product SKUs To Process' ); }
+
+        // Return data
+        $result = [];
+
+        // Process parent categories first
+        foreach ( $skus as $api_sku ) {
+
+            // Load into response list
+            $result[] = [
+                'Eskimo_Product_Identifier' => $api_sku->eskimo_product_identifier,
+				'SKU'						=> $api_sku->sku_code,
+				'StockAmount'				=> $api_sku->StockAmount,
+				'SellPrice'					=> $api_sku->SellPrice,
+				'TaxCodeID'					=> $api_sku->TaxCodeID
+            ];
+        }
+
+        // OK, done
+        return $result;
+	}
+
+    /**
+     * Get remote API product by ID
+     *
+     * @param   array   $api_data
+     * @return  boolean
+     */
+    public function get_skus_specific_code( $api_data ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+         // Validate API data
+        if ( empty( $api_data ) ) {
+            return $this->api_rest_error();
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process SKUs All[' . count( $api_data ) . ']' ); }
+
+        // Web_ID
+        $web_prefix = get_option( 'eskimo_api_product' ); 
+        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+
+        // Process products
+        $skus = [];
+
+        // Get products list
+        foreach ( $api_data as $api_sku ) {
+
+            // Required valid product sku data
+            if ( empty( $api_sku->eskimo_product_identifier ) ) { 
+                if ( $this->debug ) { error_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']' ); }
+                continue; 
+            }
+
+			// SKU already imported?
+			$sku_exists = $this->get_sku_by_id( $api_sku->sku_code );
+			if ( true === $sku_exists ) { continue; }
+			
+            // OK add products
+            $skus[] = $api_sku;
+        }
+
+        if ( $this->debug ) { error_log( 'EPOS SKUs: [' . count( $skus ) . ']' ); }
+
+        // Something to do?        
+        if ( empty( $skus ) ) { return $this->api_error( 'No Product SKUs To Process' ); }
+
+        // Return data
+        $result = [];
+
+        // Process parent categories first
+        foreach ( $skus as $api_sku ) {
+
+            // Load into response list
+            $result[] = [
+                'Eskimo_Product_Identifier' => $api_sku->eskimo_product_identifier,
+				'SKU'						=> $api_sku->sku_code,
+				'StockAmount'				=> $api_sku->StockAmount,
+				'SellPrice'					=> $api_sku->SellPrice,
+				'TaxCodeID'					=> $api_sku->TaxCodeID
+            ];
+        }
+
+        // OK, done
+        return $result;
+	}
+
+    /**
+     * Get remote API product by ID
+     *
+     * @param   array   $api_data
+     * @return  boolean
+     */
+    public function get_skus_specific_ID( $api_data ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+         // Validate API data
+        if ( empty( $api_data ) ) {
+            return $this->api_rest_error();
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process SKUs ID[' . count( $api_data ) . ']' ); }
+
+        // Web_ID
+        $web_prefix = get_option( 'eskimo_api_product' ); 
+        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+
+        // Process products
+        $skus = [];
+
+        // Get products list
+        foreach ( $api_data as $api_sku ) {
+
+            // Required valid product sku data
+            if ( empty( $api_sku->eskimo_product_identifier ) ) { 
+                if ( $this->debug ) { error_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']' ); }
+                continue; 
+            }
+
+			// SKU already imported?
+			$sku_exists = $this->get_sku_by_id( $api_sku->sku_code );
+			if ( true === $sku_exists ) { continue; }
+			
+            // OK add products
+            $skus[] = $api_sku;
+        }
+
+        if ( $this->debug ) { error_log( 'EPOS SKUs: [' . count( $skus ) . ']' ); }
+
+        // Something to do?        
+        if ( empty( $skus ) ) { return $this->api_error( 'No Product SKUs To Process' ); }
+
+        // Return data
+        $result = [];
+
+        // Process parent categories first
+        foreach ( $skus as $api_sku ) {
+
+            // Load into response list
+            $result[] = [
+                'Eskimo_Product_Identifier' => $api_sku->eskimo_product_identifier,
+				'SKU'						=> $api_sku->sku_code,
+				'StockAmount'				=> $api_sku->StockAmount,
+				'SellPrice'					=> $api_sku->SellPrice,
+				'TaxCodeID'					=> $api_sku->TaxCodeID
+            ];
+        }
+
+        // OK, done
+        return $result;
+    }
+
+    //----------------------------------------------
+    // Woocommerce Orders Import & Export
+    //----------------------------------------------
+
+    /**
+	 * Get remote API order data
+	 * - Not yet implemented
      *
      * @param   array   $api_data
      * @return  boolean
@@ -997,7 +1276,8 @@ class Eskimo_WC {
         if ( $this->debug ) { error_log( 'Process Order[' . count( $api_data ) . ']' ); }
 
 		// Validate content? order, customer
-
+		return $this->api_error( 'Order Import Not Yet Implemented' );
+		
 		// Set up order 	
 		if ( $this->debug ) { error_log( 'Order [' . ']' ); }
 
@@ -1025,18 +1305,19 @@ class Eskimo_WC {
      * @param   array   $api_data
      * @return  boolean
      */
-    public function get_orders_insert_ID( $id = '' ) {
+    public function get_orders_insert_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
 
-        // Validate API data
-        if ( empty( $id ) || $id <= 0 ) {
-            return $this->api_error( 'Insert: Invalid user ID' );
+		// Validate API data
+		$id = absint( $id );
+		if ( $id === 0 ) {
+            return $this->api_error( 'Insert: Invalid Order ID' );
         }
 
         // Process data
         if ( $this->debug ) { error_log( 'Process Order ID[' . $id . ']' ); }
 
-		// Order?
+		// Woocommerce order required
 		$order = wc_get_order( $id );
 		if ( false === $order ) { return $this->api_error( 'Invalid Order ID[' . $id . ']' ); }
 
@@ -1054,24 +1335,42 @@ class Eskimo_WC {
 		
 		// Get the customer
 		$cust_id 	= $order->get_customer_id();
-		$epos_id 	= get_user_meta( $cust_id, 'epos_id', true );
+		if ( $this->debug ) { error_log( 'Order User: ' . $cust_id ); }
+		
+		// Guest Checkout
+		if ( $cust_id === 0 ) {
+			$guest_user = get_user_by( 'email', apply_filters( 'eskimo_guest_user_email', 'guest@trutexmacclesfield.com' ) );
+			if ( ! $guest_user ) { return $this->api_error( 'EskimoEPOS Invalid Customer' ); }
+			$cust_id = $guest_user->ID;
+		}
+		if ( $this->debug ) { error_log( 'Order User UPD: ' . $cust_id ); }
+
+		// Customer meta
+		$epos_id = get_user_meta( $cust_id, 'epos_id', true );
+		if ( empty( $epos_id ) ) { return $this->api_error( 'EskimoEPOS Customer ID Does Not Exist' ); }
 
 		// Order reference
 		$epos_ei = get_option( 'eskimo_api_customer' );
 		$epos_ei = ( empty( $epos_ei ) ) ? $epos_id . '-' . $cust_id . '-' . $order_id : $epos_ei . $epos_id . '-' . $cust_id . '-' . $order_id;  
-		if ( $this->debug ) { error_log( 'Customer ID: [' . $cust_id . '] EPOS ID[' . $epos_id . ']' ); }
+		if ( $this->debug ) { error_log( 'Customer ID: [' . $cust_id . '] EPOS Customer ID[' . $epos_id . '] EPOS API ID[' . $epos_ei . ']' ); }
 
 		// Notes
-		$order_note = ( $order->get_customer_order_notes() ) ? $order->get_customer_order_notes()[0]->comment_content : '';
-		if ( empty( $order_note ) ) {
-			$order_note = get_the_excerpt( $order_id );
+		$order_notes = $order->get_customer_order_notes(); 
+		if ( is_array( $order_notes ) && ! empty( $order_notes ) ) {
+			$order_note = '';
+			foreach ( $order_notes as $n ) {
+				error_log( 'Note: [' . gettype( $n ) . '][' . print_r( $n, true ) . ']' );
+				$order_note .= $n->comment_content; 
+			}
+		} else {
+			$order_note = get_post( $id )->post_excerpt;
 		}
 
 		// Set up data
 		$data = [
 			'order_id' 				=> $order_id,
 			'eskimo_customer_id' 	=> $epos_id,
-			'order_date' 			=> $order->get_date_completed()->date('Y-m-d H:i:s'),
+			'order_date' 			=> $order->get_date_completed()->date('c'),
 			'invoice_amount' 		=> $order->get_total(),
 			'amount_paid' 			=> $order->get_total(),
 			'OrderType'				=> 2, //WebOrder,
@@ -1093,12 +1392,13 @@ class Eskimo_WC {
 			$item['unit_price']				= $product->get_price();
 			$item['line_discount_amount']	= $order_item->get_total() - $order_item->get_subtotal();
 			$item['item_note']				= null;			
+			$item['item_description']		= null;			
 			$items[] = $item;
 		}
 
 		// Set up shipping
 		$shipping = [
-			'FAO'			=>	$order->get_shipping_first_name() . ' ' . $order->get_billing_last_name(),
+			'FAO'			=>	$order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name() . ' ' . $order->get_shipping_company(),
 			'AddressLine1' 	=>	$order->get_shipping_address_1(),
 			'AddressLine2' 	=>	$order->get_shipping_address_2(),
 			'AddressLine3' 	=>	null,
@@ -1110,7 +1410,7 @@ class Eskimo_WC {
 
 		// Set up billing
 		$billing = [
-			'FAO'			=>	$order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+			'FAO'			=>	$order->get_billing_first_name() . ' ' . $order->get_billing_last_name() . ' ' . $order->get_billing_company(),
 			'AddressLine1' 	=>	$order->get_billing_address_1(),
 			'AddressLine2' 	=>	$order->get_billing_address_2(),
 			'AddressLine3' 	=>	null,
@@ -1125,7 +1425,7 @@ class Eskimo_WC {
 		$data['OrderedItems']			= $items;
 		$data['CustomerReference'] 		= null;
 		$data['DeliveryNotes'] 			= $order_note;
-		$data['ShippingRateID'] 		= 1;
+		$data['ShippingRateID'] 		= 1; // 1: FlatRate 2: ClickAndCollect
 		$data['ShippingAmountGross'] 	= $order->get_shipping_total();
 
         // OK, done
@@ -1153,73 +1453,6 @@ class Eskimo_WC {
 		// Process update
 		return ( $update === true ) ? ( update_post_meta( $id, '_web_order_id', $data->ExternalIdentifier ) ) ? 'ID[' . $id . '] EPOS WebOrder ID[' . $data->ExternalIdentifier . ']' : false : $data->ExternalIdentifier;
 	}
-
-    //----------------------------------------------
-    // Woocommerce SKU Import
-    //----------------------------------------------
-
-    /**
-     * Get remote API SKUs
-     *
-     * @param   array   $api_data
-     * @return  boolean
-     */
-    public function get_sku_all( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
-
-        // Validate API data
-        if ( empty( $api_data ) ) {
-            return $this->api_rest_error();
-        }
-
-        // Process data
-        if ( $this->debug ) { error_log( 'Process Product SKU All[' . count( $api_data ) . ']' ); }
-
-        // OK, done
-        return true;
-    }
-
-    /**
-     * Get remote API SKUs by ID
-     *
-     * @param   array   $api_data
-     * @return  boolean
-     */
-    public function get_sku_specific_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
-
-        // Validate API data
-        if ( empty( $api_data ) ) {
-            return $this->api_rest_error();
-        }
-
-        // Process data
-        if ( $this->debug ) { error_log( 'Process Product SKU[' . count( $api_data ) . ']' ); }
-
-        // OK, done
-        return true;
-    }
-
-    /**
-     * Get remote API SKU by product ID
-     *
-     * @param   array   $api_data
-     * @return  boolean
-     */
-    public function get_sku_specific_code( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
-
-        // Validate API data
-        if ( empty( $api_data ) ) {
-            return $this->api_rest_error();
-        }
-
-        // Process data
-        if ( $this->debug ) { error_log( 'Process SKU Code[' . count( $api_data ) . ']' ); }
-
-        // OK, done
-        return true;
-    }
 
     //----------------------------------------------
     // Woocommerce Product Images
@@ -1403,7 +1636,7 @@ class Eskimo_WC {
      */
     protected function add_term_eskimo_cat_id( $cat_id, $api_cat ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': CatID[' . $cat_id . ']' ); }
-        return add_term_meta( $cat_id, 'eskimo_category_id', sanitize_text_field( $api_cat->Eskimo_Category_ID ), true );
+        return update_term_meta( $cat_id, 'eskimo_category_id', sanitize_text_field( $api_cat->Eskimo_Category_ID ) );
     }
 
     /**
@@ -1776,7 +2009,11 @@ class Eskimo_WC {
 			case 'categories':
 		    	$cat_id = $this->get_category_by_id( $data );
 				$args['categories'] = ( false === $cat_id ) ? [] : $cat_id;
-			   	break;	
+				break;	
+			case 'adjust':
+		        $args['stock_quantity'] = $sku->StockAmount;
+				$args['regular_price']  = $data->from_price;	
+				break;				
 			default:
 				return $args;
 		}
@@ -1807,8 +2044,8 @@ class Eskimo_WC {
         	];            
 		} else { 
 			$args = [ 
-				'product_id' => $sku->product_id, 
-				'id' => $product_id 
+				'id' 		 => $product_id, 
+				'product_id' => $sku->product_id 
 			]; 
 		}
 			
@@ -1823,6 +2060,10 @@ class Eskimo_WC {
 			case 'price':
 				$args['regular_price'] = $sku->SellPrice;
 				break;
+			case 'adjust':
+				$args['stock_quantity'] = $sku->StockAmount;
+				$args['regular_price'] = $sku->SellPrice;
+				break;				
 		}
 
 		return $args;
@@ -1939,8 +2180,42 @@ class Eskimo_WC {
 
         // Found post sku?
         return ( $the_query->found_posts > 0 ) ? true : false;
-    }
+	}
 
+    /**
+     * Get product ID by SKU
+     *
+     * @param   string  $code
+     * @param   boolean $variation
+     * @return  boolean
+     */
+    protected function get_sku_by_id( $code ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' SKU: [' . $code . ']' ); }
+        
+        // Set up query
+        $args = [
+            'post_type'     => [ 'product_variation', 'product' ],
+            'post_status'   => 'publish',
+            'nopaging'      => true,
+            'cache_results' => false
+        ];
+
+        // Test array or string
+        $args['meta_query'] = [
+            [
+		        'key'     => '_sku',
+		        'value'   => $code,
+		        'compare' => '='
+            ]
+        ];
+
+        // Process query
+        $the_query = new WP_Query( $args );
+
+        // Found post sku?
+        return ( $the_query->found_posts > 0 ) ? true : false;
+	}
+	
     /**
      * Get the global variant stock amount from SKU list
      *
@@ -2064,7 +2339,33 @@ class Eskimo_WC {
         $cat_id     = add_post_meta( $prod_id, '_eskimo_category_id', sanitize_text_field( $api_prod->eskimo_category_id ) );
         $post_id    = add_post_meta( $prod_id, '_eskimo_product_id', sanitize_text_field( $api_prod->eskimo_identifier ) );
         return ( $cat_id && $post_id ) ? true : false;
-    }
+	}
+
+	/**
+	 * Add extra product post meta
+	 * 
+     * @param   integer $cat_id
+     * @param   object  $api_cat
+	 */
+	protected function add_post_meta_extra( $prod_id, $api_prod ) {
+    	if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
+		$meta_keywords 		= add_post_meta( $prod_id, '_meta_keywords', sanitize_text_field( $api_prod->meta_keywords ) );
+		$meta_description 	= add_post_meta( $prod_id, '_meta_description', sanitize_text_field( $api_prod->meta_description ) );
+        return ( $meta_keywords && $meta_description ) ? true : false;
+	}
+
+	/**
+	 * Add extra product post meta
+	 * 
+     * @param   integer $cat_id
+     * @param   object  $api_cat
+	 */
+	protected function add_post_meta_date( $prod_id, $api_prod ) {
+    	if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
+		$date_created 	= add_post_meta( $prod_id, '_date_created', $api_prod->date_created );
+		$last_updated	= add_post_meta( $prod_id, '_last_updated', $api_prod->last_updated );
+        return ( $date_created && $last_updated ) ? true : false;
+	}
 
     /**
      * Get tax class mapping
@@ -2223,26 +2524,22 @@ class Eskimo_WC {
     // API Error
     //----------------------------------------------
 
-    /**
-     * Log API REST Process Error
-     */
-    protected function api_rest_error() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
-		if ( $this->debug ) { error_log( __( 'API Error: Could Not Process REST data from API', 'eskimo' ) ); }
-		return __( 'API Error: Could Not Process REST data from API', 'eskimo' );
-	}
-
-    /**
+	/**
      * Log API Error
      *
      * @param   string  $error
      */
     protected function api_error( $error ) {
-        if ( $this->debug ) { 
-            error_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']' );
-            error_log( $error ); 
-		}
-		return $error;
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']' ); }
+		return new WP_Error( 'data', $error );
+	}
+
+    /**
+     * Log API REST Process Error
+     */
+    protected function api_rest_error() {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Process REST data from API', 'eskimo' ) ); }
+		return new WP_Error( 'rest', __( 'API Error: Could Not Process REST data from API', 'eskimo' ) );
 	}
 
 	/**
