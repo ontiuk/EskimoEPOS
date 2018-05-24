@@ -62,11 +62,11 @@ final class Eskimo_Admin {
 	public function __construct( $eskimo, $version, $debug = false ) {
         if ( $debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-		$this->eskimo           = $eskimo;
-		$this->version          = $version;
-		$this->debug            = $debug;
-    	$this->base_dir			= plugin_dir_url( __FILE__ ); 
-		$this->suffix		 	= $this->debug ? '' : '.min';
+		$this->eskimo	= $eskimo;
+		$this->version  = $version;
+		$this->debug    = $debug;
+    	$this->base_dir	= plugin_dir_url( __FILE__ ); 
+		$this->suffix	= $this->debug ? '' : '.min';
     }
 
     //----------------------------------------------
@@ -97,23 +97,23 @@ final class Eskimo_Admin {
     public function init() {
 
         // EPOS Category ID
-        add_filter( 'woocommerce_settings_tabs_array', [ $this, 'add_settings_tab' ], 50 ); 
-        add_action( 'woocommerce_settings_tabs_eskimo_settings', [ $this, 'set_tab_settings' ] ); 
-        add_action( 'woocommerce_update_options_eskimo_settings', [ $this, 'update_tab_settings' ] ); 
+        add_filter( 'woocommerce_settings_tabs_array', 				[ $this, 'add_settings_tab' ], 50 ); 
+        add_action( 'woocommerce_settings_tabs_eskimo_settings', 	[ $this, 'set_tab_settings' ] ); 
+        add_action( 'woocommerce_update_options_eskimo_settings', 	[ $this, 'update_tab_settings' ] ); 
     
         // EPOS Product ID
-        add_filter( 'woocommerce_product_data_tabs', [ $this, 'custom_product_tab' ] );        
-        add_action( 'admin_head', [ $this, 'custom_product_style' ] );
-        add_action( 'woocommerce_product_data_panels', [ $this, 'category_product_custom_fields' ] ); 
+        add_filter( 'woocommerce_product_data_tabs', 	[ $this, 'custom_product_tab' ] );        
+        add_action( 'admin_head', 						[ $this, 'custom_product_style' ] );
+        add_action( 'woocommerce_product_data_panels', 	[ $this, 'category_product_custom_fields' ] ); 
 
         // EPOS Product List
-        add_filter( 'manage_product_posts_columns', [ $this, 'posts_columns' ] );
-        add_action( 'manage_product_posts_custom_column' , [ $this, 'custom_columns' ], 10, 2 );
+        add_filter( 'manage_product_posts_columns', 		[ $this, 'posts_columns' ] );
+        add_action( 'manage_product_posts_custom_column', 	[ $this, 'custom_columns' ], 10, 2 );
 
         // EPOS Product List
-        add_filter( 'posts_join', [ $this, 'cf_search_join' ] );
-        add_filter( 'posts_where', [ $this, 'cf_search_where' ] );
-        add_filter( 'posts_distinct', [ $this, 'cf_search_distinct' ] );
+        add_filter( 'posts_join', 		[ $this, 'cf_search_join' ] );
+        add_filter( 'posts_where', 		[ $this, 'cf_search_where' ] );
+        add_filter( 'posts_distinct', 	[ $this, 'cf_search_distinct' ] );
     }
 
     /** 
@@ -325,7 +325,7 @@ final class Eskimo_Admin {
             return $content;
         }
 
-        $term_id = absint( $term_id );
+        $term_id 			= absint( $term_id );
         $eskimo_category_id = get_term_meta( $term_id, 'eskimo_category_id', true );
 
         if ( !empty( $eskimo_category_id ) ) {
@@ -462,7 +462,7 @@ final class Eskimo_Admin {
         // Reconstruct
         $def_start  = array_slice( $defaults, 0, 2 );
         $def_end    = array_slice( $defaults, 3 );
-        $cols = array_merge( $def_start, $epos, $def_end );
+        $cols 		= array_merge( $def_start, $epos, $def_end );
 
         return $cols;
     }
@@ -540,9 +540,4 @@ final class Eskimo_Admin {
 
         return $where;
     }
-    
-    //----------------------------------------------
-    // Eskimo EPOS ImpEx Menu
-    //----------------------------------------------
-
 }

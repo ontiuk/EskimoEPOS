@@ -68,10 +68,10 @@ final class Eskimo_WC {
     //----------------------------------------------
 
     /**
-     * Get remote API categories
+     * Get EskimoEPOS API categories & import to Woocommerce
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+	 * @return	object|array
      */
     public function get_categories_all( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -172,10 +172,10 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API category by ID
+     * Get EskimoEPOS category by ID & import to Woocommerce
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+	 * @return	object|array
      */
     public function get_categories_specific_ID( $api_cat ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -229,10 +229,10 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API categories by parent ID
+     * Get EskimoEPOS API categories by parent ID and import to Woocommerce
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+	 * @return	object|array
      */
     public function get_categories_child_categories_ID( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -302,7 +302,7 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API categories
+     * Get category data for EskimoEPOS Web_ID update
      *
      * @param   array   $api_data
      * @return  boolean
@@ -356,7 +356,7 @@ final class Eskimo_WC {
 	}
 
 	/**
-	 * Retrieve current Woocommerce product categories
+	 * Retrieve current Woocommerce product category data
 	 *
 	 * @return	array
 	 */
@@ -394,7 +394,7 @@ final class Eskimo_WC {
 	}
 
     /**
-     * Get remote API categories
+     * Get EskimoEPOS category meta data
      *
      * @param   array   $api_data
      * @return  boolean
@@ -462,10 +462,10 @@ final class Eskimo_WC {
     //----------------------------------------------
 
     /**
-     * Get remote API products by category
+     * Get EskimoEPOS API products by category
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|array
      */
     public function get_products_all( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -564,10 +564,10 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API product by ID
+     * Get EskimoEPOS API product by ID
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|array
      */
     public function get_products_specific_ID( $api_prod ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -643,11 +643,11 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API product by ID
+     * Get EskimoEPOS API product by ID
      *
-     * @param   array   $api_data
-     * @param   array   $path
-     * @return  boolean
+     * @param   array   		$api_data
+     * @param   array   		$path
+     * @return  object|array
      */
     public function get_products_import_ID( $api_prod, $path ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ':' . $path ); }
@@ -701,10 +701,10 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API products by category
+     * Get EskimoEPOS API products by category
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|array
      */
     public function get_products_cart_ID( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -817,10 +817,10 @@ final class Eskimo_WC {
     //----------------------------------------------
 
     /**
-     * Get remote API customer data
+     * Get EskimoEPOS API customer data
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|array
      */
     public function get_customers_specific_ID( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -905,10 +905,10 @@ final class Eskimo_WC {
 	}
 
     /**
-     * Get customer data for insert
+     * Get customer data for insert by ID
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   integer   		$id
+     * @return  object|array
      */
     public function get_customers_insert_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
@@ -968,10 +968,10 @@ final class Eskimo_WC {
 	}
 
     /**
-     * Get customer data for update
+     * Get customer data for update by ID
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   integer   		$id
+     * @return  object|array
      */
     public function get_customers_update_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
@@ -1031,11 +1031,12 @@ final class Eskimo_WC {
 	}
 
     /**
-     * Post insert EPOS data user update
+     * Insert EskimoEPOS data user for update
      *
-     * @param   array   $id
-     * @param   array   $data
-     * @return  boolean
+     * @param   array   		$id
+	 * @param   array   		$data
+	 * @param	boolean			$update
+     * @return  object|boolean
      */
     public function get_customers_epos_ID( $id, $data, $update = false ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . ']' ); }
@@ -1057,11 +1058,11 @@ final class Eskimo_WC {
     //----------------------------------------------
 
     /**
-     * Get remote API skus
+     * Get EskimoEPOS API skus
      *
-     * @param   array   $api_data
-     * @param   boolean	$import default true
-     * @return  boolean
+     * @param   array   		$api_data
+     * @param   boolean			$import default true
+     * @return  object|array
      */
     public function get_skus_all( $api_data, $import = true ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1122,10 +1123,10 @@ final class Eskimo_WC {
 	}
 
     /**
-     * Get remote API product by ID
+     * Get EskimoEPOS API product by ID
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|array
      */
     public function get_skus_specific_code( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1188,10 +1189,10 @@ final class Eskimo_WC {
 	}
 
     /**
-     * Get remote API product by ID
+     * Get EskimoEPOS API product by ID
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|array
      */
     public function get_skus_specific_ID( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1258,13 +1259,12 @@ final class Eskimo_WC {
     //----------------------------------------------
 
     /**
-	 * Get remote API order data
-	 * - Not yet implemented
+	 * Get EskimoEPOS API web order data
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|array
      */
-    public function get_orders_specific_ID( $api_data ) {
+    public function get_orders_website_order( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Validate API data
@@ -1302,8 +1302,8 @@ final class Eskimo_WC {
     /**
      * Get woocommerce order data for EPOS insert
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|array
      */
     public function get_orders_insert_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
@@ -1433,10 +1433,11 @@ final class Eskimo_WC {
 	}
 
     /**
-     * Post insert EPOS reference update
+     * Insert EskimoEPOS extermal reference update
      *
-     * @param   array   $id
-     * @param   array   $data
+     * @param   array   		$id
+	 * @param   array   		$data
+	 * @param	boolean			$update
      * @return  boolean
      */
     public function get_orders_epos_ID( $id, $data, $update = false ) {
@@ -1459,11 +1460,10 @@ final class Eskimo_WC {
     //----------------------------------------------
 
     /**
-     * Get remote API product image links
-     * - Not yet implemented
+     * Get EskimoEPOS API product image links
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|boolean
      */
     public function get_image_links_all( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1481,11 +1481,10 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API product images
-     * - Not yet implemented
+     * Get EskimoEPOS API product images
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|boolean
      */
     public function get_images_all( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1507,11 +1506,10 @@ final class Eskimo_WC {
     //----------------------------------------------
 
     /**
-     * Get remote API Tax Codes optionally by ID
-     * - Not yet implemented
+     * Get EskimoEPOS API Tax Codes optionally by ID
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|boolean
      */
     public function get_tax_codes( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1529,11 +1527,10 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API shops
-     * - Not yet implemented
+     * Get EskimoEPOS API shops
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|boolean
      */
     public function get_shops_all( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1551,11 +1548,10 @@ final class Eskimo_WC {
     }
 
     /**
-     * Get remote API Shops by ID
-     * - Not yet implemented
+     * Get EskimoEPOS API Shops by ID
      *
-     * @param   array   $api_data
-     * @return  boolean
+     * @param   array   		$api_data
+     * @return  object|boolean
      */
     public function get_shops_specific_ID( $api_data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1710,7 +1706,7 @@ final class Eskimo_WC {
     /**
      * Add category product: Simple Product
      *
-     * @param   object  $data
+     * @param   object  		$data
      * @return  boolean|object
      */
     protected function add_category_product_simple( $data ) {
@@ -1758,7 +1754,7 @@ final class Eskimo_WC {
     /**
      * Add category product: Simple Product
      *
-     * @param   object  $data
+     * @param   object  		$data
      * @return  boolean|object
      */
     protected function add_category_product_variable( $data ) {
@@ -1837,8 +1833,8 @@ final class Eskimo_WC {
     /**
      * Add category product: Simple Product
      *
-	 * @param   object  $data
-	 * @param	string	$path
+	 * @param   object  		$data
+	 * @param	string			$path
      * @return  boolean|object
      */
     protected function update_category_product_simple( $data, $path ) {
@@ -1872,8 +1868,8 @@ final class Eskimo_WC {
     /**
      * Add category product: Simple Product
      *
-	 * @param   object  $data
-	 * @param	string	$path
+	 * @param   object  		$data
+	 * @param	string			$path
      * @return  boolean|object
      */
     protected function update_category_product_variable( $data, $path ) {
@@ -1934,9 +1930,9 @@ final class Eskimo_WC {
     /**
      * Add a variation to a just created variable product
      *
-	 * @param   object  $sku
-	 * @param   object  $data
-	 * @param	string	$path
+	 * @param   object  		$sku
+	 * @param   object  		$data
+	 * @param	string			$path
      * @return  object|boolean
      */
     protected function update_category_product_variation( $sku, $data, $path ) {
@@ -2186,7 +2182,6 @@ final class Eskimo_WC {
      * Get product ID by SKU
      *
      * @param   string  $code
-     * @param   boolean $variation
      * @return  boolean
      */
     protected function get_sku_by_id( $code ) {
@@ -2294,7 +2289,8 @@ final class Eskimo_WC {
     /**
      * Add a variation to a just created variable product
      *
-     * @param   object  $sku
+	 * @param   object  		$sku
+	 * @param	array			$data
      * @return  object|boolean
      */
     protected function add_category_product_variation( $sku, $data ) {
@@ -2332,7 +2328,8 @@ final class Eskimo_WC {
      * Update new product post with custom Eskimo Product ID
      *
      * @param   integer $cat_id
-     * @param   object  $api_cat
+	 * @param   object  $api_cat
+	 * @return	boolean
      */
     protected function add_post_meta_eskimo_id( $prod_id, $api_prod ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
@@ -2345,7 +2342,8 @@ final class Eskimo_WC {
 	 * Add extra product post meta
 	 * 
      * @param   integer $cat_id
-     * @param   object  $api_cat
+	 * @param   object  $api_cat
+	 * @return 	boolean
 	 */
 	protected function add_post_meta_extra( $prod_id, $api_prod ) {
     	if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
@@ -2358,7 +2356,8 @@ final class Eskimo_WC {
 	 * Add extra product post meta
 	 * 
      * @param   integer $cat_id
-     * @param   object  $api_cat
+	 * @param   object  $api_cat
+	 * @return 	boolean
 	 */
 	protected function add_post_meta_date( $prod_id, $api_prod ) {
     	if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
@@ -2479,7 +2478,8 @@ final class Eskimo_WC {
      * - Should be no surprises here, parents should all be pre-processed
      * - Children with orphan parent EPOS cat treated as bad data & logged
      *
-     * @param   object  $data   Category data
+	 * @param   object  $data   Category data
+	 * @return	array
      */
     protected function get_category_by_id( $data ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -2527,7 +2527,8 @@ final class Eskimo_WC {
 	/**
      * Log API Error
      *
-     * @param   string  $error
+	 * @param   string  $error
+	 * @return	object
      */
     protected function api_error( $error ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']' ); }
@@ -2535,7 +2536,9 @@ final class Eskimo_WC {
 	}
 
     /**
-     * Log API REST Process Error
+	 * Log API REST Process Error
+	 * 
+	 * @return	object
      */
     protected function api_rest_error() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Process REST data from API', 'eskimo' ) ); }
@@ -2545,9 +2548,9 @@ final class Eskimo_WC {
 	/**
 	 * External identifier for WebOrder
 	 *
-	 * @param integer $length default 10
-	 * @param integer $start default 0
-	 * @return string
+	 * @param 	integer $length default 10
+	 * @param 	integer $start default 0
+	 * @return 	string
 	 */
 	protected function keygen( $length = 10, $start = 0 ) {
 		return substr( str_shuffle( sha1( microtime( true ). mt_rand( 10000,90000 ) ) ), $start, $length );

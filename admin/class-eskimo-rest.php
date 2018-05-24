@@ -207,7 +207,7 @@ final class Eskimo_REST {
      * - No Import
      *
      * @param   integer $start      default 1  
-     * @param   integer $records    default 20
+     * @param   integer $records    default 25
      * @return  boolean
      */
     public function get_category_products_all( $start = 1, $records = 25 ) {
@@ -216,7 +216,7 @@ final class Eskimo_REST {
         // Sensible defaults
         $api_defaults = [
             'StartPosition' => 1,
-            'RecordCount'   => 250
+            'RecordCount'   => 25
         ];
 
         // Pre-Sanitize
@@ -225,7 +225,7 @@ final class Eskimo_REST {
 
         // Validate options & set a sensible batch range
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
-        $api_opts['RecordCount']    = ( $records === 0 || $records > 250 ) ? $api_defaults['RecordCount'] : $records;
+        $api_opts['RecordCount']    = ( $records === 0 || $records > 25 ) ? $api_defaults['RecordCount'] : $records;
         if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
                     
         // Test connection
@@ -262,7 +262,7 @@ final class Eskimo_REST {
     /**
      * Get remote API category by ID
      * 
-     * @param   string  $id default ''
+     * @param   string  $id
      * @return  boolean
      */
     public function get_category_products_specific_category( $id ) {
@@ -307,17 +307,16 @@ final class Eskimo_REST {
      * Get remote API products
      *
      * @param   integer $start      default 1  
-     * @param   integer $records    default 20
-     * @param   integer $records    default 2000-01-01
+     * @param   integer $records    default 25
      * @return  boolean
      */
-    public function get_products( $start = 1, $records = 20 ) {
+    public function get_products( $start = 1, $records = 25 ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
 
         // Sensible defaults
         $api_defaults = [
             'StartPosition' => 1,
-            'RecordCount'   => 20
+            'RecordCount'   => 25
         ];
 
         // Pre-Sanitize
@@ -435,11 +434,11 @@ final class Eskimo_REST {
      * Get remote API products
      *
      * @param   integer $start      default 1  
-     * @param   integer $records    default 20
+     * @param   integer $records    default 25
      * @param   integer $records    default 2000-01-01
      * @return  boolean
      */
-    public function get_products_modified( $route, $modified, $start = 1, $records = 20 ) {
+    public function get_products_modified( $route, $modified, $start = 1, $records = 25 ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']' ); }
 
         // Sensible defaults
@@ -619,7 +618,6 @@ final class Eskimo_REST {
     /**
      * Get remote API categories for meta ID reset
 	 *
-	 * @param	boolean			$update default true
      * @return  object|array
      */
     public function get_categories_meta_ID() {
@@ -654,7 +652,6 @@ final class Eskimo_REST {
     /**
      * Get remote API categories for Web_ID reset
 	 *
-	 * @param	boolean			$update default true
      * @return  object|array
      */
     public function get_categories_cart_ID() {
@@ -836,8 +833,8 @@ final class Eskimo_REST {
     /**
      * Get remote API customer data
      *
-     * @param   string  $id default ''
-     * @return  boolean | string
+     * @param   string			$id
+     * @return  object|array
      */
     public function get_customers_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
@@ -876,8 +873,8 @@ final class Eskimo_REST {
     /**
      * Get remote API customer data
      *
-     * @param   string  $id default ''
-     * @return  boolean | string
+     * @param   string  		$email
+     * @return  object|array
      */
     public function get_customers_specific_email( $email ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Email[' . $email . ']' ); }
@@ -914,8 +911,8 @@ final class Eskimo_REST {
     /**
      * Insert WC user to EskimoEPOS
      *
-     * @param   string  $id default ''
-     * @return  boolean | string
+     * @param   string  		$id
+     * @return  object|array
      */
     public function get_customers_insert( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
@@ -961,8 +958,8 @@ final class Eskimo_REST {
     /**
      * Update WC user to EskimoEPOS
      *
-     * @param   string  $id default ''
-     * @return  boolean | string
+     * @param   string  		$id
+     * @return  object|array
      */
     public function get_customers_update( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
@@ -1008,7 +1005,7 @@ final class Eskimo_REST {
     /**
      * Get remote API customer data
      *
-     * @return  boolean | string
+     * @return  object|array
      */
     public function get_customers_titles() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1040,12 +1037,11 @@ final class Eskimo_REST {
 
     /**
 	 * Import EskimoEPOS WebOrder into Woocommerce
-	 * - not yet implemented
      *
-     * @param   array   $id
-     * @return  boolean
+     * @param   array   		$id
+     * @return  object|array
      */
-    public function get_orders_specific_ID( $id ) {
+    public function get_orders_website_order( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
         // Test Options
@@ -1059,7 +1055,7 @@ final class Eskimo_REST {
         }
 
         // Get remote data
-        $api_data = $this->api->orders_specific_ID( $id );
+        $api_data = $this->api->orders_website_order( $id );
 
         // Validate API data
         if ( false === $api_data ) {
@@ -1076,14 +1072,14 @@ final class Eskimo_REST {
         }
 
         // Process order update
-        return $this->wc->get_orders_specific_ID( $api_data, true );
+        return $this->wc->get_orders_website_order( $api_data, true );
     }
 
     /**
      * Export Woocommerce order to EskimoEPOS WebOrder
      *
-     * @param   array   $id
-     * @return  boolean
+     * @param   array   		$id
+     * @return  object|array
      */
     public function get_orders_insert( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
@@ -1127,7 +1123,7 @@ final class Eskimo_REST {
     /**
      * Retrieve EskimoEPOS Fulfilment Methods
      *
-     * @return  boolean
+     * @return  object|array
      */
     public function get_orders_methods() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1160,8 +1156,8 @@ final class Eskimo_REST {
     /**
      * Search EskimoEPOS Orders: Customer ID
      *
-     * @param   array   $id
-     * @return  boolean
+     * @param   array   		$id
+     * @return  object|array
      */
     public function get_orders_search_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
@@ -1182,12 +1178,12 @@ final class Eskimo_REST {
 		$to = $dt->format('c');
 
 		$api_opts = [ 
-			'FromDate'	=> $from,
-			'ToDate' 	=> $to,
-			'OrderType' => 2, //WebOrder
-			'IncludeCustomerDetails' => false,
-			'IncludeProductDetails'	 => false,
-			'CustomerID' => $id			
+			'FromDate'					=> $from,
+			'ToDate' 					=> $to,
+			'OrderType' 				=> 2, //WebOrder
+			'IncludeCustomerDetails' 	=> false,
+			'IncludeProductDetails'	 	=> false,
+			'CustomerID' 				=> $id			
 		];
 
         // Insert order to EPOS
@@ -1213,8 +1209,8 @@ final class Eskimo_REST {
     /**
      * Search EskimoEPOS Orders: Order Type
      *
-     * @param   array   $id
-     * @return  boolean
+     * @param   array   		$id
+     * @return  object|array
      */
     public function get_orders_search_type( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
@@ -1229,17 +1225,17 @@ final class Eskimo_REST {
 		}
 		
 		// Dates
-		$dt = new DateTime( '2000-01-01');
-		$from = $dt->format('c');
-		$dt->setTimestamp( time() );
-		$to = $dt->format('c');
+		$now	= current_time( 'timestamp' );
+		$dt 	= new DateTime( '2000-01-01');
+		$from 	= $dt->format('c');
+		$to 	= $dt->setTimestamp( $now )->format('c');
 
 		$api_opts = [ 
-			'FromDate'  => $from,
-			'ToDate' 	=> $to,
-			'OrderType' => $id,
-			'IncludeCustomerDetails' => false,
-			'IncludeProductDetails'	 => false
+			'FromDate'  				=> $from,
+			'ToDate' 					=> $to,
+			'OrderType' 				=> $id,
+			'IncludeCustomerDetails' 	=> false,
+			'IncludeProductDetails'	 	=> false
 		];
 
         // Insert order to EPOS
@@ -1265,8 +1261,8 @@ final class Eskimo_REST {
     /**
      * Search EskimoEPOS Orders: Order Date
      *
-     * @param   array   $id
-     * @return  boolean
+     * @param   array   		$id
+     * @return  object|array
      */
     public function get_orders_search_date( $route, $date_1, $date_2 ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
@@ -1281,6 +1277,7 @@ final class Eskimo_REST {
 		// Dates
 		$date_1 = sanitize_text_field( $date_1 );
 		$date_2 = sanitize_text_field( $date_2 );
+		$now	= current_time( 'timestamp' );
 
 		// Validate
 		if ( empty( $date_1 ) ) { return $this->api_error( 'Invalid Order Date 1' ); }
@@ -1294,32 +1291,29 @@ final class Eskimo_REST {
 		// Dates
 		switch ( $route ) {
 			case 'from':
-				$dt = new DateTime( $from );
-				$from = $dt->format('c');
-				$dt->setTimestamp( time() );
-				$to = $dt->format('c');
+				$dt 	= new DateTime( $from );
+				$from 	= $dt->format('c');
+				$to 	= $dt->setTimestamp( $now )->format('c');
 				break;
 			case 'to':
-				$dt = new DateTime( '2000-01-01' );
-				$from = $dt->format('c');
-				$dt->setTimestamp( strtotime( $to ) );
-				$to = $dt->format('c');
+				$dt 	= new DateTime( '2000-01-01' );
+				$from 	= $dt->format('c');
+				$to 	= $dt->setTimestamp( strtotime( $to ) )->format('c');
 				break;
 			case 'range':
-				$dt = new DateTime( $from );
-				$from = $dt->format('c');
-				$dt->setTimestamp( strtotime( $to ) );
-				$to = $dt->format('c');
+				$dt 	= new DateTime( $from );
+				$from 	= $dt->format('c');
+				$to 	= $dt->setTimestamp( strtotime( $to ) )->format('c');
 				break;
 		}
         if ( $this->debug ) { error_log( 'Route[' . $route . ' FromDate[' . $from . '] ToDate[' . $to . ']' ); }
 
 		$api_opts = [ 
-			'FromDate'  => $from,
-			'ToDate' 	=> $to,
-			'OrderType'	=> 2, //WebOrder
-			'IncludeCustomerDetails' => false,
-			'IncludeProductDetails'	 => false
+			'FromDate'  				=> $from,
+			'ToDate' 					=> $to,
+			'OrderType'					=> 2, //WebOrder
+			'IncludeCustomerDetails' 	=> false,
+			'IncludeProductDetails'	 	=> false
 		];
 
         // Insert order to EPOS
@@ -1342,7 +1336,6 @@ final class Eskimo_REST {
         return $api_data;
 	}
 
-
     //----------------------------------------------
     // Woocommerce SKU Import
     //----------------------------------------------
@@ -1353,7 +1346,7 @@ final class Eskimo_REST {
      * @param   integer $start      default 1  
      * @param   integer $records    default 20
      * @param   integer $records    default 2000-01-01
-     * @return  boolean
+     * @return  object|array
      */
     public function get_skus( $start = 1, $records = 100 ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
@@ -1409,14 +1402,15 @@ final class Eskimo_REST {
 	}
 
 	/**
-	 * Retrieve SKU's my modified date
+	 * Retrieve SKUs by modified date
 	 *
-	 * @param	string	$path
-	 * @param	string	$route
-	 * @param	integer	$modified
-	 * @param	integer	$start
-	 * @param	integer	$records
-	 * @param	integer	$import
+	 * @param	string			$path
+	 * @param	string			$route
+	 * @param	integer			$modified
+	 * @param	integer			$start
+	 * @param	integer			$records
+	 * @param	integer			$import
+     * @return  object|array
 	 */
 	public function get_skus_modified( $path, $route, $modified, $start, $records, $import = 0 ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Path[' . $path . '] Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']' ); }
@@ -1483,8 +1477,8 @@ final class Eskimo_REST {
 	/**
 	 * Import SKUs by product
 	 *
-	 * @param 	array $products
-	 * @return 	array
+	 * @param 	array 			$api_products
+     * @return  object|array
 	 */	
 	protected function get_skus_product_import( $api_products ) {
 		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1510,8 +1504,8 @@ final class Eskimo_REST {
     /**
      * Get remote API SKU by product ID
      *
-     * @param   string  $id     default ''
-     * @return  boolean
+     * @param   string  		$id
+     * @return  object|array
      */
     public function get_skus_specific_code( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': SKU ID[' . $id . ']' ); }
@@ -1550,9 +1544,9 @@ final class Eskimo_REST {
     /**
      * Get remote API SKUs by ID
      *
-     * @param   string  $id     default ''  
-     * @param   integer $import default true
-     * @return  boolean
+     * @param   string  		$id
+     * @param   integer 		$import default true
+     * @return  object|array
      */
     public function get_skus_specific_ID( $id, $import = true ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . '] Import[' . (int) $import . ']' ); }
@@ -1591,9 +1585,8 @@ final class Eskimo_REST {
     /**
      * Get remote API SKUs by ID
      *
-     * @param   string  $id     default ''  
-     * @param   integer $import default true
-     * @return  boolean
+     * @param   string  		$prod_id  
+     * @return  object|array
      */
     public function get_skus_product_ID( $prod_id = '' ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Prod ID[' . $prod_id . ']' ); }
@@ -1630,9 +1623,10 @@ final class Eskimo_REST {
 
     /**
      * Get remote API product image links
-     * - Not yet impemented
-     * 
-     * @return  boolean
+	 * 
+	 * @param	integer			$start
+	 * @param	integer			$records
+     * @return  object|array
      */
     public function get_image_links_all( $start = 1, $records = 100) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
@@ -1681,9 +1675,10 @@ final class Eskimo_REST {
 
     /**
      * Get remote API product images
-     * - not yet implemented
      * 
-     * @return  boolean
+	 * @param	integer			$start
+	 * @param	integer			$records
+     * @return  object|array
      */
     public function get_images_all( $start = 1, $records = 100 ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
@@ -1737,12 +1732,11 @@ final class Eskimo_REST {
 
     /**
      * Get remote API Tax Codes optionally by ID
-     * - not yet implemented
      *
-     * @param   string  $id     default ''
-     * @return  boolean
+     * @param   string  		$id
+     * @return  object|array
      */
-    public function get_tax_codes( $id = '' ) {
+    public function get_tax_codes( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
         // Get remote data
@@ -1768,9 +1762,8 @@ final class Eskimo_REST {
 
     /**
      * Get remote API shops
-     * - not yet implemented
      *
-     * @return boolean
+     * @return  object|array
      */
     public function get_shops_all() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -1803,12 +1796,11 @@ final class Eskimo_REST {
 
     /**
      * Get remote API product images
-     * - not yet implemented
      *
-     * @param   string  $id     default ''
-     * @return  boolean
+     * @param   string  		$id
+     * @return  object|array
      */
-    public function get_shops_specific_ID( $id = '' ) {
+    public function get_shops_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
         // Test Options
@@ -1849,8 +1841,8 @@ final class Eskimo_REST {
 	/**
 	 * Stock adjustments at SKU level
 	 *
-	 * @param	string	$path
-	 * @return 	boolean|WP_Error
+	 * @param	string			$path
+     * @return  object|array
 	 */
 	protected function set_stock_adjust( $path ) {
 
@@ -1867,9 +1859,9 @@ final class Eskimo_REST {
 	/**
 	 * Generate the modified from time
 	 *
-	 * @param	string	$route
-	 * @param	integer	$modified
-	 * @return 	string|object	WP_Error if failed
+	 * @param	string			$route
+	 * @param	integer			$modified
+     * @return  object|array
 	 */
 	protected function get_modified_time( $route, $modified ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Modified[' . $modified . ']' ); }
@@ -1926,7 +1918,7 @@ final class Eskimo_REST {
      * Log API Error
      *
 	 * @param   string  $error
-	 * @return WP_Error
+     * @return  object
      */
     protected function api_error( $error ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']' ); }
@@ -1934,7 +1926,9 @@ final class Eskimo_REST {
     }
 
     /**
-     * Log API Connection Error
+	 * Log API Connection Error
+	 * 
+     * @return  object
      */
     protected function api_connect_error() {
 		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Connect To API', 'eskimo' ) );	}
@@ -1943,7 +1937,9 @@ final class Eskimo_REST {
 
     /**
      * Log API REST Process Error
-     */
+	 * 
+     * @return  object
+	 */
     protected function api_rest_error() {
 		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ) ); }
 		return new WP_Error( 'rest', __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ) ); 

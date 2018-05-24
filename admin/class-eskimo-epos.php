@@ -152,7 +152,7 @@ final class Eskimo_EPOS {
     /**
      * Retrieve EPOS access token
      *
-     * @return  boolean
+     * @return  boolean|object
      */
     protected function get_access_token() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
@@ -207,7 +207,8 @@ final class Eskimo_EPOS {
     /**
      * Curl API error
      *
-     * @param   object  cUrl instance
+	 * @param   object  cUrl instance
+	 * @return	boolean
      */ 
     public function api_error( $curl ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
