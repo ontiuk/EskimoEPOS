@@ -87,6 +87,8 @@ class Eskimo {
         $this->eskimo_rest  = new Eskimo_REST( $this->eskimo_api, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
         $this->eskimo_route = new Eskimo_Route( $this->eskimo_rest, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
    
+        $this->eskimo_wc  	= new Eskimo_EPOS_WC( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+
         $this->define_admin_hooks();
 		$this->define_public_hooks();
         $this->define_shared_hooks();
@@ -117,9 +119,10 @@ class Eskimo {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-i18n.php';
 
         /**
-		 *  A utility class for use throughout the plugin 
+		 *  Shared class for use throughout the plugin 
 		 */
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-utils.php';
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-wc.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area
@@ -195,7 +198,20 @@ class Eskimo {
     
         // Woocommerce Settings & Eskimo EPOS Integration
 		$this->loader->add_action( 'init', $this->eskimo_epos, 'init' );
-    }
+
+		// Woocommerce customers & orders 
+		$this->loader->add_action( 'woocommerce_created_customer', $this->eskimo_wc, 'customer_created', 99 );
+//		$this->loader->add_action( 'profile_update', $this->eskimo_wc, 'customer_updated', 99 );
+	
+		// Order Processing Tests - Actions
+		$order_status = get_option( 'eskimo_epos_order', '' );
+		if ( $this->debug ) { error_log( 'EPOS Order Status[' . $order_status . ']' ); } 
+		if ( $order_status === 'completed' ) {
+			$this->loader->add_action( 'woocommerce_order_status_completed', $this->eskimo_wc, 'order_status_completed' );
+		} else {
+			$this->loader->add_action( 'woocommerce_order_status_processing', $this->eskimo_wc, 'order_status_processing' );
+		}
+	}
 
 	/**
 	 * Run the loader to execute all of the hooks with WordPress

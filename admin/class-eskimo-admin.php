@@ -185,7 +185,17 @@ final class Eskimo_Admin {
                 'type'      => 'text',
                 'desc'      => '',
                 'id'        => 'eskimo_epos_password'
-            ],
+			],
+            'status'      	=> [
+                'name'      => __( 'Order Status', 'eskimo' ),
+				'type'      => 'select',
+				'options'       => [
+					'processing' => __( 'Processing', 'classworx' ),
+					'completed'	 => __( 'Completed', 'classworx' )
+				],
+                'desc'      => '',
+                'id'        => 'eskimo_epos_order'
+            ],			
             'epos_end'       => [
                  'type'     => 'sectionend',
                  'id'       => 'eskimo_section_epos_end'
