@@ -47,12 +47,13 @@ final class Eskimo_Cart {
 	 * @param   string    $version    Plugin debugging mode, default false
 	 */
 	public function __construct( $eskimo, $version ) {
-        if ( $debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
 		$this->eskimo       = $eskimo;
 		$this->version      = $version;
 		$this->debug        = ESKIMO_CART_DEBUG;
-    	$this->base_dir		= plugin_dir_url( __FILE__ ); 
+		$this->base_dir		= plugin_dir_url( __FILE__ ); 
+		
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 	}
     
     //----------------------------------------------
