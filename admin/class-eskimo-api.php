@@ -832,7 +832,7 @@ final class Eskimo_API {
      *
      * @return  array|boolean
      */
-    public function orders_fulfilment_methods() {
+    public function orders_methods() {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__  ); }
 
         // Get authentication parameters

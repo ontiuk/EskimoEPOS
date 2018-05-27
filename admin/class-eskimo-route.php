@@ -263,6 +263,17 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
 		] );
 
+        // Products: All
+        register_rest_route( $namespace, '/products-all', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_products_all' ],
+                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
+                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'args'                  => []
+            ] 
+        ] );
+
         // Products Modified: Select Products By Range And Last Modified Date
         register_rest_route( $namespace, '/products-modified/(?P<route>[\w]+)/(?P<modified>[\d]+)/?(?P<start>[\d]*)/?(?P<records>[\d]*)', [
             [
@@ -292,17 +303,6 @@ final class Eskimo_Route extends WP_REST_Controller {
                         }
                     ]    
                 ]
-            ] 
-        ] );
-
-        // Products: All
-        register_rest_route( $namespace, '/products-all', [
-            [
-                'methods'               => WP_REST_Server::READABLE,
-                'callback'              => [ $this, 'get_products_all' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
-                'args'                  => []
             ] 
         ] );
 
@@ -597,7 +597,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     	// WordPress REST Routes - SKUs
     	//----------------------------------------------
 
-        // SKUs: Select EskimoEPOS Products By Range
+        // SKUs: Select EskimoEPOS SKUs By Range
         register_rest_route( $namespace, '/skus/(?P<start>[\d]+)/?(?P<records>[\d]*)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
@@ -1157,7 +1157,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // Validate Range
         if ( $start === 0 ) { return; }
-        $records = ( $records === 0 || $records > 50 ) ? 25 : $records;
+        $records = ( $records === 0 || $records > 50 ) ? 50 : $records;
 
         // Response data
         $data = [
@@ -1251,7 +1251,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // Validate Range
         $start = ( $start === 0 ) ? 1 : $start;
-        $records = ( $records === 0 || $records > 250 ) ? 100 : $records;
+        $records = ( $records === 0 || $records > 250 ) ? 250 : $records;
 
         // Response data
         $data = [

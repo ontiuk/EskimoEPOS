@@ -1370,7 +1370,7 @@ final class Eskimo_WC {
 		$data = [
 			'order_id' 				=> $order_id,
 			'eskimo_customer_id' 	=> $epos_id,
-			'order_date' 			=> $order->get_date_completed()->date('c'),
+			'order_date' 			=> $order->get_date_created()->date('c'),
 			'invoice_amount' 		=> $order->get_total(),
 			'amount_paid' 			=> $order->get_total(),
 			'OrderType'				=> 2, //WebOrder,

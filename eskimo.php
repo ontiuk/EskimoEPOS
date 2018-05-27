@@ -4,7 +4,7 @@
  * Plugin Name:       EskimoEPOS
  * Plugin URI:        https://github.com/ontiuk
  * Description:       Connect to Eskimo EPOS via Eskimo API and resistered Eskimo Reporting / EPOS account
- * Version:           1.1.2
+ * Version:           1.1.3
  * Author:            Stephen Betley
  * Author URI:        https://on.tinternet.co.uk
  * License:           GPL-2.0+
@@ -46,12 +46,13 @@ if ( is_woocommerce_active() ) {
     /**
      * Currently Eskimo EPOS plugin version
      */
-    define( 'ESKIMO_VERSION', '1.1.2' );
+    define( 'ESKIMO_VERSION', '1.1.3' );
 
     /**
-     * Currently Eskimo debugging state
+     * Currently Eskimo debugging states
      */
     define( 'ESKIMO_DEBUG', true );
+    define( 'ESKIMO_CART_DEBUG', true );
 
     /**
      * The code that runs during plugin activation
