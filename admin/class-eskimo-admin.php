@@ -398,11 +398,9 @@ final class Eskimo_Admin {
         $eskimo_product_id  = get_post_meta( $post->ID, '_eskimo_product_id', true );
 
         // Translate to Category Web_ID
-        $cat_list = wp_get_post_terms( $post->ID, 'product_cat', [ 'fields' => 'ids' ] );
-        if ( $cat_list && !is_wp_error( $cat_list ) ) {
-            $web_prefix = get_option( 'eskimo_api_category' ); 
-            $eskimo_category_web_id = $web_prefix . $cat_list[0];
-        }
+        $cat_list 	= wp_get_post_terms( $post->ID, 'product_cat', [ 'fields' => 'ids' ] );
+		$web_prefix = get_option( 'eskimo_api_category' ); 
+		$eskimo_category_web_id = ( $cat_list && !is_wp_error( $cat_list ) ) ? $web_prefix . $cat_list[0] : '';
 
         // Get Product Web_ID
         $web_prefix = get_option( 'eskimo_api_product' ); 
@@ -488,7 +486,6 @@ final class Eskimo_Admin {
         // Category & Product IDs
         $eskimo_category_id = get_post_meta( $post_id, '_eskimo_category_id', true );
         $eskimo_product_id  = get_post_meta( $post_id, '_eskimo_product_id', true );
-        error_log( 'Cat ID[' . $eskimo_category_id . '] Prod ID[' . $eskimo_product_id . ']' );
         
         // Test Column
         switch ( $column ) {

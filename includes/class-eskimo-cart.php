@@ -52,8 +52,6 @@ final class Eskimo_Cart {
 		$this->version      = $version;
 		$this->debug        = ESKIMO_CART_DEBUG;
 		$this->base_dir		= plugin_dir_url( __FILE__ ); 
-		
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 	}
     
     //----------------------------------------------

@@ -10,9 +10,6 @@
  * @subpackage Eskimo/admin
  */
 
-// Curl class namespace
-use \Curl\Curl;
-
 /**
  * Get/Set API JSON data
  *
@@ -90,40 +87,82 @@ final class Eskimo_API {
     //----------------------------------------------
 
     /**
-     * Retrieve data from remote API
+     * Retrieve data from remote API via GET
      *
      * @param   string  		$api_url
-     * @param   array|boolean   $api_opts Default false   
      * @return  object|array
      */
-    protected function get_data( $api_url, $api_opts = false ) {
+    protected function get_data( $api_url ) {
 
         // Get access token & test for timeout
         $auth = get_transient( 'eskimo_access_authenticated' );
         $access_token = get_transient( 'eskimo_access_token' );
         if ( false === $auth ) { return false; }
 
-        // Initialise response
-        $curl = new Curl();
-    	$curl->setHeader( 'Content-Type', 'application/json' );
-        $curl->setHeader( 'Authorization', 'Bearer ' . $access_token );
-        $curl->get( $api_url, $api_opts );
-        
-		if ( $this->debug && $curl->error ) { 
-			error_log( 'CURL GET Error [' . print_r( $curl->error, true ) . ']' ); 
+		// GET Request
+		$request = wp_remote_get( $api_url,
+			[ 
+				'timeout' 		=> 60,
+				'user-agent'	=> 'Eskimo/1.0',
+            	'headers' => [
+					'Accept' 		=> 'application/json',
+					'Authorization'	=> 'Bearer ' . $access_token
+				]
+			]
+		);
+
+		// Check Error
+		if ( $this->debug && is_wp_error( $request ) ) {
+			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
 		}
 
-        return ( $curl->error ) ? false : $curl->response;    
+		// Return error or request response
+		return ( is_wp_error( $request ) ) ? false : wp_remote_retrieve_body( $request ); 
 	}
 
     /**
-     * Retrieve media from remote API
-     *
+	 * Retrieve media from remote API
+	 *
      * @param   string  		$api_url
-     * @param   array|boolean   $api_opts Default false   
+     * @param   array|boolean   $api_opts default false   
      * @return  object|array
      */
     protected function get_media( $api_url, $api_opts = false ) {
+
+        // Get access token & test for timeout
+        $auth = get_transient( 'eskimo_access_authenticated' );
+        $access_token = get_transient( 'eskimo_access_token' );
+        if ( false === $auth ) { return false; }
+
+		// GET Request
+		$request = wp_remote_get( $api_url,
+			[ 
+				'timeout' 		=> 12,
+				'user-agent'	=> 'Eskimo/1.0',
+            	'headers' => [
+					'Accept' 		=> 'application/jpg, application/png',
+					'Authorization'	=> 'Bearer ' . $access_token
+				]
+			]
+		);
+
+		// Check Error
+		if ( $this->debug && is_wp_error( $request ) ) {
+			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
+		}
+
+		// Return error or request response
+		return ( is_wp_error( $request ) ) ? false : wp_remote_retrieve_body( $request ); 
+    }
+
+    /**
+     * Send & Retrieve via remote API via POST
+     *
+     * @param   string  		$api_url
+     * @param   array|boolean   $api_opts default false   
+     * @return  object|array
+	 */    
+    protected function post_data( $api_url, $api_opts = false ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' URL[' . $api_url . ']' ); }
 
         // Get access token & test for timeout
@@ -131,46 +170,106 @@ final class Eskimo_API {
         $access_token = get_transient( 'eskimo_access_token' );
         if ( false === $auth ) { return false; }
 
-        // Initialise response
-        $curl = new Curl();
-        $curl->setHeader( 'Authorization', 'Bearer ' . $access_token );
-        $curl->get( $api_url, $api_opts );
-        
-		if ( $this->debug ) { error_log( 'CURL GET URL[' . $api_url . ']' ); }
+		// GET Request
+		$request = wp_remote_post( $api_url,
+			[ 
+				'timeout' 		=> 60,
+				'method'		=> 'POST',
+				'user-agent'	=> 'Eskimo/1.0',
+            	'headers' => [
+					'Content-Type' 	=> 'application/json',
+					'Accept' 		=> 'application/json',
+					'Authorization'	=> 'Bearer ' . $access_token
+				],
+				'body'	=> $api_opts
+			]
+		);
 
-		if ( $this->debug && $curl->error ) { 
-			error_log( 'CURL GET Error [' . print_r( $curl->error, true ) . ']' ); 
+		// Check Error
+		if ( $this->debug && is_wp_error( $request ) ) {
+			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
 		}
 
-        return ( $curl->error ) ? false : $curl->response;    
-    }
-    
+		// Return error or request response
+		return ( is_wp_error( $request ) ) ? false : wp_remote_retrieve_body( $request ); 
+	}
+	
     /**
-     * Send & Retrieve via remote API
+     * Send & Retrieve via remote API via POST
      *
      * @param   string  		$api_url
-     * @param   array|boolean   $api_opts Default false   
+     * @param   array|boolean   $api_opts default false   
      * @return  object|array
-     */    
-    protected function post_data( $api_url, $api_opts = false ) {
+	 */    
+    protected function post_raw( $api_url, $api_opts = false ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' URL[' . $api_url . ']' ); }
 
         // Get access token & test for timeout
         $auth = get_transient( 'eskimo_access_authenticated' );
         $access_token = get_transient( 'eskimo_access_token' );
         if ( false === $auth ) { return false; }
 
-        // Initialise response
-        $curl = new Curl();
-    	$curl->setHeader( 'Content-Type', 'application/json' );
-        $curl->setHeader( 'Authorization', 'Bearer ' . $access_token );
-        $curl->post( $api_url, $api_opts );
-        
-		if ( $this->debug && $curl->error ) { 
-			error_log( 'CURL POST Error [' . print_r( $curl->error, true ) . ']' ); 
+		// GET Request
+		$request = wp_remote_post( $api_url,
+			[ 
+				'timeout' 		=> 60,
+				'method'		=> 'POST',
+				'user-agent'	=> 'Eskimo/1.0',
+            	'headers' => [
+					'Content-Type' 	=> 'application/json',
+					'Accept' 		=> 'application/json',
+					'Authorization'	=> 'Bearer ' . $access_token
+				],
+				'body'	=> $api_opts
+			]
+		);
+
+		// Check Error
+		if ( $this->debug && is_wp_error( $request ) ) {
+			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
 		}
-		
-        return ( $curl->error ) ? false : $curl->response;    
-    }
+
+		// Return error or request response
+		return ( is_wp_error( $request ) ) ? false : $request; 
+	}
+
+    /**
+     * Send & Retrieve via remote API via POST
+     *
+     * @param   string  		$api_url
+     * @param   array|boolean   $api_opts default false   
+     * @return  object|array
+	 */    
+    protected function post_status( $api_url, $api_opts = false ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' URL[' . $api_url . ']' ); }
+
+        // Get access token & test for timeout
+        $auth = get_transient( 'eskimo_access_authenticated' );
+        $access_token = get_transient( 'eskimo_access_token' );
+        if ( false === $auth ) { return false; }
+
+		// GET Request
+		$request = wp_remote_post( $api_url,
+			[ 
+				'timeout' 		=> 10,
+				'method'		=> 'POST',
+            	'headers' => [
+					'Content-Type' 	=> 'application/json',
+					'Accept' 		=> 'application/json',
+					'Authorization'	=> 'Bearer ' . $access_token
+				],
+				'body'	=> $api_opts
+			]
+		);
+
+		// Check Error
+		if ( $this->debug && is_wp_error( $request ) ) {
+			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
+		}
+
+		// Return error or request response
+		return ( is_wp_error( $request ) ) ? false : wp_remote_retrieve_response_code( $request ); 
+	}
 
     //--------------------------------------------------
     //  Eskimo API Functions: Barcode ImpEX
@@ -194,7 +293,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -215,7 +314,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     //--------------------------------------------------
@@ -238,7 +337,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -258,7 +357,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
     
     /**
@@ -278,7 +377,7 @@ final class Eskimo_API {
     	$api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
    	
     /**
@@ -296,7 +395,7 @@ final class Eskimo_API {
         // Set remote url and get response
     	$api_url    = $oauth['domain'] . 'api/Categories/UpdateCartIDs';
     	$api_opts   = json_encode( $api_opts );
-        $api_data   = $this->post_data( $api_url, $api_opts );
+        $api_data   = $this->post_status( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : $api_data;
@@ -325,7 +424,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
     
     /**
@@ -345,7 +444,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
     
     //--------------------------------------------------
@@ -369,7 +468,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     /**
@@ -388,7 +487,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -409,7 +508,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -430,7 +529,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -451,7 +550,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     //--------------------------------------------------
@@ -477,7 +576,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
 	/**
@@ -498,7 +597,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     //--------------------------------------------------
@@ -523,7 +622,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
 	/**
@@ -544,7 +643,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     //--------------------------------------------------
@@ -569,7 +668,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
 	/**
@@ -590,7 +689,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -610,7 +709,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
 	/** 
@@ -632,7 +731,7 @@ final class Eskimo_API {
 		$api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     //--------------------------------------------------
@@ -657,7 +756,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
 	/** 
@@ -678,7 +777,7 @@ final class Eskimo_API {
 		$api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
 	/**
@@ -699,7 +798,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     //--------------------------------------------------
@@ -724,7 +823,7 @@ final class Eskimo_API {
 		$api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     /**
@@ -744,7 +843,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -764,7 +863,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -784,7 +883,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 	
     /**
@@ -804,7 +903,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -824,7 +923,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 	
     /**
@@ -843,7 +942,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     /**
@@ -864,7 +963,7 @@ final class Eskimo_API {
 		$api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
    /**
@@ -884,7 +983,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     //--------------------------------------------------
@@ -909,7 +1008,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -929,7 +1028,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
     
     /**
@@ -947,7 +1046,7 @@ final class Eskimo_API {
         // Set remote url and get response
         $api_url    = $oauth['domain'] . 'api/Products/UpdateCartIDs';
     	$api_opts   = json_encode( $api_opts );
-        $api_data   = $this->post_data( $api_url, $api_opts );
+        $api_data   = $this->post_status( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : $api_data;
@@ -973,7 +1072,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -993,7 +1092,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     //--------------------------------------------------
@@ -1018,7 +1117,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -1038,7 +1137,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     /**
@@ -1058,7 +1157,7 @@ final class Eskimo_API {
     	$api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     //--------------------------------------------------
@@ -1081,7 +1180,7 @@ final class Eskimo_API {
     	$api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     /**
@@ -1100,7 +1199,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url);
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
 	/**
@@ -1119,7 +1218,7 @@ final class Eskimo_API {
     	$api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
 	/**
@@ -1138,7 +1237,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url);
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     //--------------------------------------------------
@@ -1161,7 +1260,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -1181,7 +1280,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     //--------------------------------------------------
@@ -1206,7 +1305,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     //--------------------------------------------------
@@ -1231,7 +1330,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     /**
@@ -1252,7 +1351,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -1272,7 +1371,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     /**
@@ -1292,7 +1391,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     /**
@@ -1312,7 +1411,7 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
 	/**
@@ -1331,7 +1430,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
 	/**
@@ -1350,7 +1449,7 @@ final class Eskimo_API {
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
 	/**
@@ -1371,6 +1470,6 @@ final class Eskimo_API {
         $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : $api_data;
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 }

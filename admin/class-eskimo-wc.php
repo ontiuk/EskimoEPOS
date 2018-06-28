@@ -186,7 +186,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Category[' . count( $api_cat ) . ']' ); }
+        if ( $this->debug ) { error_log( 'Process Category[' . $api_cat->Eskimo_Category_ID . ']' ); }
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_category' ); 
@@ -561,6 +561,58 @@ final class Eskimo_WC {
 
         // OK, done
         return $result;
+	}
+
+    /**
+     * Get EskimoEPOS API products by category
+     *
+	 * @param   array	 		$api_data
+     * @return  object|array
+     */
+    public function get_products_new( $api_data ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+
+         // Validate API data
+        if ( empty( $api_data ) ) {
+            return $this->api_rest_error();
+        }
+
+        // Process data
+        if ( $this->debug ) { error_log( 'Process Products New[' . count( $api_data ) . ']' ); }
+
+        // Process products
+        $products = [];
+
+        // Get products list
+        foreach ( $api_data as $api_prod ) {
+
+            // Product Categories Only
+            if ( !preg_match( '/product$/', $api_prod->eskimo_category_id ) ) { continue; }
+
+            // Dodgy Title?
+            if ( empty( $api_prod->title ) ) {
+                if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' ); }
+                continue; 
+            }
+				
+			// Requires that the Eskimo Category has been imported
+            if ( empty( $api_prod->web_category_id ) || $api_prod->web_category_id === '0' ) { 
+                if ( $this->debug ) { error_log( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists Cat Web_ID' ); }
+                continue; 
+            }
+
+            // Requires that the Eskimo Product has NOT been imported
+            if ( !empty( $api_prod->web_id ) && $api_prod->web_id !== '0' ) { 
+                if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']' ); }
+                continue; 
+			}
+
+            // OK add products
+            $products[] =  $api_prod->eskimo_identifier;
+        }
+
+        // OK, done
+        return $products;
     }
 
     /**
@@ -578,7 +630,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Product[' . count( $api_prod ) . ']' ); }
+        if ( $this->debug ) { error_log( 'Process Product [' . $api_prod->eskimo_category_id . '] SKUs[' . count( $api_prod->sku ) . ']' ); }
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_product' ); 
@@ -658,7 +710,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Product[' . count( $api_prod ) . '] path[' . $path . ']' ); }
+        if ( $this->debug ) { error_log( 'Process Product SKUs[' . count( $api_prod->sku ) . '] path[' . $path . ']' ); }
 
         // Product Categories Only
         if ( !preg_match( '/product$/', $api_prod->eskimo_category_id ) ) { return false; }
@@ -831,7 +883,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Customer[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { error_log( 'Process Customer[' . $api_data->EmailAddress . ']' ); }
 
 		// Email exists?
 		$email = filter_var( $api_data->EmailAddress, FILTER_SANITIZE_EMAIL );

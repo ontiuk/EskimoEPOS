@@ -103,7 +103,7 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Category Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -143,13 +143,13 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
-        if ( $this->debug ) { error_log( 'Category Count[' . $api_count . ']' ); }
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { error_log( 'Cateory ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
 
-        // No API data?
-        if ( $api_count === 0 ) {
+		// No API data or invalid
+        if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
-		}
+        }
 
         if ( $this->debug ) { error_log( 'Cat[' . print_r( $api_data, true ) . ']' ); }
 
@@ -185,7 +185,7 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Child Category Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -245,7 +245,7 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Category Product Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
             
 		// No API data
@@ -255,7 +255,7 @@ final class Eskimo_REST {
 
         if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
 
-        // Process Woocommerce Import for Web_ID update
+        // Return data set
         return $api_data;
     }
 
@@ -287,7 +287,7 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Category Product Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -295,7 +295,7 @@ final class Eskimo_REST {
             return $this->api_error( 'No Results Returned' );
 		}
 
-        // Process Woocommerce Import
+        // Return data set
         return $api_data;
     }
 
@@ -331,7 +331,7 @@ final class Eskimo_REST {
         // Validate Opts
         $api_opts = [];
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
-        $api_opts['RecordCount']    = ( $records === 0 || $records > 100 ) ? $api_defaults['RecordCount'] : $records;
+        $api_opts['RecordCount']    = ( $records === 0 || $records > 50 ) ? $api_defaults['RecordCount'] : $records;
         if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
 
         // Get remote data
@@ -343,7 +343,7 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
 
 		// No API data
@@ -366,9 +366,81 @@ final class Eskimo_REST {
     /**
      * Get remote API products
      * 
-     * @param   integer $start      default 1  
-     * @param   integer $records    default 20
-     * @param   string  $timestmp   default 2000-01-01
+     * @param   string  $route 
+     * @param   integer $created 
+     * @return  boolean
+     */
+    public function get_products_new( $route, $created ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Created[' . $created . ']' ); }
+
+		// Pre-Sanitize
+		$route 		= sanitize_text_field( $route );
+		$created	= absint( $created );
+
+     	// Test connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+		// Get modified from timeframe
+		$timestamp_from = ( $route === 'all' ) ? 0 : $this->get_modified_time( $route, $created );
+		if ( is_wp_error( $timestamp_from ) ) { return $timestamp_from; }
+
+        // Validate Opts
+        $api_opts = [];
+        $api_opts['StartPosition']  = 1;
+        $api_opts['RecordCount']    = 100;
+        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+
+		// Set timestamp		
+		if ( $timestamp_from !== 0 ) {
+			$api_opts['TimeStampFrom']	=  $timestamp_from;				
+    	    if ( $this->debug ) { error_log( 'TimeStamp[' . $api_opts['TimeStampFrom'] . ']' ); }
+		}
+
+        // Batched Results
+        $results = [];
+
+        // Iterate batched results
+        do { 
+    
+            // Get remote data
+            $api_data = $this->api->products_all( $api_opts );
+
+			// Validate API data
+			if ( false === $api_data ) {
+				return $this->api_rest_error();
+			}
+
+            // OK process data
+            $api_count =  $this->api_count( $api_data );
+            if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+
+            // Nothing to do here...
+            if ( $api_count === 0 ) { break; }
+
+            // Process data
+            if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+
+            // Process Woocommerce Import
+            $api_products = $this->wc->get_products_new( $api_data );
+
+            // Update loop position
+            $api_opts['StartPosition'] += $api_opts['RecordCount'];
+
+			// Log products for update
+			if ( is_wp_error( $api_products ) || empty( $api_products ) ) { continue; }
+			foreach ( $api_products as $result ) { $results[] = $result; }
+
+        } while ( true );
+
+        // Return results for Web_ID update
+        return $results;
+	}
+
+    /**
+     * Get remote API products
+     * 
      * @return  boolean
      */
     public function get_products_all() {
@@ -400,7 +472,7 @@ final class Eskimo_REST {
 			}
 
             // OK process data
-            $api_count = count( $api_data );
+            $api_count =  $this->api_count( $api_data );
             if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
 
             // Nothing to do here...
@@ -479,7 +551,7 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStamp [' . $api_opts['TimeStampFrom'] . ']' ); }
 
 		// No API data
@@ -529,11 +601,11 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
-        if ( $this->debug ) { error_log( 'Product ID [' . $id . '] Count[' . $api_count . ']' ); }
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { error_log( 'Product ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
 
-		// No API data
-        if ( $api_count === 0 || ! is_object( $api_data ) ) {
+		// No API data or invalid
+        if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
@@ -582,11 +654,11 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
-        if ( $this->debug ) { error_log( 'Product ID [' . $id . '] Path [' . $path . '] Count[' . $api_count . ']' ); }
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { error_log( 'Product ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
 
 		// No API data or invalid
-        if ( $api_count === 0 || ! is_object( $api_data ) ) {
+        if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
@@ -637,7 +709,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Category Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -671,7 +743,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Category Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -710,9 +782,14 @@ final class Eskimo_REST {
             return $this->api_rest_error();
         }
 
-        // OK process data
-        $api_count = count( $api_response );
-		if ( $this->debug ) { error_log( 'Child EPOS Category Count[' . $api_count . ']' );	}
+		// OK process data
+        $api_has_status = $this->api_has_status( $api_response );
+        if ( $this->debug ) { error_log( 'EPOS Categories UPD Status [' . $api_response . '][' . (int)$api_has_status . ']' ); }
+
+		// No API data or invalid
+        if ( false === $api_has_status ) {
+            return $this->api_error( 'Bad Process Update' );
+        }
 
         // Default OK
         return true;
@@ -774,7 +851,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
 
 		// No API data
@@ -813,13 +890,13 @@ final class Eskimo_REST {
             return $this->api_rest_error();
         }
 
-        // OK process data
-        $api_count = count( $api_response );
-        if ( $this->debug ) { error_log( 'EPOS Product Count[' . $api_count . ']' ); }
+		// OK process data
+        $api_has_status = $this->api_has_status( $api_response );
+        if ( $this->debug ) { error_log( 'EPOS Product UPD Status [' . $api_response . '][' . (int)$api_has_status . ']' ); }
 
-		// No API data
-        if ( $api_count === 0 ) {
-            return $this->api_error( 'No Results Returned' );
+		// No API data or invalid
+        if ( false === $api_has_status ) {
+            return $this->api_error( 'Bad Process Update' );
         }
 
         // Default OK
@@ -858,11 +935,11 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
-		if ( $this->debug ) { error_log( 'Customer Count[' . $api_count . ']' ); }
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { error_log( 'Customer ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
 
-		// No API data
-        if ( $api_count === 0 ) {
+		// No API data or invalid
+        if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
@@ -901,7 +978,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Customer Count[' . $api_count . ']' ); }
 
         // Process return
@@ -943,11 +1020,11 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
-		if ( $this->debug ) { error_log( 'Customer Count[' . $api_count . ']' ); }
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { error_log( 'Cateory ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
 
-		// No API data
-        if ( $api_count === 0 ) {
+		// No API data or invalid
+        if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
@@ -990,11 +1067,11 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
-		if ( $this->debug ) { error_log( 'Customer Count[' . $api_count . ']' ); }
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { error_log( 'Customer ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
 
-		// No API data
-        if ( $api_count === 0 ) {
+		// No API data or invalid
+        if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
@@ -1024,7 +1101,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Titles Count[' . $api_count . ']' ); }
 
         // Process return
@@ -1063,11 +1140,11 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
-		if ( $this->debug ) { error_log( 'Order Count[' . $api_count . ']' ); }
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { error_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
 
-		// No API data
-        if ( $api_count === 0 ) {
+		// No API data or invalid
+        if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
@@ -1108,11 +1185,11 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
-		if ( $this->debug ) { error_log( 'Orders Count[' . $api_count . ']' ); }
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { error_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
 
-		// No API data
-        if ( $api_count === 0 ) {
+		// No API data or invalid
+        if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
@@ -1142,7 +1219,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Order Methods Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -1195,7 +1272,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Orders Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -1247,7 +1324,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Orders Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -1325,7 +1402,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Orders Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -1386,7 +1463,7 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'SKU Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
 
 		// No API data
@@ -1459,7 +1536,7 @@ final class Eskimo_REST {
 		}
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'SKU Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
 
 		// No API data
@@ -1529,7 +1606,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Product SKU Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -1570,7 +1647,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'Product SKU Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -1588,7 +1665,7 @@ final class Eskimo_REST {
      * @param   string  		$prod_id  
      * @return  object|array
      */
-    public function get_skus_product_ID( $prod_id = '' ) {
+    public function get_skus_product_ID( $prod_id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Prod ID[' . $prod_id . ']' ); }
 
         // Test Product
@@ -1610,7 +1687,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
         if ( $this->debug ) { error_log( 'SKU Count[' . $api_count . ']' ); }
         
         // Process Woocommerce Import
@@ -1661,7 +1738,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Image Links Count[' . $api_count . ']' );	}
 
 		// No API data
@@ -1714,7 +1791,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Image Links Count[' . $api_count . ']' );	}
 
 		// No API data
@@ -1748,7 +1825,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Tax Code Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -1782,7 +1859,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Shopss Count[' . $api_count . ']' ); }
 
 		// No API data
@@ -1822,7 +1899,7 @@ final class Eskimo_REST {
         }
 
         // OK process data
-        $api_count = count( $api_data );
+        $api_count = $this->api_count( $api_data );
 		if ( $this->debug ) { error_log( 'Shops Count[' . $api_count . ']' );	}
 
 		// No API data
@@ -1908,6 +1985,91 @@ final class Eskimo_REST {
 		}
 
 		return $dt->format( 'c' );
+	}
+
+	/**
+	 * Generate the created datetime
+	 *
+	 * @param	string			$route
+	 * @param	integer			$created
+     * @return  object|array
+	 */
+	protected function get_created_time( $route, $created ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Created[' . $created . ']' ); }
+		
+		// Valid routes
+		$routes = [ 'hours', 'days', 'weeks', 'months', 'timestamp' ];
+
+		// Test routes
+		if ( ! in_array( $route, $routes ) ) { 
+            return $this->api_error( 'Invalid Route[' . $route . ']' );
+		}
+
+		// Set modified from timeframe
+		$dt = new DateTime;
+		$dt->setTimestamp( current_time( 'timestamp' ) );
+		switch( $route ) {
+			case 'hours':
+				$date_interval = 'PT' . $created . 'H';
+				$dt->sub( new DateInterval( $date_interval ) );
+				break;
+			case 'days':
+				$date_interval = 'P' . $created . 'D';
+				$dt->sub( new DateInterval( $date_interval ) );
+				break;
+			case 'weeks':
+				$date_interval = 'P' . $created . 'W';
+				$dt->sub( new DateInterval( $date_interval ) );
+				break;
+			case 'months':
+				$date_interval = 'P' . $created . 'M';
+				$dt->sub( new DateInterval( $date_interval ) );
+				break;
+			case 'timestamp':
+				$dt->setTimestamp( $created ); 
+				break;
+		}
+
+		return $dt->format( 'Y-m-d H:i:s' );
+	}
+	
+    //----------------------------------------------
+    // API Functions
+    //----------------------------------------------
+
+	/**
+	 * Test API return
+	 *
+	 * @param	string	$api_data
+	 * @return 	boolean|object
+	 */	
+	private function api_has_data( $api_data ) {
+		return ( empty( $api_data ) || ! is_object( $api_data ) ) ? false : $api_data; 
+	}
+
+	/**
+	 * Test API return
+	 *
+	 * @param	object	$api_data
+	 * @return 	boolean
+	 */	
+	private function api_has_status( $api_status ) {
+		return ( $api_status === 200 ) ? true : false;
+	}
+
+	/**
+	 * Count an object
+	 *
+	 * @param 	object|array $api_data
+	 * @return 	integer
+	 */
+	private function api_count( $api_data ) {
+
+		// first check
+		if ( empty( $api_data ) ) { return 0; }
+
+		// just do a quick count
+		return ( is_array( $api_data ) ) ? count( $api_data ) : count( (array) $api_data );
 	}
 
     //----------------------------------------------
