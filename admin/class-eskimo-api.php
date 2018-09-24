@@ -272,6 +272,202 @@ final class Eskimo_API {
 	}
 
     //--------------------------------------------------
+    //  Eskimo API Functions: Addresses ImpEX
+    //--------------------------------------------------
+	
+    /**
+	 * Insert remote EskimoEPOS Address information
+	 * - Requires customer ID and Address Reference
+     *
+     * @param   string   		$cust_id 
+     * @param   string   		$addr_ref 
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */       	
+   	public function addresses_insert( $cust_id, $addr_ref, $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' ' . $cust_id . ' ' . $addr_ref ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Addresses/Insert/' . $cust_id . '/' . $addr_ref;
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );	
+	}
+
+    /**
+	 * Update remote EskimoEPOS Address information
+	 * - Requires customer ID and Address Reference
+     *
+     * @param   string   		$cust_id 
+     * @param   string   		$addr_ref 
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */       	
+   	public function addresses_update( $cust_id, $addr_ref, $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' ' . $cust_id . ' ' . $addr_ref ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Addresses/Update/' . $cust_id . '/' . $addr_ref;
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );	
+	}
+
+    /**
+	 * Search remote EskimoEPOS Address information
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */       	
+   	public function addresses_search( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Addresses/Search';
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );	
+	}
+
+    /**
+	 * Return remote EskimoEPOS Address description based on postcode
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */       	
+   	public function addresses_validation_summary( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Addresses/AddressValidationSummary';
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );	
+	}
+
+   /**
+	 * Return remote EskimoEPOS Address description based on postcode
+     *
+     * @param   string   		$id 
+     * @return  array|boolean
+     */
+   	public function addresses_validation_detailed( $id ) {
+		if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Addresses/AddressValidationDetailed/' . $id;
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
+    //--------------------------------------------------
+    //  Eskimo API Functions: Amazon ImpEX
+    //--------------------------------------------------
+
+    /**
+     * Download remote EskimoEPOS Amazon Orders not yet in Eskimo system
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */       	
+   	public function amazon_download_orders( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Amazon/DownloadOrders';
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    /**
+     * Update remote EPOS stock levels of all FBA products
+     *
+     * @return  array|boolean
+     */
+   	public function amazon_download_FBA_inventory() {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get api response
+        $api_url    = $oauth['domain'] . 'api/Amazon/DownloadFBAInventory';
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    /**
+     * Retreives order info from Amazon
+     *
+     * @return  array|boolean
+     */
+   	public function amazon_get_order_info() {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' ID: ' . $id ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get api response
+        $api_url    = $oauth['domain'] . 'api/Amazon/GetOrderInfo/' . $id;
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+		
+    /**
+     * Remote EPOS Amazon Product Info
+     *
+     * @return  array|boolean
+     */
+   	public function amazon_upload_product_info() {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get api response
+        $api_url    = $oauth['domain'] . 'api/Amazon/UploadProductInfo';
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    //--------------------------------------------------
     //  Eskimo API Functions: Barcode ImpEX
     //--------------------------------------------------
 
@@ -297,7 +493,7 @@ final class Eskimo_API {
     }
 
     /**
-     * Apply remote EskimoEPOS barcode action
+     * Apply remote EskimoEPOS note of an action for a particular barcode 
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -429,6 +625,7 @@ final class Eskimo_API {
     
     /**
      * Get product list by specific EPOS category ID
+     * - Deprecated: Use products_specific_id
      *
      * @param   string   		$id 
      * @return  array|boolean
@@ -446,13 +643,38 @@ final class Eskimo_API {
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
-    
+
+    //--------------------------------------------------
+    //  Eskimo API Functions: Countries ImpEX
+    //--------------------------------------------------
+
+    /**
+     * Retrieve a list of countries
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+   	public function countries_search( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/Countries/Search';	
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
     //--------------------------------------------------
     //  Eskimo API Functions: Customers ImpEX
     //--------------------------------------------------
 
     /**
-     * Get EPOS customer data by ID
+     * Get specific EPOS customer data by ID
      *
      * @param   string  		$id
      * @return  array|boolean
@@ -491,7 +713,7 @@ final class Eskimo_API {
     }
 
     /**
-     * Get EPOS customer data 
+     * Get EPOS customer data by matching records
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -504,6 +726,27 @@ final class Eskimo_API {
 
         // Set remote url and get response
     	$api_url    = $oauth['domain'] . 'api/Customers/Search';	
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
+   /**
+     * Get EPOS customer data for export
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+   	public function customers_customers_dump( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Customers/CustomersDump';	
     	$api_opts   = json_encode( $api_opts ); 
         $api_data   = $this->post_data( $api_url, $api_opts );
 
@@ -559,7 +802,7 @@ final class Eskimo_API {
 
     /**
 	 * Insert/Update remote EPOS external category and Item Specific information
-	 *  - Used with  category information from eBay or Amazon
+	 *  - Used with category information from eBay or Amazon
 	 *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -598,6 +841,73 @@ final class Eskimo_API {
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
+    //--------------------------------------------------
+    //  Eskimo API Functions: Gift Cards ImpEX
+    //--------------------------------------------------
+
+    /**
+     * Retrieve EskimoEPOS gift card balance
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+    public function gift_cards_balance_enquiry( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/GiftCards/BalanceEnquiry';	
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    /**
+     * Remote EskimoEPOS gift card update
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+    public function gift_cards_balance_increment( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/GiftCards/Increment';	
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    /**
+     * Remote EskimoEPOS gift card redeem
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+    public function gift_cards_balance_redeem( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/GiftCards/Redeem';	
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     //--------------------------------------------------
@@ -605,7 +915,7 @@ final class Eskimo_API {
     //--------------------------------------------------
 
     /**
-     * Retrieve EskimoEPOS product image links
+     * Retrieve EskimoEPOS product image links by batch
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -631,7 +941,7 @@ final class Eskimo_API {
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
-    public function image_links_cart_ID( $api_opts ) {
+    public function image_links_update_cart_ID( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
 
         // Get authentication parameters
@@ -651,7 +961,7 @@ final class Eskimo_API {
     //--------------------------------------------------
 
     /**
-     * Retrieve remote EskimoEPOS product images
+     * Retrieve remote EskimoEPOS product images objects (max 10,000)
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -677,7 +987,7 @@ final class Eskimo_API {
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
-    public function images_cart_ID( $api_opts ) {
+    public function images_update_cart_ID( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
 
         // Get authentication parameters
@@ -706,6 +1016,26 @@ final class Eskimo_API {
 
         // Set remote url and get response
         $api_url    = $oauth['domain'] . 'api/Images/ImageData/' . $id;	
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    /**
+     * Retrieve image data for a singular image as base64
+     *
+     * @param   integer   		$id 
+     * @return  array|boolean
+     */
+    public function images_as_base64( $id ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/Images/AsBase64/' . $id;	
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -802,6 +1132,31 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
+    //  Eskimo API Functions: Operators ImpEX
+    //--------------------------------------------------
+
+    /**
+     * retrieve remote EskimoEPOS list of Operators (or Clerks)
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+   	public function operators_search( $api_opts ) {
+		if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+   
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Operators/Search';
+    	$api_opts   = json_encode( $api_opts ); 
+		$api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
+    //--------------------------------------------------
     //  Eskimo API Functions: Orders ImpEX
     //--------------------------------------------------
 
@@ -827,7 +1182,27 @@ final class Eskimo_API {
 	}
 
     /**
-     * Retrieves a singular order class for a specific customer Order ID
+     * Retrieves a list of status codes that an order can be in.
+     *
+     * @return  array|boolean
+     */
+    public function orders_status_codes() {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/Orders/StatusCodes';	
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    /**
+	 * Retrieves a singular order class for a specific customer Order ID
+	 * - Deprecated: No longer part of the EskimoEPOS API
      *
      * @param   integer   		$order_id 
      * @return  array|boolean
@@ -848,6 +1223,7 @@ final class Eskimo_API {
 
     /**
      * Retrieves a singular order class for a specific mail order Order ID
+	 * - Deprecated: No longer part of the EskimoEPOS API
      *
      * @param   integer   		$order_id 
      * @return  array|boolean
@@ -868,6 +1244,7 @@ final class Eskimo_API {
 
     /**
      * Retrieves a singular order class for a specific customer Order ID
+	 * - Deprecated: No longer part of the EskimoEPOS API
      *
      * @param   integer   		$order_id 
      * @return  array|boolean
@@ -908,6 +1285,7 @@ final class Eskimo_API {
 
     /**
      * Retrieves a singular order for a specific eBay Order ID
+	 * - Deprecated: No longer part of the EskimoEPOS API
      *
      * @param   integer   		$order_id 
      * @return  array|boolean
@@ -931,7 +1309,7 @@ final class Eskimo_API {
      *
      * @return  array|boolean
      */
-    public function orders_methods() {
+    public function orders_fulfilment_methods() {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__  ); }
 
         // Get authentication parameters
@@ -946,7 +1324,7 @@ final class Eskimo_API {
 	}
 
     /**
-     * EskimoEPOS order search: Customer ID
+     * EskimoEPOS order search by criteria
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -968,6 +1346,7 @@ final class Eskimo_API {
 
    /**
      * Retrieves a singular order for a specific Amazon Order ID
+	 * - Deprecated: No longer part of the EskimoEPOS API
      *
      * @param   integer   		$order_id 
      * @return  array|boolean
@@ -1045,6 +1424,92 @@ final class Eskimo_API {
 
         // Set remote url and get response
         $api_url    = $oauth['domain'] . 'api/Products/UpdateCartIDs';
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_status( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : $api_data;
+    }
+
+    //--------------------------------------------------
+    //  Eskimo API Functions: Sales ImpEX
+    //--------------------------------------------------
+
+    /**
+     * Retrieve remote EPOS store receipt
+     *
+     * @return  array|boolean
+     */
+   	public function sales_retrieve_sale( $store, $till, $receipt ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Sales/RetrieveSale/' . $store . '/' . $till . '/' . $receipt;
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
+    /**
+     * Insert a sale into the Eskimo system.
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+    public function sales_insert_sale( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/Sales/InsertSale';
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_status( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : $api_data;
+    }
+
+    /**
+     * Retrieve remote Eskimo list of sales based on the search criteria
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+    public function sales_search( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/Sales/Search';
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_status( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : $api_data;
+    }
+
+    /**
+     * Retrieve remote Eskimo list of sales channels
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+    public function sales_channels( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/Sales/Channels';
     	$api_opts   = json_encode( $api_opts );
         $api_data   = $this->post_status( $api_url, $api_opts );
 
@@ -1352,6 +1817,27 @@ final class Eskimo_API {
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
+    /**
+     * Get EskimoEPOS Till menu products
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+    public function till_menu_products_dump( $api_opts ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/TillMenu/ProductsDump';
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     /**
@@ -1395,7 +1881,8 @@ final class Eskimo_API {
 	}
 
     /**
-     * Get EskimoEPOS Till menu functions
+	 * Get EskimoEPOS Till menu functions
+	 * Deprecated: No longer part of the EskimoEPOS API
      *
      * @return  array|boolean
      */

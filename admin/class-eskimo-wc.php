@@ -1421,12 +1421,12 @@ final class Eskimo_WC {
 		// Set up data
 		$data = [
 			'order_id' 				=> $order_id,
+			'ExternalIdentifier'	=> $epos_ei,
+			'OrderType'				=> 2, //WebOrder
 			'eskimo_customer_id' 	=> $epos_id,
 			'order_date' 			=> $order->get_date_created()->date('c'),
-			'invoice_amount' 		=> $order->get_total(),
-			'amount_paid' 			=> $order->get_total(),
-			'OrderType'				=> 2, //WebOrder,
-			'ExternalIdentifier'	=> $epos_ei
+			'invoice_amount' 		=> number_format( $order->get_total() - $order->get_total_tax(), wc_get_price_decimals(), '.', '' ),
+			'amount_paid' 			=> $order->get_total()
 		];
 
 		// Set up order items
@@ -1442,7 +1442,7 @@ final class Eskimo_WC {
 			$item['sku_code'] 				= $product->get_sku();
 			$item['qty_purchased']			= $order_item->get_quantity();
 			$item['unit_price']				= $product->get_price();
-			$item['line_discount_amount']	= $order_item->get_total() - $order_item->get_subtotal();
+			$item['line_discount_amount']	= number_format( $order_item->get_subtotal() - $order_item->get_total(), wc_get_price_decimals(), '.', '' );
 			$item['item_note']				= null;			
 			$item['item_description']		= null;			
 			$items[] = $item;

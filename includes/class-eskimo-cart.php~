@@ -119,7 +119,7 @@ final class Eskimo_Cart {
     //----------------------------------------------
 
 	/**
-	 * Trigger automatic export of user to EskimoEPOS on order creation
+	 * Trigger automatic export of order data to EskimoEPOS on order creation
 	 *
 	 * @param integer $order_id
 	 */

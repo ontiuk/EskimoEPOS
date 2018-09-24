@@ -1202,7 +1202,7 @@ final class Eskimo_REST {
      *
      * @return  object|array
      */
-    public function get_orders_methods() {
+    public function get_orders_fulfilment_methods() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
         // Test connection

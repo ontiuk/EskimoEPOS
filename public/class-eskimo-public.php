@@ -50,13 +50,13 @@ class Eskimo_Public {
 	 * Register the stylesheets for the public-facing side of the site
 	 */
 	public function enqueue_styles() {
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/eskimo-public.css', [], $this->version, 'all' );
+		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/css/eskimo-public.css', [], $this->version, 'all' );
 	}
 
 	/**
 	 * Register the JavaScript for the public-facing side of the site
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/eskimo-public.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/eskimo-public.js', array( 'jquery' ), $this->version, false );
 	}
 }
