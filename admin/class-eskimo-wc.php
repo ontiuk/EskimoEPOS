@@ -27,21 +27,21 @@ final class Eskimo_WC {
 	private $eskimo;
 
 	/**
-	 * The version of this plugin
+	 * Plugin version
 	 *
 	 * @var     string    $version    The current version of this plugin
 	 */
 	private $version;
 
     /**
-	 * Is the plugin in debug mode 
+	 * Plugin debug mode 
 	 *
 	 * @var     bool    $debug    Plugin is in debug mode
 	 */
 	private $debug;
 
 	/**
-	 * Is the plugin base directory 
+	 * Plugin base directory 
 	 *
 	 * @var      string    $base_dir  string path for the plugin directory 
 	 */
@@ -51,17 +51,17 @@ final class Eskimo_WC {
 	 * Initialize the class and set its properties
 	 *
 	 * @param   string    $eskimo     The name of this plugin
-	 * @param   string    $version    The version of this plugin
-	 * @param   string    $version    Plugin debugging mode, default false
 	 */
-	public function __construct( $eskimo, $version, $debug = false ) {
-        if ( $debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+	public function __construct( $eskimo ) {
+   
+		// Set up class settings
+		$this->eskimo   	= $eskimo;
+   		$this->version  	= ESKIMO_VERSION;
+		$this->debug    	= ESKIMO_DEBUG;
+	 	$this->base_dir		= plugin_dir_url( __FILE__ ); 
 
-		$this->eskimo   = $eskimo;
-		$this->version  = $version;
-		$this->debug    = $debug;
-    	$this->base_dir	= plugin_dir_url( __FILE__ ); 
-    }
+		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+	}
 
     //----------------------------------------------
     // Woocommerce Category Import
@@ -95,7 +95,7 @@ final class Eskimo_WC {
         foreach ( $api_data as $api_cat ) {
 
             // Product Categories Only... Change depending on implementation
-            if ( !preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { continue; }
+            if ( ! preg_match( '/product$/i', $api_cat->Eskimo_Category_ID ) ) { continue; }
             
             // Already with a Web_ID so pre-existing in WC & Temp 'zero' reset
             if ( !empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) {
@@ -174,7 +174,7 @@ final class Eskimo_WC {
     /**
      * Get EskimoEPOS category by ID & import to Woocommerce
      *
-     * @param   array   		$api_data
+     * @param   array   		$api_cat
 	 * @return	object|array
      */
     public function get_categories_specific_ID( $api_cat ) {
@@ -193,7 +193,7 @@ final class Eskimo_WC {
         if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
 
         // Product Categories Only
-        if ( !preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { return false; }
+        if ( ! preg_match( '/product$/i', $api_cat->Eskimo_Category_ID ) ) { return false; }
             
         // Already with a Web_ID so pre-existing in WC
         if ( ! empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) { 
@@ -253,7 +253,7 @@ final class Eskimo_WC {
         foreach ( $api_data as $api_cat ) {
 
             // Product Categories Only
-            if ( !preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { continue; }
+            if ( ! preg_match( '/product$/i', $api_cat->Eskimo_Category_ID ) ) { continue; }
             
             // Already with a Web_ID so pre-existing in WC
             if ( !empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) { 
@@ -325,7 +325,7 @@ final class Eskimo_WC {
         foreach ( $api_data as $api_cat ) {
 
             // Product Categories Only
-            if ( ! preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { continue; }
+            if ( ! preg_match( '/product$/i', $api_cat->Eskimo_Category_ID ) ) { continue; }
             
             // Already with a Web_ID so pre-existing in WC
             if ( empty( $api_cat->Web_ID ) ) { 
@@ -417,7 +417,7 @@ final class Eskimo_WC {
         foreach ( $api_data as $api_cat ) {
 
             // Product Categories Only
-            if ( ! preg_match( '/product$/', $api_cat->Eskimo_Category_ID ) ) { continue; }
+            if ( ! preg_match( '/product$/i', $api_cat->Eskimo_Category_ID ) ) { continue; }
             
             // Add cat
             $categories[] = $api_cat;
@@ -489,7 +489,7 @@ final class Eskimo_WC {
         foreach ( $api_data as $api_prod ) {
 
             // Product Categories Only
-            if ( !preg_match( '/product$/', $api_prod->eskimo_category_id ) ) { continue; }
+            if ( ! preg_match( '/product$/i', $api_prod->eskimo_category_id ) ) { continue; }
 
             // Dodgy Title?
             if ( empty( $api_prod->title ) ) {
@@ -544,6 +544,12 @@ final class Eskimo_WC {
             $prod_meta_id = $this->add_post_meta_extra( $prod['id'], $api_prod );
             if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
                 if ( $this->debug ) { error_log( 'Bad post meta extra insert[' . $prod['id'] . ']' ); }
+			}
+
+            // Update Eskimo Style
+            $prod_meta_id = $this->add_post_meta_more( $prod['id'], $api_prod );
+            if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
+                if ( $this->debug ) { error_log( 'Bad post meta more insert[' . $prod['id'] . ']' ); }
             }
 
 			// Update Eskimo ProdID
@@ -587,7 +593,7 @@ final class Eskimo_WC {
         foreach ( $api_data as $api_prod ) {
 
             // Product Categories Only
-            if ( !preg_match( '/product$/', $api_prod->eskimo_category_id ) ) { continue; }
+            if ( ! preg_match( '/product$/i', $api_prod->eskimo_category_id ) ) { continue; }
 
             // Dodgy Title?
             if ( empty( $api_prod->title ) ) {
@@ -609,7 +615,12 @@ final class Eskimo_WC {
 
             // OK add products
             $products[] =  $api_prod->eskimo_identifier;
-        }
+		}
+
+		// New product count
+		if ( $this->debug ) { 
+			error_log( 'New Prod Count[' . count( $products ) . '] Products[' . print_r( $products, true ) . ']' );
+		}
 
         // OK, done
         return $products;
@@ -637,7 +648,7 @@ final class Eskimo_WC {
         if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
 
         // Product Categories Only
-        if ( !preg_match( '/product$/', $api_prod->eskimo_category_id ) ) { return false; }
+        if ( ! preg_match( '/product$/i', $api_prod->eskimo_category_id ) ) { return false; }
 
         // Dodgy Title?
         if ( empty( $api_prod->title ) ) {
@@ -678,6 +689,12 @@ final class Eskimo_WC {
 		if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
 			if ( $this->debug ) { error_log( 'Bad post meta extra insert[' . $prod['id'] . ']' ); }
 		}
+		
+        // Update Eskimo Style
+        $prod_meta_id = $this->add_post_meta_more( $prod['id'], $api_prod );
+        if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
+            if ( $this->debug ) { error_log( 'Bad post meta more insert[' . $prod['id'] . ']' ); }
+        }
 
 		// Update Eskimo ProdID
 		$prod_meta_id = $this->add_post_meta_date( $prod['id'], $api_prod );
@@ -713,7 +730,7 @@ final class Eskimo_WC {
         if ( $this->debug ) { error_log( 'Process Product SKUs[' . count( $api_prod->sku ) . '] path[' . $path . ']' ); }
 
         // Product Categories Only
-        if ( !preg_match( '/product$/', $api_prod->eskimo_category_id ) ) { return false; }
+        if ( ! preg_match( '/product$/i', $api_prod->eskimo_category_id ) ) { return false; }
 
         // Dodgy Title?
         if ( empty( $api_prod->title ) ) {
@@ -750,7 +767,64 @@ final class Eskimo_WC {
                 'Web_ID'            => $api_prod->web_id
             ]
         ];
-    }
+	}
+
+    /**
+     * Get EskimoEPOS API product by ID
+     *
+     * @param   string   		$prod_ref
+     * @param   string   		$trade_ref
+     * @return  object|array
+     */
+	public function get_products_trade_ID( $prod_ref, $trade_ref ) {
+		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': StyleRef[' . str_replace( '|', '', $prod_ref ) . ']' ); }
+
+		// Default category args
+		$args = [
+			'post_type'			=> 'product',
+			'posts_per_page'	=> 1,
+			'post_status'		=> 'publish',
+   			'cache_results' 	=> false,
+			'meta_key'			=> '_eskimo_product_id',
+			'meta_value'		=> $prod_ref
+        ];
+
+        // Process query
+        $the_query = new WP_Query( $args );
+
+        // Found post sku?
+		if ( $the_query->found_posts === 0 ) {
+			return $this->api_error( 'No product found for prod ref[' . $prod_ref . ']' );
+		}
+
+		// Get product
+		$product = $the_query->posts[0];
+
+		// Get the product prefix
+        $web_prefix = get_option( 'eskimo_api_product' ); 
+
+        if ( $this->debug ) { error_log( 'Products[' . $the_query->found_posts . '] ProdID[' . $product->ID . '] Prefix[' . $web_prefix . ']' ); }
+
+		// Construct web_id results
+//		return [
+//			'Eskimo_Identifier' => $prod_ref,
+//          'Web_ID'            => ( empty( $web_prefix ) ) ? $product->ID : $web_prefix . $product->ID
+//		];			
+
+		// Ok, update post meta
+		$update = update_post_meta( $product->ID, '_eskimo_product_id', $trade_ref );
+		if ( false === $update ) {
+			return $this->api_error( 'Bad post meta update for prod ref[' . $prod_ref . ']' );
+		}
+	
+		// ok, done
+		return [
+			[
+				'Eskimo_Identifier' => $trade_ref,
+                'Web_ID'            => ( empty( $web_prefix ) ) ? $product->ID : $web_prefix . $product->ID
+			]
+		];			
+	}
 
     /**
      * Get EskimoEPOS API products by category
@@ -776,7 +850,7 @@ final class Eskimo_WC {
         foreach ( $api_data as $api_prod ) {
 
             // Product Categories Only
-            if ( !preg_match( '/product$/', $api_prod->eskimo_category_id ) ) { continue; }
+            if ( ! preg_match( '/product$/i', $api_prod->eskimo_category_id ) ) { continue; }
 
             // Requires that the Eskimo Category has been imported
             if ( empty( $api_prod->web_category_id ) ) { 
@@ -1842,6 +1916,7 @@ final class Eskimo_WC {
         $wp_rest_request = new WP_REST_Request( 'POST' );
         $wp_rest_request->set_body_params( $args );
         
+		// Set up REST product controller for insert
         $products_controller = new WC_REST_Products_Controller();
         $res = $products_controller->create_item( $wp_rest_request );
         
@@ -1906,10 +1981,12 @@ final class Eskimo_WC {
 		$args = $this->update_category_product_simple_args( $path, $data, $sku, $product_id );
         if ( $this->debug ) { error_log( print_r( $args, true ) ); }
 
-        // Set up REST process
-        $products_controller = new WC_REST_Products_Controller();
-        $wp_rest_request = new WP_REST_Request( 'POST' );
+		// Set up REST process
+		$wp_rest_request = new WP_REST_Request( 'POST' );
         $wp_rest_request->set_body_params( $args );
+
+		// Set up REST product controller for update
+        $products_controller = new WC_REST_Products_Controller();
         $res = $products_controller->update_item( $wp_rest_request );
         
         if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
@@ -1964,7 +2041,8 @@ final class Eskimo_WC {
         // Set up REST process
         $wp_rest_request = new WP_REST_Request( 'POST' );
         $wp_rest_request->set_body_params( $args );
-        
+
+		// Set up REST product controller for update		
         $products_controller = new WC_REST_Products_Controller();
         $res = $products_controller->update_item( $wp_rest_request );
 
@@ -1998,11 +2076,13 @@ final class Eskimo_WC {
 		// Update product attributes, sku, stock for Variable products
 		$args = $this->update_category_product_variable_args( $path, $data, $sku, $product_id );
         if ( $this->debug ) { error_log( print_r( $args, true ) ); }
-
-        // Set up REST process
-        $products_controller = new WC_REST_Product_Variations_Controller();
-        $wp_rest_request = new WP_REST_Request( 'POST' );
+		
+		// Set up REST process
+		$wp_rest_request = new WP_REST_Request( 'POST' );
         $wp_rest_request->set_body_params( $args );
+
+		// Set up product controller for update
+        $products_controller = new WC_REST_Product_Variations_Controller();
         $res = $products_controller->update_item( $wp_rest_request );
         
         if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
@@ -2365,10 +2445,12 @@ final class Eskimo_WC {
 
         if ( $this->debug ) { error_log( print_r( $args, true ) ); }
 
-        // Set up REST process
-        $products_controller = new WC_REST_Product_Variations_Controller();
+		// Set up REST process
         $wp_rest_request = new WP_REST_Request( 'POST' );
         $wp_rest_request->set_body_params( $args );
+
+		// Set up REST product controller for update
+        $products_controller = new WC_REST_Product_Variations_Controller();
         $res = $products_controller->create_item( $wp_rest_request );
         
         if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
@@ -2402,6 +2484,20 @@ final class Eskimo_WC {
 		$meta_keywords 		= add_post_meta( $prod_id, '_meta_keywords', sanitize_text_field( $api_prod->meta_keywords ) );
 		$meta_description 	= add_post_meta( $prod_id, '_meta_description', sanitize_text_field( $api_prod->meta_description ) );
         return ( $meta_keywords && $meta_description ) ? true : false;
+	}
+
+	/**
+	 * Add more product post meta
+	 * 
+     * @param   integer $cat_id
+	 * @param   object  $api_cat
+	 * @return 	boolean
+	 */
+	protected function add_post_meta_more( $prod_id, $api_prod ) {
+    	if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
+		$style_ref 	= add_post_meta( $prod_id, '_eskimo_style_reference', sanitize_text_field( $api_prod->style_reference ) );
+		$addfield04	= add_post_meta( $prod_id, '_addfield04', sanitize_text_field( $api_prod->addfield04 ) );
+        return ( $style_ref ) ? true : false;
 	}
 
 	/**

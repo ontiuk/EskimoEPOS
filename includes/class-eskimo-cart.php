@@ -6,9 +6,16 @@
  * 
  * @package    Eskimo
  * @subpackage Eskimo/includes
- * @author     Stephen Betley <on@tinternet.co.uk>
+ * @link       https://on.tinternet.co.uk
  */
 
+/**
+ * The plugin woocommerce eskimoEPOS class 
+ *
+ * @package    Eskimo
+ * @subpackage Eskimo/includes
+ * @author     Stephen Betley <on@tinternet.co.uk>
+ */
 final class Eskimo_Cart { 
 
 	/**
@@ -19,21 +26,21 @@ final class Eskimo_Cart {
 	private $eskimo;
 
 	/**
-	 * The version of this plugin
+	 * Plugin version
 	 *
 	 * @var     string    $version    The current version of this plugin
 	 */
 	private $version;
 
     /**
-	 * Is the plugin in debug mode 
+	 * Plugin debug mode 
 	 *
 	 * @var     bool    $debug    Plugin is in debug mode
 	 */
 	private $debug;
 
 	/**
-	 * Is the plugin base directory 
+	 * Plugin base directory 
 	 *
 	 * @var      string    $base_dir  String path for the plugin directory
 	 */
@@ -43,15 +50,16 @@ final class Eskimo_Cart {
 	 * Initialize the class and set its properties
 	 *
 	 * @param   string    $eskimo     The name of this plugin
-	 * @param   string    $version    The version of this plugin
-	 * @param   string    $version    Plugin debugging mode, default false
 	 */
-	public function __construct( $eskimo, $version ) {
+	public function __construct( $eskimo ) {
 
+		// Set up class settings
 		$this->eskimo       = $eskimo;
-		$this->version      = $version;
+   		$this->version		= ESKIMO_VERSION;
 		$this->debug        = ESKIMO_CART_DEBUG;
 		$this->base_dir		= plugin_dir_url( __FILE__ ); 
+
+		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 	}
     
     //----------------------------------------------
@@ -60,6 +68,8 @@ final class Eskimo_Cart {
 
 	/**
 	 * Customer created processing - update EPOS
+	 *
+	 * @param	string	$cust_id
 	 */
 	public function customer_created( $cust_id ) {
 		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' Customer ID[' . $cust_id . ']' ); }
@@ -88,7 +98,7 @@ final class Eskimo_Cart {
 
 			// Create it if not...
 			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-insert/' . $cust_id;
-			$response = wp_remote_get( $rest_url, [ 'timeout' => 10 ] );
+			$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 			$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
 			if ( $this->debug ) { error_log( 'EPOS Customer:  Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
@@ -97,6 +107,8 @@ final class Eskimo_Cart {
 	
 	/**
 	 * Customer update processing - update EPOS
+	 * 
+	 * @param	string	$cust_id
 	 */
 	public function customer_updated( $cust_id ) {
 		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' Customer ID[' . $cust_id . ']' ); }
@@ -107,7 +119,7 @@ final class Eskimo_Cart {
 		// Initiate REST call to update EPOS order status
 		if ( $user_role === 'customer' ) {
 			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-update/' . $cust_id;
-			$response = wp_remote_get( $rest_url, [ 'timeout' => 10 ] );
+			$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 			$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
 			if ( $this->debug ) { error_log( 'EPOS Customer: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
@@ -140,7 +152,7 @@ final class Eskimo_Cart {
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-insert/' . $user_id;
-		$response = wp_remote_get( $rest_url, [ 'timeout' => 10 ] );
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( $this->debug ) { error_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
@@ -171,7 +183,7 @@ final class Eskimo_Cart {
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-insert/' . $order_id;
-		$response = wp_remote_get( $rest_url, [ 'timeout' => 10 ] );
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( $this->debug ) { error_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
@@ -202,7 +214,7 @@ final class Eskimo_Cart {
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-insert/' . $order_id;
-		$response = wp_remote_get( $rest_url, [ 'timeout' => 10 ] );
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( $this->debug ) { error_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }

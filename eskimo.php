@@ -4,7 +4,7 @@
  * Plugin Name:       EskimoEPOS
  * Plugin URI:        https://github.com/ontiuk
  * Description:       Connect to Eskimo EPOS via Eskimo API and resistered Eskimo Reporting / EPOS account
- * Version:           1.1.5
+ * Version:           1.2.0
  * Author:            Stephen Betley
  * Author URI:        https://on.tinternet.co.uk
  * License:           GPL-2.0+
@@ -16,7 +16,7 @@
  * @package           Eskimo
  *
  * WC requires at least: 3.0.0
- * WC tested up to: 3.4.0
+ * WC tested up to: 3.5.3
  * 
 EskimoEPOS is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,31 +32,33 @@ You should have received a copy of the GNU General Public License
 along with EskimoEPOS. If not, see http://www.gnu.org/licenses/gpl-2.0.txt.
 */
 
-// If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) { die; }
+// If this file is called directly, abort
+defined( 'WPINC' ) || die;
 
-/**
- * Required functions
- */
-require_once( 'includes/eskimo-functions.php' );
+// Required functions
+require_once 'includes/eskimo-functions.php';
 
 // Base dependency test
 if ( is_woocommerce_active() ) { 
-    
-    /**
-     * Currently Eskimo EPOS plugin version
-     */
-    define( 'ESKIMO_VERSION', '1.1.5' );
 
-    /**
-     * Currently Eskimo debugging states
-     */
-    define( 'ESKIMO_DEBUG', false );
-    define( 'ESKIMO_CART_DEBUG', true );
+	// The plugin name
+	define( 'ESKIMO_NAME', 'eskimo' );
+	
+    // Currently Eskimo EPOS plugin version
+    define( 'ESKIMO_VERSION', '1.2.0' );
 
+    // Currently Eskimo debugging states
+    define( 'ESKIMO_DEBUG', 		true );
+    define( 'ESKIMO_CART_DEBUG', 	true );
+    define( 'ESKIMO_API_DEBUG', 	true );
+    define( 'ESKIMO_CRON_DEBUG', 	true );
+
+	// Rest Route deliminator
+	define( 'ESKIMO_REST_DELIMINATOR', '|' );
+	
     /**
-     * The code that runs during plugin activation
-     * This action is documented in includes/class-eskimo-activator.php
+	 * Run plugin activation 
+	 * - documented in includes/class-eskimo-activator.php
      */
     function activate_eskimo() {
 	    require_once plugin_dir_path( __FILE__ ) . 'includes/class-eskimo-activator.php';
@@ -64,8 +66,8 @@ if ( is_woocommerce_active() ) {
     }
 
     /**
-     * The code that runs during plugin deactivation
-     * This action is documented in includes/class-eskimo-deactivator.php
+	 * Run plugin deactivation
+	 * - documented in includes/class-eskimo-deactivator.php
      */
     function deactivate_eskimo() {
 	    require_once plugin_dir_path( __FILE__ ) . 'includes/class-eskimo-deactivator.php';
@@ -76,27 +78,27 @@ if ( is_woocommerce_active() ) {
     register_activation_hook( __FILE__, 'activate_eskimo' );
     register_deactivation_hook( __FILE__, 'deactivate_eskimo' );
 
-    /**
-     * Include the core cUrl class & dependencies
-     */
+    // Include the core cUrl class & dependencies
     require_once plugin_dir_path( __FILE__ ) . 'includes/lib/curl.php';
 
     /**
-     * The core plugin class that is used to define internationalization,
-     * admin-specific hooks, and public-facing site hooks
+	 * The core plugin class 
+	 * - initializes admin, shared, and public site hooks
+	 * - internationalization
      */
     require plugin_dir_path( __FILE__ ) . 'includes/class-eskimo.php';
 
-    /**
-     * Begins execution of the plugin
-     */
+    // Begins execution of the plugin
     function run_eskimo() {
-	    $plugin = new Eskimo();
-    	$plugin->run();
-    }
-    run_eskimo();
+	    $eskimo = new Eskimo();
+    	$eskimo->run();
+	}
+
+	// Initialize plugin
+	run_eskimo();
+	
 } else {
-    // Dependency fatal warning notice
+    // Dependency: fatal warning notice, woocommerce required
 	add_action( 'admin_notices', 'woocommerce_required_notice' ); 
 }
 

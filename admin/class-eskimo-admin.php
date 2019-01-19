@@ -18,55 +18,55 @@
 final class Eskimo_Admin {
 
 	/**
-	 * The ID of this plugin
+	 * Plugin ID
 	 *
-	 * @var     string    $eskimo    The ID of this plugin
+	 * @var	string		$eskimo		The ID of this plugin
 	 */
 	private $eskimo;
 
 	/**
-	 * The version of this plugin
+	 * Plugin version
 	 *
-	 * @var     string    $version    The current version of this plugin
+	 * @var	string		$version	The current version of this plugin
 	 */
 	private $version;
 
-	/**
-	 * Script suffix for debugging 
-	 *
-	 * @var     string    $suffix    Script suffix for including minified file versions
-	 */
-	private $suffix;
-
     /**
-	 * Is the plugin in debug mode 
+	 * Plugin debug mode 
 	 *
-	 * @var     bool    $debug    Plugin is in debug mode
+	 * @var	bool		$debug		Plugin debug mode - defaults to false
 	 */
 	private $debug;
 
 	/**
+	 * Script suffix for debugging 
+	 *
+	 * @var	string		$suffix		Script suffix for including minified file versions
+	 */
+	private $suffix;
+
+	/**
 	 * Is the plugin base directory 
 	 *
-	 * @var      string    $base_dir  string path for the plugin directory
+	 * @var	string		$base_dir	string path for the plugin directory
 	 */
     private $base_dir;
 
 	/**
 	 * Initialize the class and set its properties
 	 *
-	 * @param   string    $eskimo     The name of this plugin
-	 * @param   string    $version    The version of this plugin
-	 * @param   string    $version    Plugin debugging mode, default false
+	 * @param	string	$eskimo	The name of this plugin
 	 */
-	public function __construct( $eskimo, $version, $debug = false ) {
-        if ( $debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+	public function __construct( $eskimo ) {
 
+		// Set up class settings
 		$this->eskimo	= $eskimo;
-		$this->version  = $version;
-		$this->debug    = $debug;
-    	$this->base_dir	= plugin_dir_url( __FILE__ ); 
-		$this->suffix	= $this->debug ? '' : '.min';
+   		$this->version  = ESKIMO_VERSION;
+		$this->debug    = ESKIMO_DEBUG;
+	 	$this->base_dir	= plugin_dir_url( __FILE__ ); 
+		$this->suffix	= ( true === $this->debug ) ? '' : '.min';
+
+		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
     }
 
     //----------------------------------------------
@@ -102,25 +102,25 @@ final class Eskimo_Admin {
         add_action( 'woocommerce_update_options_eskimo_settings', 	[ $this, 'update_tab_settings' ] ); 
     
         // EPOS Product ID
-        add_filter( 'woocommerce_product_data_tabs', 	[ $this, 'custom_product_tab' ] );        
-        add_action( 'admin_head', 						[ $this, 'custom_product_style' ] );
-        add_action( 'woocommerce_product_data_panels', 	[ $this, 'category_product_custom_fields' ] ); 
+        add_filter( 'woocommerce_product_data_tabs', 				[ $this, 'custom_product_tab' ] );        
+        add_action( 'admin_head', 									[ $this, 'custom_product_style' ] );
+        add_action( 'woocommerce_product_data_panels', 				[ $this, 'category_product_custom_fields' ] ); 
 
         // EPOS Product List
-        add_filter( 'manage_product_posts_columns', 		[ $this, 'posts_columns' ] );
-        add_action( 'manage_product_posts_custom_column', 	[ $this, 'custom_columns' ], 10, 2 );
+        add_filter( 'manage_product_posts_columns', 				[ $this, 'posts_columns' ] );
+        add_action( 'manage_product_posts_custom_column', 			[ $this, 'custom_columns' ], 10, 2 );
 
         // EPOS Product List
-        add_filter( 'posts_join', 		[ $this, 'cf_search_join' ] );
-        add_filter( 'posts_where', 		[ $this, 'cf_search_where' ] );
-        add_filter( 'posts_distinct', 	[ $this, 'cf_search_distinct' ] );
-    }
+//        add_filter( 'posts_join', 		[ $this, 'cf_search_join' ] );
+//        add_filter( 'posts_where', 		[ $this, 'cf_search_where' ] );
+//        add_filter( 'posts_distinct', 	[ $this, 'cf_search_distinct' ] );
+	}
 
     /** 
      * Add a new settings tab to the WooCommerce settings tabs array
      * 
-     * @param   array   $settings_tabs  Array of WooCommerce setting tabs & their labels, excluding the Subscription tab. 
-     * @return  array   $settings_tabs  Array of WooCommerce setting tabs & their labels, including the Subscription tab. 
+     * @param   array   $settings_tabs  
+     * @return  array   $settings_tabs  
      */ 
     public function add_settings_tab( $settings_tabs ) { 
         $settings_tabs['eskimo_settings'] = __( 'Eskimo', 'eskimo' ); 
@@ -148,7 +148,7 @@ final class Eskimo_Admin {
     /**
      * Get all the settings for this plugin for @see woocommerce_admin_fields() function
      *
-     * @return  array   Array of settings for @see woocommerce_admin_fields() function
+     * @return  array
      */
     protected function get_tab_settings() {
 
@@ -250,7 +250,7 @@ final class Eskimo_Admin {
     /**
      * Add the Eskimo Category ID as field in Product_Cat
      *
-     * @param   object  $term
+     * @param   object  $tax	Taxonomy
      */
     public function add_eskimo_category_id( $tax ) {
 
@@ -265,9 +265,10 @@ final class Eskimo_Admin {
     }
 
     /**
-     * Edit Eskimo Category ID
+     * Eskimo Category ID: Edit
      *
-     * @param   object  $term
+	 * @param   object  $term	Term object
+	 * @param	string	$tax	Taxonomy
      */
     public function edit_eskimo_category_id( $term, $tax ) { 
 
@@ -283,9 +284,10 @@ final class Eskimo_Admin {
     } 
 
     /** 
-     * Saving Image 
+     * Eskimo Category ID: Save
      *
-     * @param   integer $term_id
+	 * @param   integer $term_id	Term ID
+	 * @param	integer	$tt_id		Taxonomy Term ID
      */ 
     public function save_eskimo_category_id( $term_id, $tt_id ) { 
 
@@ -296,12 +298,12 @@ final class Eskimo_Admin {
                 add_term_meta( $term_id, 'eskimo_category_id', $term_cat_id, true ); 
             } 
         }  
-    }   
+    }
 
     /** 
-     * Saving Image 
+     * Eskimo Category ID: Update
      *
-     * @param   integer $term_id
+     * @param   integer $term_id	Term ID
      */ 
     public function update_eskimo_category_id( $term_id ) { 
 
@@ -315,8 +317,9 @@ final class Eskimo_Admin {
 
     /**
      * Add the Eskimo Category ID to columns
-     *
-     * @return array
+	 *
+	 * @param	array	$columns
+     * @return 	array	$columns
      */
     public function add_eskimo_category_column( $columns ){
         $columns['eskimo_category_id'] = __( 'Eskimo ID', 'eskimo' );
@@ -325,8 +328,11 @@ final class Eskimo_Admin {
 
     /**
      * Add the Eskimo Category ID column content
-     *
-     * @return string
+	 *
+	 * @param	$string		$content
+	 * @param	$string		$column_name
+	 * @param	integer		$term_id
+     * @return 	string		$content
      */
     public function add_eskimo_category_column_content( $content, $column_name, $term_id ){
 
@@ -348,8 +354,8 @@ final class Eskimo_Admin {
     /**
      * Make the Eskimo Category ID admin column sortable
      *
-     * @param   array $sortable
-     * @return  array 
+     * @param   array 	$sortable
+     * @return  array 	$sortable
      */
     public function add_eskimo_category_column_sortable( $sortable ){
         $sortable['eskimo_category_id'] = 'eskimo_category_id';
@@ -364,7 +370,7 @@ final class Eskimo_Admin {
      * Add a custom product tab for Eskimo content
      *
      * @param   array   $tabs
-     * @return  array   
+     * @return  array	$tabs   
      */ 
     public function custom_product_tab( $tabs ) { 
 
@@ -377,7 +383,7 @@ final class Eskimo_Admin {
         ];
 
      	return $tabs;  
-    } 
+    }
 
     /**
      * Custom product tab icon
@@ -453,11 +459,14 @@ final class Eskimo_Admin {
     } 
 
     //----------------------------------------------
-    // Eskimo EPOS ImpEx Menu
+    // EskimoEPOS REST ImpEx Menu
     //----------------------------------------------
 
     /**
-     * Display the EPOS data in the product listings
+	 * Display the EPOS data in the product listings
+	 *
+	 * @param	array	$defaults
+	 * @return	array	$cols
      */
     public function posts_columns( $defaults ){
 
@@ -476,7 +485,7 @@ final class Eskimo_Admin {
     }
 
     /**
-     * Custom column
+     * Custom columns: EskimoEPOS Category ID & Product ID
      *
      * @param   string  $column
      * @param   integer $post_id
@@ -500,8 +509,10 @@ final class Eskimo_Admin {
 
     /**
      * Join posts and postmeta tables
-     *
-     * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_join
+	 * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_join
+	 *
+	 * @param	string	$join
+	 * @return	string	$join
      */
     public function cf_search_join( $join ) {
 
@@ -516,9 +527,11 @@ final class Eskimo_Admin {
     }
 
     /**
-     * Modify the search query with posts_where
-     *
-     * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_where
+	 * Modify the search query with posts_where
+	 * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_where
+	 *
+	 * @param	string	$where
+	 * @return	string	$where
      */
     public function cf_search_where( $where ) {
     
@@ -535,8 +548,10 @@ final class Eskimo_Admin {
 
     /**
      * Prevent duplicates
-     *
      * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_distinct
+	 *
+	 * @param	string	$where
+	 * @return	string	$where
      */
     public function cf_search_distinct( $where ) {
         global $wpdb;

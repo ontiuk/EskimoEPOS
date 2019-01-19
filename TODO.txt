@@ -1,0 +1,11 @@
+Rough Development ToDo List
+-----------------------------
+
+Eskimo WP API Admin UI page
+- ImpEx funcitonality for products & categories
+- Take EPOS ID and import into Woocommerce
+- Resync EPOS stock for Web Product
+- Other API calls with simpler UI implementation
+
+Products List admin UI column at product level 
+- Resync product button

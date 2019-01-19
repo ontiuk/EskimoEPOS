@@ -10,14 +10,13 @@
 
 /**
  * Fired during plugin activation
- *
- * This class defines all code necessary to run during the plugin's activation
+ * - Defines all code necessary to run during the plugin's activation
  *
  * @package    Eskimo
  * @subpackage Eskimo/includes
  * @author     Stephen Betley <on@tinternet.co.uk>
  */
-class Eskimo_Activator {
+final class Eskimo_Activator {
 
 	/**
      * Plugin activation requirements 
@@ -32,15 +31,15 @@ class Eskimo_Activator {
         /**
          * Eskimo requires PHP 5.4 to function, every host should be here by now!
          */
-        if ( version_compare( $php_version, '5.4', '<' ) ) {
+        if ( version_compare( $php_version, '5.6', '<' ) ) {
 			deactivate_plugins( $plugin_file );
-			wp_die( __( 'Eskimo EPOS requires PHP 5.4 or newer to function.  Please call your webhosting company and have them upgrade your hosting account to a version of PHP 5.4 or newer.', 'eskimo' ) );
+			wp_die( __( 'Eskimo EPOS requires PHP 5.6 or newer to function.  Please call your webhosting company and have them upgrade your hosting account to a version of PHP 5.6 or later.', 'eskimo' ) );
 		}        
 
         /**
 		 *  Requires woocommerce to be installed and active 
 		 */
-		if ( !class_exists( 'WooCommerce' ) ) { 
+		if ( ! class_exists( 'WooCommerce' ) ) { 
 			deactivate_plugins( $plugin_file );
 			wp_die( __( 'Eskimo EPOS requires WooCommerce to run. Please install WooCommerce and activate before attempting to activate again.', 'eskimo' ) );
 		}

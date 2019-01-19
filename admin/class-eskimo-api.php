@@ -2,7 +2,6 @@
 
 /**
  * Connect to the Eskimo EPOS and get/add json data via api calls
- *
  * - Implements all available API calls, though not all Woocommerce related or used
  *
  * @link       https://on.tinternet.co.uk
@@ -22,28 +21,28 @@
 final class Eskimo_API {
     
 	/**
-	 * The ID of this plugin.
+	 * The ID of this plugin
 	 *
 	 * @var     string    $eskimo    The ID of this plugin
 	 */
 	private $eskimo;
 
 	/**
-	 * The version of this plugin.
+	 * Plugin version
 	 *
 	 * @var     string    $version    The current version of this plugin
 	 */
 	private $version;
 
     /**
-	 * Is the plugin in debug mode
+	 * Plugin debug mode
 	 *
-	 * @var     bool    $debug    Plugin is in debug mode
+	 * @var     bool    $debug    Plugin debug mode - defaults to false
 	 */
 	private $debug;
 
 	/**
-	 * Is the plugin base directory
+	 * Plugin base directory
 	 *
 	 * @var      string    $base_dir  string path for the plugin directory
 	 */
@@ -61,18 +60,18 @@ final class Eskimo_API {
      *
      * @param   object  $api        Eskimo_EPOS instance
 	 * @param   string  $eskimo     The name of this plugin
-	 * @param   string  $version    The version of this plugin
-	 * @param   boolean $debug      Plugin debugging mode, default false
 	 */
-	public function __construct( Eskimo_EPOS $api, $eskimo, $version, $debug = false ) {
-        if ( $debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+	public function __construct( Eskimo_EPOS $api, $eskimo ) {
 
+		// Set up class settings
         $this->api      = $api; 
 		$this->eskimo   = $eskimo;
-		$this->version  = $version;
-		$this->debug    = $debug;
+   		$this->version  = ESKIMO_VERSION;
+		$this->debug    = ESKIMO_API_DEBUG;
     	$this->base_dir	= plugin_dir_url( __FILE__ ); 
-    }
+
+		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+	}
 
     /**
      * Create API connection TEMP
@@ -95,8 +94,8 @@ final class Eskimo_API {
     protected function get_data( $api_url ) {
 
         // Get access token & test for timeout
-        $auth = get_transient( 'eskimo_access_authenticated' );
-        $access_token = get_transient( 'eskimo_access_token' );
+        $auth 			= get_transient( 'eskimo_access_authenticated' );
+        $access_token 	= get_transient( 'eskimo_access_token' );
         if ( false === $auth ) { return false; }
 
 		// GET Request
@@ -111,12 +110,12 @@ final class Eskimo_API {
 			]
 		);
 
-		// Check Error
+		// Check WP Error
 		if ( $this->debug && is_wp_error( $request ) ) {
-			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
+			error_log( 'WP cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
 		}
 
-		// Return error or request response
+		// Return request response or false if error
 		return ( is_wp_error( $request ) ) ? false : wp_remote_retrieve_body( $request ); 
 	}
 
@@ -130,8 +129,8 @@ final class Eskimo_API {
     protected function get_media( $api_url, $api_opts = false ) {
 
         // Get access token & test for timeout
-        $auth = get_transient( 'eskimo_access_authenticated' );
-        $access_token = get_transient( 'eskimo_access_token' );
+        $auth 			= get_transient( 'eskimo_access_authenticated' );
+        $access_token 	= get_transient( 'eskimo_access_token' );
         if ( false === $auth ) { return false; }
 
 		// GET Request
@@ -146,12 +145,12 @@ final class Eskimo_API {
 			]
 		);
 
-		// Check Error
+		// Check WP Error
 		if ( $this->debug && is_wp_error( $request ) ) {
 			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
 		}
 
-		// Return error or request response
+		// Return request response or false if error
 		return ( is_wp_error( $request ) ) ? false : wp_remote_retrieve_body( $request ); 
     }
 
@@ -166,8 +165,8 @@ final class Eskimo_API {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' URL[' . $api_url . ']' ); }
 
         // Get access token & test for timeout
-        $auth = get_transient( 'eskimo_access_authenticated' );
-        $access_token = get_transient( 'eskimo_access_token' );
+        $auth 			= get_transient( 'eskimo_access_authenticated' );
+        $access_token 	= get_transient( 'eskimo_access_token' );
         if ( false === $auth ) { return false; }
 
 		// GET Request
@@ -185,12 +184,12 @@ final class Eskimo_API {
 			]
 		);
 
-		// Check Error
+		// Check WP Error
 		if ( $this->debug && is_wp_error( $request ) ) {
 			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
 		}
 
-		// Return error or request response
+		// Return request response or false if error
 		return ( is_wp_error( $request ) ) ? false : wp_remote_retrieve_body( $request ); 
 	}
 	
@@ -205,8 +204,8 @@ final class Eskimo_API {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' URL[' . $api_url . ']' ); }
 
         // Get access token & test for timeout
-        $auth = get_transient( 'eskimo_access_authenticated' );
-        $access_token = get_transient( 'eskimo_access_token' );
+        $auth 			= get_transient( 'eskimo_access_authenticated' );
+        $access_token 	= get_transient( 'eskimo_access_token' );
         if ( false === $auth ) { return false; }
 
 		// GET Request
@@ -224,12 +223,12 @@ final class Eskimo_API {
 			]
 		);
 
-		// Check Error
+		// Check WP Error
 		if ( $this->debug && is_wp_error( $request ) ) {
 			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
 		}
 
-		// Return error or request response
+		// Return request response or false if error
 		return ( is_wp_error( $request ) ) ? false : $request; 
 	}
 
@@ -244,8 +243,8 @@ final class Eskimo_API {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' URL[' . $api_url . ']' ); }
 
         // Get access token & test for timeout
-        $auth = get_transient( 'eskimo_access_authenticated' );
-        $access_token = get_transient( 'eskimo_access_token' );
+        $auth 			= get_transient( 'eskimo_access_authenticated' );
+        $access_token 	= get_transient( 'eskimo_access_token' );
         if ( false === $auth ) { return false; }
 
 		// GET Request
@@ -267,16 +266,17 @@ final class Eskimo_API {
 			error_log( 'cUrl Error [' . $request->get_error_code() . ' : ' . $request->get_error_message() . ']' );
 		}
 
-		// Return error or request response
+		// Return request response or false if error
 		return ( is_wp_error( $request ) ) ? false : wp_remote_retrieve_response_code( $request ); 
 	}
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Addresses ImpEX
+    //  Eskimo API Functions: Addresses REST ImpEx
     //--------------------------------------------------
 	
     /**
 	 * Insert remote EskimoEPOS Address information
+	 * - POST api/Addresses/Insert/{CustomerID}/{AddressRef}
 	 * - Requires customer ID and Address Reference
      *
      * @param   string   		$cust_id 
@@ -286,6 +286,9 @@ final class Eskimo_API {
      */       	
    	public function addresses_insert( $cust_id, $addr_ref, $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' ' . $cust_id . ' ' . $addr_ref ); }
+
+		// Basic parameter check
+		if ( empty( $cust_id ) || empty( $addr_ref ) || empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -301,6 +304,7 @@ final class Eskimo_API {
 
     /**
 	 * Update remote EskimoEPOS Address information
+	 * - POST api/Addresses/Update/{CustomerID}/{AddressRef}
 	 * - Requires customer ID and Address Reference
      *
      * @param   string   		$cust_id 
@@ -310,6 +314,9 @@ final class Eskimo_API {
      */       	
    	public function addresses_update( $cust_id, $addr_ref, $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' ' . $cust_id . ' ' . $addr_ref ); }
+
+		// Basic parameter check
+		if ( empty( $cust_id ) || empty( $addr_ref ) || empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -325,12 +332,16 @@ final class Eskimo_API {
 
     /**
 	 * Search remote EskimoEPOS Address information
-     *
+	 * - POST api/Addresses/Search
+	 * 
      * @param   array   		$api_opts 
      * @return  array|boolean
      */       	
    	public function addresses_search( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -346,12 +357,16 @@ final class Eskimo_API {
 
     /**
 	 * Return remote EskimoEPOS Address description based on postcode
+	 * - POST api/Addresses/AddressValidationSummary
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */       	
    	public function addresses_validation_summary( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -366,13 +381,17 @@ final class Eskimo_API {
 	}
 
    /**
-	 * Return remote EskimoEPOS Address description based on postcode
-     *
-     * @param   string   		$id 
-     * @return  array|boolean
-     */
+	* Return remote EskimoEPOS Address description based on postcode
+	* - GET api/Addresses/AddressValidationDetailed/{id}
+    *
+    * @param   string   		$id 
+    * @return  array|boolean
+    */
    	public function addresses_validation_detailed( $id ) {
 		if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -386,17 +405,21 @@ final class Eskimo_API {
 	}
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Amazon ImpEX
+    //  Eskimo API Functions: Amazon REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Download remote EskimoEPOS Amazon Orders not yet in Eskimo system
+	 * Download remote EskimoEPOS Amazon Orders not yet in Eskimo system
+	 * - POST api/Amazon/DownloadOrders
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */       	
    	public function amazon_download_orders( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -411,7 +434,8 @@ final class Eskimo_API {
     }
 
     /**
-     * Update remote EPOS stock levels of all FBA products
+	 * Update remote EPOS stock levels of all FBA products
+	 * GET api/Amazon/DownloadFBAInventory
      *
      * @return  array|boolean
      */
@@ -430,12 +454,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Retreives order info from Amazon
+	 * Retreives order info from Amazon
+	 * - GET api/Amazon/GetOrderInfo/{id}
      *
+	 * @param	string			$id
      * @return  array|boolean
      */
-   	public function amazon_get_order_info() {
+   	public function amazon_get_order_info( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' ID: ' . $id ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -449,36 +478,45 @@ final class Eskimo_API {
     }
 		
     /**
-     * Remote EPOS Amazon Product Info
+	 * Remote EPOS Amazon Product Info
+	 * - POST api/Amazon/UploadProductInfo
      *
+     * @param   array   		$api_opts 
      * @return  array|boolean
      */
-   	public function amazon_upload_product_info() {
+   	public function amazon_upload_product_info( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get api response
         $api_url    = $oauth['domain'] . 'api/Amazon/UploadProductInfo';
-        $api_data   = $this->get_data( $api_url );
+        $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : json_decode( $api_data );
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Barcode ImpEX
+    //  Eskimo API Functions: Barcode REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Retrieve remote EskimoEPOS barcode information
+	 * Retrieve remote EskimoEPOS barcode information
+	 * - POST api/Barcode/GetInfo
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */       	
    	public function barcode_get_info( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -493,13 +531,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Apply remote EskimoEPOS note of an action for a particular barcode 
+	 * Apply remote EskimoEPOS note of an action for a particular barcode 
+	 * - POST api/Barcode/ApplyAction
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */       	
    	public function barcode_apply_action( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -514,11 +556,12 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Category ImpEX
+    //  Eskimo API Functions: Category REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Retreive remote EPOS category list
+	 * Retreive remote EPOS category list
+	 * - GET api/Categories/All
      *
      * @return  array|boolean
      */
@@ -537,13 +580,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Get a category by EPOS category id
+	 * Get a category by EPOS category ID
+	 * - GET api/Categories/SpecificID/{id}
      *
      * @param   string   		$id 
      * @return  array|boolean
      */
     public function categories_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -557,13 +604,17 @@ final class Eskimo_API {
     }
     
     /**
-     * Get categories by EPOS parent id
+	 * Get categories by EPOS parent category ID
+	 * - GET api/Categories/ChildCategories/{id}
      *
      * @param   string   		$id 
      * @return  array|boolean
      */    
     public function categories_child_categories_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -577,13 +628,17 @@ final class Eskimo_API {
     }
    	
     /**
-     * Update remote EPOS category webID field
+	 * Update remote EPOS category webID field
+	 * - POST api/Categories/UpdateCartIDs
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */       	
    	public function categories_update_cart_ID( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -597,12 +652,13 @@ final class Eskimo_API {
     	return ( false === $api_data ) ? false : $api_data;
     }
 
-    //--------------------------------------------------
-    //  Eskimo API Functions: Category Product ImpEX
-    //--------------------------------------------------
+    //------------------------------------------------------
+    //  Eskimo API Functions: Category Product REST ImpEx
+    //------------------------------------------------------
 
     /**
-     * Get product list orderded by category
+	 * Get product list orderded by category
+	 * - POST api/CategoryProducts/All
      * - Deprecated: Use products_all or products_range
      *
      * @param   array   		$api_opts 
@@ -610,6 +666,9 @@ final class Eskimo_API {
      */
    	public function category_products_all( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -624,7 +683,8 @@ final class Eskimo_API {
     }
     
     /**
-     * Get product list by specific EPOS category ID
+	 * Get product list by specific EPOS category ID
+	 * - GET api/CategoryProducts/SpecificCategory/{id}
      * - Deprecated: Use products_specific_id
      *
      * @param   string   		$id 
@@ -632,6 +692,9 @@ final class Eskimo_API {
      */
     public function category_products_specific_category( $id ) {
 		if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -645,7 +708,7 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Countries ImpEX
+    //  Eskimo API Functions: Countries REST ImpEx
     //--------------------------------------------------
 
     /**
@@ -656,6 +719,9 @@ final class Eskimo_API {
      */
    	public function countries_search( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -670,17 +736,21 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Customers ImpEX
+    //  Eskimo API Functions: Customers REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Get specific EPOS customer data by ID
+	 * Get specific EPOS customer data by ID
+	 * - GET api/Customers/SpecificID/{ID}
      *
      * @param   string  		$id
      * @return  array|boolean
      */
    	public function customers_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -694,7 +764,8 @@ final class Eskimo_API {
 	}
 
     /**
-     * Get EPOS customer titles
+	 * Get EPOS customer titles
+	 * - GET api/Customers/Titles
      *
      * @return  array|boolean
      */
@@ -713,13 +784,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Get EPOS customer data by matching records
+	 * Get EPOS customer data by matching records
+	 * - POST api/Customers/Search
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
    	public function customers_search( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -733,14 +808,18 @@ final class Eskimo_API {
     	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
-   /**
-     * Get EPOS customer data for export
+	/**
+	 * Get EPOS customer data for export
+	 * - POST api/Customers/CustomersDump	
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
    	public function customers_customers_dump( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -755,13 +834,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Create remote EPOS customer from web data
+	 * Create remote EPOS customer from web data
+	 * - POST api/Customers/Insert	
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function customers_insert( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -776,13 +859,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Update remote EPOS customer by ID or Email
+	 * Update remote EPOS customer by ID or Email
+	 * - POST api/Customers/Update
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function customers_update( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -802,6 +889,7 @@ final class Eskimo_API {
 
     /**
 	 * Insert/Update remote EPOS external category and Item Specific information
+	 *  - POST api/ExternalCategories/Insert
 	 *  - Used with category information from eBay or Amazon
 	 *
      * @param   array   		$api_opts 
@@ -809,6 +897,9 @@ final class Eskimo_API {
      */
     public function external_categories_insert( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -824,12 +915,16 @@ final class Eskimo_API {
 
 	/**
 	 * Retrieves a remote EskimoEPOS singular external category class for a specific ID and Type
+	 * - POST api/ExternalCategories/SpecificID
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function external_categories_specific_ID( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -844,17 +939,21 @@ final class Eskimo_API {
 	}
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Gift Cards ImpEX
+    //  Eskimo API Functions: Gift Cards REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Retrieve EskimoEPOS gift card balance
+	 * Retrieve EskimoEPOS gift card balance
+	 * - POST api/GiftCards/BalanceEnquiry
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function gift_cards_balance_enquiry( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -869,13 +968,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Remote EskimoEPOS gift card update
+	 * Remote EskimoEPOS gift card update
+	 * - POST api/GiftCards/Increment
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function gift_cards_balance_increment( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -890,13 +993,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Remote EskimoEPOS gift card redeem
+	 * Remote EskimoEPOS gift card redeem
+	 * - POST api/GiftCards/Redeem
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function gift_cards_balance_redeem( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -911,17 +1018,21 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Image Links ImpEX
+    //  Eskimo API Functions: Image Links REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Retrieve EskimoEPOS product image links by batch
+	 * Retrieve EskimoEPOS product image links by batch
+	 * - POST api/ImageLinks/All
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function image_links_all( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -936,7 +1047,8 @@ final class Eskimo_API {
     }
 
 	/**
-     * Updates EskimoEPOS Image Link Cart IDs
+	 * Updates EskimoEPOS Image Link Cart IDs
+	 * - POST api/ImageLinks/UpdateCartIDs
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -957,17 +1069,21 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Images ImpEX
+    //  Eskimo API Functions: Images REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Retrieve remote EskimoEPOS product images objects (max 10,000)
+	 * Retrieve remote EskimoEPOS product images objects (max 10,000)
+	 * - POST api/Images/All
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function images_all( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -982,13 +1098,17 @@ final class Eskimo_API {
     }
 
 	/**
-     * Updates EskimoEPOS Images Cart IDs
+	 * Updates EskimoEPOS Images Cart IDs
+	 * - POST api/Images/UpdateCartIDs
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function images_update_cart_ID( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1003,13 +1123,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Retrieve image data for a singular image
+	 * Retrieve image data for a singular image
+	 * - GET api/Images/ImageData/{id}
      *
      * @param   integer   		$id 
      * @return  array|boolean
      */
     public function images_image_data( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1023,13 +1147,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Retrieve image data for a singular image as base64
+	 * Retrieve image data for a singular image as base64
+	 * - GET api/Images/AsBase64/{id}	
      *
      * @param   integer   		$id 
      * @return  array|boolean
      */
     public function images_as_base64( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1044,6 +1172,7 @@ final class Eskimo_API {
 
 	/** 
 	 * Retrieve image data / url from direct link 
+	 * - GET api/Images/ImageURL?token={token}&image_id={image_id}
 	 *
      * @param   integer   		$image_id 
      * @param   string    		$token 
@@ -1051,6 +1180,9 @@ final class Eskimo_API {
      */
     public function images_image_url( $image_id, $token ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : Image ID [' . $image_id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $image_id ) || empty( $token ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1069,13 +1201,17 @@ final class Eskimo_API {
     //--------------------------------------------------
 	
 	/**
-     * Retrieves a list of all items that have not yet been listed externally
+	 * Retrieves a list of all items that have not yet been listed externally
+	 * - POST api/Listings/AllUnlisted
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function listings_all_unlisted( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1091,12 +1227,16 @@ final class Eskimo_API {
 
 	/** 
 	 * Retrieve image data / url from direct link 
+	 * - GET api/Listings/ListingImage?strDataKey={strDataKey}
 	 *
      * @param   string   		$key 
      * @return  array|boolean
      */
     public function listings_listing_image( $key ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : Key [' . $key . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $key ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1112,12 +1252,16 @@ final class Eskimo_API {
 
 	/**
 	 * Marks a listing a 'listed' 
+	 * - POST api/Listings/MarkAsListed
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function listings_mark_as_listed( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1132,18 +1276,46 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Operators ImpEX
+    //  Eskimo API Functions: MeasureUnits REST ImpEx
     //--------------------------------------------------
 
     /**
-     * retrieve remote EskimoEPOS list of Operators (or Clerks)
+	 * Retrieves a list of all the measurement units setup in Eskimo
+	 * - GET api/MeasureUnits/All	
+     *
+     * @return  array|boolean
+     */
+    public function measure_units() {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/MeasureUnits/All';	
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    //--------------------------------------------------
+    //  Eskimo API Functions: Operators ImpEx
+    //--------------------------------------------------
+
+    /**
+	 * retrieve remote EskimoEPOS list of Operators (or Clerks)
+	 * - POST api/Operators/Search
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
    	public function operators_search( $api_opts ) {
 		if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
-   
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
+
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
@@ -1161,7 +1333,8 @@ final class Eskimo_API {
     //--------------------------------------------------
 
     /**
-     * Insert remote EskimoEPOS order from web sale
+	 * Insert remote EskimoEPOS order from web sale
+	 * - POST api/Orders/Insert
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1182,7 +1355,8 @@ final class Eskimo_API {
 	}
 
     /**
-     * Retrieves a list of status codes that an order can be in.
+	 * Retrieves a list of status codes that an order can be in
+	 * - GET api/Orders/StatusCodes
      *
      * @return  array|boolean
      */
@@ -1210,6 +1384,9 @@ final class Eskimo_API {
     public function orders_customer_sale( $order_id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ': Order ID[' . $order_id . ']' ); }
 
+		// Basic parameter check
+		if ( empty( $order_id ) ) { return false; }
+
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
@@ -1230,6 +1407,9 @@ final class Eskimo_API {
      */
     public function orders_mail_order( $order_id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ': Order ID[' . $order_id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $order_id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1252,6 +1432,9 @@ final class Eskimo_API {
     public function orders_customer_order( $order_id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ': Order ID[' . $order_id . ']' ); }
 
+		// Basic parameter check
+		if ( empty( $order_id ) ) { return false; }
+
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
@@ -1264,13 +1447,17 @@ final class Eskimo_API {
     }
 	
     /**
-     * Retrieves a singular order class for a specific Web Order ID
+	 * Retrieves a singular order class for a specific Web Order ID
+	 * - GET api/Orders/WebsiteOrder/{ID}
      *
      * @param   integer   		$order_id 
      * @return  array|boolean
      */
     public function orders_website_order( $order_id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ': Order ID[' . $order_id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $order_id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1293,6 +1480,9 @@ final class Eskimo_API {
     public function orders_ebay_order( $order_id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ': Order ID[' . $order_id . ']' ); }
 
+		// Basic parameter check
+		if ( empty( $order_id ) ) { return false; }
+
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
@@ -1305,7 +1495,8 @@ final class Eskimo_API {
 	}
 	
     /**
-     * Retrieves Order Fulfiment Methods
+	 * Retrieves Order Fulfiment Methods
+	 * - GET api/Orders/FulfilmentMethods
      *
      * @return  array|boolean
      */
@@ -1324,14 +1515,18 @@ final class Eskimo_API {
 	}
 
     /**
-     * EskimoEPOS order search by criteria
+	 * EskimoEPOS order search by criteria
+	 * - POST api/Orders/Search
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
    	public function orders_search( $api_opts ) {
 		if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
-   
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
+
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
@@ -1354,6 +1549,9 @@ final class Eskimo_API {
     public function orders_amazon_order( $order_id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : Order ID[' . $order_id . ']' ); }
 
+		// Basic parameter check
+		if ( empty( $order_id ) ) { return false; }
+
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
@@ -1370,13 +1568,17 @@ final class Eskimo_API {
     //--------------------------------------------------
 
     /**
-     * Get product list
+	 * Get product list by batch
+	 * - POST api/Products/All
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
    	public function products_all( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1391,13 +1593,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Get product list by EskimoEPOS product ID
+	 * Get product list by EskimoEPOS product ID
+	 * - GET api/Products/SpecificID/{id}
      *
      * @param   integer   		$id 
      * @return  array|boolean
      */
     public function products_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1411,13 +1617,17 @@ final class Eskimo_API {
     }
     
     /**
-     * Update remote EPOS product webID
+	 * Update remote EPOS product web_ID
+	 * - POST api/Products/UpdateCartIDs
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function products_update_cart_ID( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1432,16 +1642,20 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Sales ImpEX
+    //  Eskimo API Functions: Sales ImpEx
     //--------------------------------------------------
 
     /**
-     * Retrieve remote EPOS store receipt
+	 * Retrieve remote EPOS store receipt
+	 * - GET api/Sales/RetrieveSale/{Store}/{Till}/{Receipt}
      *
      * @return  array|boolean
      */
    	public function sales_retrieve_sale( $store, $till, $receipt ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $store ) || empty( $till ) || empty( $receipt ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1455,13 +1669,17 @@ final class Eskimo_API {
 	}
 
     /**
-     * Insert a sale into the Eskimo system.
+	 * Insert a sale into the Eskimo system
+	 * - POST api/Sales/InsertSale
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function sales_insert_sale( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1476,13 +1694,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Retrieve remote Eskimo list of sales based on the search criteria
+	 * Retrieve remote Eskimo list of sales based on the search criteria
+	 * - POST api/Sales/Search
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function sales_search( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1497,13 +1719,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Retrieve remote Eskimo list of sales channels
+	 * Retrieve remote Eskimo list of sales channels
+	 * - POST api/Sales/Channels
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function sales_channels( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1522,7 +1748,8 @@ final class Eskimo_API {
     //--------------------------------------------------
 
     /**
-     * Get all current EPOS shops
+	 * Get all current EPOS shops
+	 * - GET api/Shops/All
      *
      * @return  array|boolean
      */
@@ -1541,13 +1768,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Get an EPOS shop by specific ID
+	 * Get an EPOS shop by specific ID
+	 * - GET api/Shops/SpecificID/{id}
      *
      * @param   string  		$id
      * @return  array|boolean
      */
     public function shops_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1565,13 +1796,17 @@ final class Eskimo_API {
     //--------------------------------------------------
 
     /**
-     * Get EPOS SKUs
+	 * Get EPOS SKUs by batch
+	 * - POST api/SKUs/All
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
    	public function skus_all( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1586,19 +1821,23 @@ final class Eskimo_API {
     }
 
     /**
-     * Get EPOS SKU by specific sku code
+	 * Get EPOS SKU by specific sku code
+	 * - GET api/SKUs/SpecificSKUCode/{id}
      *
-     * @param   string  		$code
+     * @param   string  		$id
      * @return  array|boolean
      */
-   	public function skus_specific_code( $code ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : Code [' . $code . ']' ); }
+   	public function skus_specific_code( $id ) {
+        if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : Code [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-        $api_url    = $oauth['domain'] . 'api/SKUs/SpecificSKUCode/' . $code;
+        $api_url    = $oauth['domain'] . 'api/SKUs/SpecificSKUCode/' . $id;
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1606,13 +1845,17 @@ final class Eskimo_API {
 	}
 
     /**
-     * Get EPOS SKUs by specific EPOS product ID
+	 * Get EPOS SKUs by specific EPOS product ID
+	 * - GET api/SKUs/SpecificIdentifier/{id}
      *
      * @param   string  		$id 
      * @return  array|boolean
      */
    	public function skus_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']' ); }
+
+		// Basic parameter check
+		if ( empty( $id ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1626,11 +1869,12 @@ final class Eskimo_API {
 	}
 
     //--------------------------------------------------
-    //  Eskimo API Functions: StockTaking ImpEX
+    //  Eskimo API Functions: StockTaking REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Retrieves a list of products and operators that can be used for stock taking.
+	 * Retrieves a list of products and operators that can be used for stock taking
+	 * - GET api/StockTaking/GetProductData
      *
      * @return  array|boolean
      */
@@ -1650,18 +1894,24 @@ final class Eskimo_API {
 
     /**
 	 * Increments the counted figure for a collection of products
+	 * - POST api/StockTaking/IncrementCounts
 	 *
+     * @param   array   		$api_opts 
      * @return  array|boolean
      */
-   	public function stock_taking_increment_counts() {
+   	public function stock_taking_increment_counts( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
         $api_url    = $oauth['domain'] . 'api/StockTaking/IncrementCounts';
-        $api_data   = $this->post_data( $api_url);
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : json_decode( $api_data );
@@ -1669,6 +1919,7 @@ final class Eskimo_API {
 
 	/**
 	 * Retrieves a distinct list of all areas counted in this stock take
+	 * - GET api/StockTaking/RetrieveAreas
 	 *
      * @return  array|boolean
      */
@@ -1688,29 +1939,36 @@ final class Eskimo_API {
 
 	/**
 	 * Retrieves a list of all counts. This can be used to match up with local data
+	 * - POST api/StockTaking/ValidateStockTake
      *
+     * @param   array   		$api_opts 
      * @return  array|boolean
      */
-   	public function stock_taking_validate_stock_take() {
+   	public function stock_taking_validate_stock_take( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
         $api_url    = $oauth['domain'] . 'api/StockTaking/ValidateStockTake';
-        $api_data   = $this->post_data( $api_url);
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Tax ImpEX
+    //  Eskimo API Functions: Tax REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Get EPOS Tax Codes
+	 * Get EPOS Tax Codes
+	 * - GET api/TaxCodes/All
      *
      * @return  array|boolean
      */
@@ -1734,8 +1992,12 @@ final class Eskimo_API {
      * @param   boolean 		$id
      * @return  array|boolean
      */
-    public function tax_codes_specific_ID( $id = false ) {
+    public function tax_codes_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . (int) $id . ']' ); }
+
+		// Basic parameter check
+		$id = absint( $id );
+		if ( $id <= 0 ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1749,17 +2011,21 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Tenders ImpEX
+    //  Eskimo API Functions: Tenders REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Get EskimoEPOS Tenders
+	 * Get EskimoEPOS Tenders
+	 * - POST api/Tenders/All
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function tenders_all( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1774,17 +2040,21 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
-    //  Eskimo API Functions: Till Menu ImpEX
+    //  Eskimo API Functions: Till Menu REST ImpEx
     //--------------------------------------------------
 
     /**
-     * Get EskimoEPOS Till menu areas
+	 * Get EskimoEPOS Till menu areas
+	 * - POST api/TillMenu/Areas
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function till_menu_areas( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1799,13 +2069,17 @@ final class Eskimo_API {
 	}
 
     /**
-     * Get EskimoEPOS Till menu products
+	 * Get EskimoEPOS Till menu products
+	 * - POST api/TillMenu/Products
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function till_menu_products( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1820,13 +2094,17 @@ final class Eskimo_API {
 	}
 
     /**
-     * Get EskimoEPOS Till menu products
+	 * Get EskimoEPOS Till menu products
+	 * - POST api/TillMenu/ProductsDump
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function till_menu_products_dump( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1841,12 +2119,17 @@ final class Eskimo_API {
     }
 
     /**
-     * Get EskimoEPOS Till menu sections
+	 * Get EskimoEPOS Till menu sections
+	 * - POST api/TillMenu/Sections
      *
+     * @param   array   		$api_opts 
      * @return  array|boolean
      */
-    public function till_menu_sections() {
+    public function till_menu_sections( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1861,12 +2144,17 @@ final class Eskimo_API {
 	}
 
     /**
-     * Get EskimoEPOS Till menu product search
+	 * Get EskimoEPOS Till menu product search
+	 * - POST api/TillMenu/ProductSearch
      *
+     * @param   array   		$api_opts 
      * @return  array|boolean
      */
-    public function till_menu_product_search() {
+    public function till_menu_product_search( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1884,10 +2172,14 @@ final class Eskimo_API {
 	 * Get EskimoEPOS Till menu functions
 	 * Deprecated: No longer part of the EskimoEPOS API
      *
+     * @param   array   		$api_opts 
      * @return  array|boolean
      */
-    public function till_menu_functions() {
+    public function till_menu_functions( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();
@@ -1902,7 +2194,8 @@ final class Eskimo_API {
     }
 
 	/**
-     * Get EskimoEPOS Till menu source codes
+	 * Get EskimoEPOS Till menu source codes
+	 * - GET api/TillMenu/SourceCodes
      *
      * @return  array|boolean
      */
@@ -1921,7 +2214,8 @@ final class Eskimo_API {
     }
 
 	/**
-     * Get EskimoEPOS Till menu unit info
+	 * Get EskimoEPOS Till menu unit info
+	 * - GET api/TillMenu/UnitInfo
      *
      * @return  array|boolean
      */
@@ -1940,13 +2234,17 @@ final class Eskimo_API {
     }
 
 	/**
-     * Get EskimoEPOS Till menu sent orders
+	 * Get EskimoEPOS Till menu sent orders
+	 * - POST api/TillMenu/SendOrderItems
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
      */
     public function till_menu_send_order_items( $api_opts ) {
         if ( $this->debug ) { error_log( __CLASS__ . ' : ' . __METHOD__ ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
 
         // Get authentication parameters
         $oauth = $this->api->get_oauth_params();

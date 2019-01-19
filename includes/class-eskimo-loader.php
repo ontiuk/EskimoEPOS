@@ -39,7 +39,6 @@ class Eskimo_Loader {
 	 * Initialize the collections used to maintain the actions and filters
 	 */
 	public function __construct() {
-
 		$this->actions = [];
 		$this->filters = [];
 	}

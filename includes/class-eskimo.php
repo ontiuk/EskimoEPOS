@@ -1,10 +1,9 @@
 <?php
 
 /**
- * The file that defines the core plugin class
+ * Defines the core Eskimo plugin class
  *
- * A class definition that includes attributes and functions used across both the
- * public-facing side of the site and the admin area
+ * Includes attributes and functions used across both the public-facing side of the site and the admin area
  *
  * @link       https://on.tinternet.co.uk
  * @package    Eskimo
@@ -12,10 +11,9 @@
  */
 
 /**
- * The core plugin class
+ * The core Eskimo plugin class
  *
  * Define internationalization, admin-specific hooks, and public-facing site hooks
- *
  * Also maintains the unique identifier of this plugin as well as the current version of the plugin
  *
  * @package    Eskimo
@@ -25,7 +23,7 @@
 class Eskimo {
 
 	/**
-	 * The loader that's responsible for maintaining and registering all hooks that power the plugin
+	 * Loader responsible for maintaining and registering all hooks that power the plugin
 	 *
 	 * @var      Eskimo_Loader    $loader    Maintains and registers all hooks for the plugin
 	 */
@@ -68,6 +66,7 @@ class Eskimo {
 	 */
 	public function __construct() {
     
+		// Set name & process
 		$this->eskimo   = 'eskimo';
    		$this->version  = ESKIMO_VERSION;
 		$this->debug    = ESKIMO_DEBUG;
@@ -76,20 +75,24 @@ class Eskimo {
 		$this->set_locale();
     
 		// Admin Objects
-        $this->eskimo_admin = new Eskimo_Admin( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+        $this->eskimo_admin 	= new Eskimo_Admin( $this->get_plugin_name() );
 
 		// Public Objects
-		$this->eskimo_public = new Eskimo_Public( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+		$this->eskimo_public 	= new Eskimo_Public( $this->get_plugin_name() );
 
 		// Shared Objects
-        $this->eskimo_epos  = new Eskimo_EPOS( $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-        $this->eskimo_api   = new Eskimo_API( $this->eskimo_epos, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-        $this->eskimo_rest  = new Eskimo_REST( $this->eskimo_api, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
-        $this->eskimo_route = new Eskimo_Route( $this->eskimo_rest, $this->get_plugin_name(), $this->get_version(), $this->get_debug() );
+        $this->eskimo_epos  	= new Eskimo_EPOS( $this->get_plugin_name() );
+        $this->eskimo_api   	= new Eskimo_API( $this->eskimo_epos, $this->get_plugin_name() );
+        $this->eskimo_rest  	= new Eskimo_REST( $this->eskimo_api, $this->get_plugin_name() );
+        $this->eskimo_route 	= new Eskimo_Route( $this->eskimo_rest, $this->get_plugin_name() );
    
 		// Cart Object
-        $this->eskimo_cart  = new Eskimo_Cart( $this->get_plugin_name(), $this->get_version() );
+        $this->eskimo_cart  	= new Eskimo_Cart( $this->get_plugin_name() );
 
+		// Cron Object
+        $this->eskimo_cron  	= new Eskimo_Cron( $this->get_plugin_name(), $this->get_version() );
+
+		// Define plugin hooks
         $this->define_admin_hooks();
 		$this->define_public_hooks();
         $this->define_shared_hooks();
@@ -124,6 +127,7 @@ class Eskimo {
 		 */
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-utils.php';
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-cart.php';
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-cron.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area
@@ -154,7 +158,6 @@ class Eskimo {
 	private function set_locale() {
 
 		$plugin_i18n = new Eskimo_i18n();
-
 		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 	}
 
@@ -170,13 +173,14 @@ class Eskimo {
         $this->loader->add_action( 'init', $this->eskimo_admin, 'init' );
 
         // Product Category Custom Category ID
-		$this->loader->add_action( 'product_cat_add_form_fields', $this->eskimo_admin, 'add_eskimo_category_id',  10, 2  );
-		$this->loader->add_action( 'product_cat_edit_form_fields', $this->eskimo_admin, 'edit_eskimo_category_id',  10, 2  );
-		$this->loader->add_action( 'created_product_cat', $this->eskimo_admin, 'save_eskimo_category_id',  10, 2  );
-		$this->loader->add_action( 'edited_product_cat', $this->eskimo_admin, 'update_eskimo_category_id',  10, 2  );
+		$this->loader->add_action( 'product_cat_add_form_fields', 	$this->eskimo_admin, 'add_eskimo_category_id',  10, 2  );
+		$this->loader->add_action( 'product_cat_edit_form_fields', 	$this->eskimo_admin, 'edit_eskimo_category_id',  10, 2  );
+		$this->loader->add_action( 'created_product_cat', 			$this->eskimo_admin, 'save_eskimo_category_id',  10, 2  );
+		$this->loader->add_action( 'edited_product_cat', 			$this->eskimo_admin, 'update_eskimo_category_id',  10, 2  );
 
-        $this->loader->add_action( 'manage_edit-product_cat_columns', $this->eskimo_admin, 'add_eskimo_category_column' );
-        $this->loader->add_action( 'manage_product_cat_custom_column', $this->eskimo_admin, 'add_eskimo_category_column_content',  10, 3  );
+		// Product Category Columns
+        $this->loader->add_action( 'manage_edit-product_cat_columns', 	$this->eskimo_admin, 'add_eskimo_category_column' );
+        $this->loader->add_action( 'manage_product_cat_custom_column', 	$this->eskimo_admin, 'add_eskimo_category_column_content',  10, 3  );
         $this->loader->add_action( 'manage_edit-product_cat_sortable_columns', $this->eskimo_admin, 'add_eskimo_category_column_sortable' );
 	}
 
@@ -185,8 +189,15 @@ class Eskimo {
 	 */
 	private function define_public_hooks() {
 
+		// Register styles and scripts
 		$this->loader->add_action( 'wp_enqueue_scripts', $this->eskimo_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $this->eskimo_public, 'enqueue_scripts' );
+
+		// Register cron hooks - Sync categories & products
+		$this->loader->add_action( 'eskimo_do_categories_new', 		$this->eskimo_cron, 'categories_do_new' );
+		$this->loader->add_action( 'eskimo_do_products_new', 		$this->eskimo_cron, 'products_do_new', 10, 2 );
+		$this->loader->add_action( 'eskimo_do_skus_modified', 		$this->eskimo_cron, 'skus_do_modified', 10, 3 );
+		$this->loader->add_action( 'eskimo_do_products_modified', 	$this->eskimo_cron, 'products_do_modified', 10, 1 );
 
         // REST API Init
 		$this->loader->add_action( 'rest_api_init', $this->eskimo_route, 'register_routes' );
@@ -208,10 +219,13 @@ class Eskimo {
 		$order_status = get_option( 'eskimo_epos_order', '' );
 		if ( $this->debug ) { error_log( 'EPOS Order Status[' . $order_status . ']' ); } 
 		if ( $order_status === 'completed' ) {
-			$this->loader->add_action( 'woocommerce_order_status_completed', $this->eskimo_cart, 'order_status_completed' );
+			$this->loader->add_action( 'woocommerce_order_status_completed', 	$this->eskimo_cart, 'order_status_completed' );
 		} else {
-			$this->loader->add_action( 'woocommerce_order_status_processing', $this->eskimo_cart, 'order_status_processing' );
+			$this->loader->add_action( 'woocommerce_order_status_processing', 	$this->eskimo_cart, 'order_status_processing' );
 		}
+
+		// Cron jobs
+		// TBD
 	}
 
 	/**

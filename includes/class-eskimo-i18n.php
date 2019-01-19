@@ -21,7 +21,7 @@
  * @subpackage Eskimo/includes
  * @author     Stephen Betley <on@tinternet.co.uk>
  */
-class Eskimo_i18n {
+final class Eskimo_i18n {
 
 	/**
 	 * Load the plugin text domain for translation.

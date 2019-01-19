@@ -23,28 +23,28 @@ use \Curl\Curl;
 final class Eskimo_EPOS {
 
 	/**
-	 * The ID of this plugin
+	 * Plugin ID
 	 *
 	 * @var     string    $eskimo    The ID of this plugin
 	 */
 	private $eskimo;
 
 	/**
-	 * The version of this plugin
+	 * Plugin version
 	 *
 	 * @var     string    $version    The current version of this plugin
 	 */
 	private $version;
 
     /**
-	 * Is the plugin in debug mode 
+	 * Plugin debug mode 
 	 *
 	 * @var     bool    $debug    Plugin is in debug mode
 	 */
 	private $debug;
 
 	/**
-	 * Is the plugin base directory 
+	 * Plugin base directory 
 	 *
 	 * @var      string    $base_dir  String path for the plugin directory
 	 */
@@ -75,16 +75,16 @@ final class Eskimo_EPOS {
 	 * Initialize the class and set its properties
 	 *
 	 * @param   string    $eskimo     The name of this plugin
-	 * @param   string    $version    The version of this plugin
-	 * @param   string    $version    Plugin debugging mode, default false
 	 */
-	public function __construct( $eskimo, $version, $debug = false ) {
-        if ( $debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+	public function __construct( $eskimo ) {
 
+		// Set up class settings
 		$this->eskimo       = $eskimo;
-		$this->version      = $version;
-		$this->debug        = $debug;
+   		$this->version  	= ESKIMO_VERSION;
+		$this->debug    	= ESKIMO_DEBUG;
     	$this->base_dir		= plugin_dir_url( __FILE__ ); 
+
+		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 	}
     
     //----------------------------------------------

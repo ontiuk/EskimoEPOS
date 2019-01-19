@@ -18,28 +18,28 @@
 final class Eskimo_REST {
 
 	/**
-	 * The ID of this plugin
+	 * Plugin ID
 	 *
 	 * @var     string    $eskimo    The ID of this plugin
 	 */
 	private $eskimo;
 
 	/**
-	 * The version of this plugin
+	 * Plugin version
 	 *
 	 * @var     string    $version    The current version of this plugin
 	 */
 	private $version;
 
     /**
-	 * Is the plugin in debug mode 
+	 * Plugin debug mode 
 	 *
 	 * @var     bool    $debug    Plugin is in debug mode
 	 */
 	private $debug;
 
 	/**
-	 * Is the plugin base directory 
+	 * Plugin base directory 
 	 *
 	 * @var      string    $base_dir  string path for the plugin directory 
 	 */
@@ -62,20 +62,20 @@ final class Eskimo_REST {
 	/**
 	 * Initialize the class and set its properties
 	 *
-	 * @param   string    $eskimo     The name of this plugin
-	 * @param   string    $version    The version of this plugin
-	 * @param   string    $version    Plugin debugging mode, default false
+	 * @param	object		$api		The API object		
+	 * @param   string 		$eskimo     The name of this plugin
 	 */
-	public function __construct( Eskimo_API $api, $eskimo, $version, $debug = false ) {
-        if ( $debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+	public function __construct( Eskimo_API $api, $eskimo ) {
 
+		// Set up class settings
         $this->api      = $api;
-        $this->wc       = new Eskimo_WC( $eskimo, $version, $debug );
-		$this->eskimo   = $eskimo;
-		$this->version  = $version;
-		$this->debug    = $debug;
+        $this->wc       = new Eskimo_WC( $eskimo );
+   		$this->version  = ESKIMO_VERSION;
+		$this->debug    = ESKIMO_DEBUG;
     	$this->base_dir	= plugin_dir_url( __FILE__ ); 
-    }
+
+		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+	}
 
     //----------------------------------------------
     // Woocommerce Category Import
@@ -89,7 +89,7 @@ final class Eskimo_REST {
     public function get_categories_all() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -124,12 +124,12 @@ final class Eskimo_REST {
     public function get_categories_specific_ID( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
-        // Validate Category
+        // Validate Category ID
         if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Category ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -166,12 +166,12 @@ final class Eskimo_REST {
     public function get_categories_child_categories_ID( $id = '' ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
-        // Validate Category
+        // Validate Category ID
         if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Category Parent ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -198,13 +198,13 @@ final class Eskimo_REST {
     }
 
     //----------------------------------------------
-    // Woocommerce Category Products
+    // Woocommerce Category Product Import
     //----------------------------------------------
 
     /**
      * Get remote API products by category
      * - Requires 2 parameters: StartPosition & RecordCount
-     * - No Import
+     * - Deprecated
      *
      * @param   integer $start      default 1  
      * @param   integer $records    default 25
@@ -228,7 +228,7 @@ final class Eskimo_REST {
         $api_opts['RecordCount']    = ( $records === 0 || $records > 25 ) ? $api_defaults['RecordCount'] : $records;
         if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
                     
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -268,12 +268,12 @@ final class Eskimo_REST {
     public function get_category_products_specific_category( $id ) {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
 
-        // Test Category
+        // Test Category ID
         if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Category ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -323,7 +323,7 @@ final class Eskimo_REST {
         $start   = absint( $start );
         $records = absint( $records );
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -377,7 +377,7 @@ final class Eskimo_REST {
 		$route 		= sanitize_text_field( $route );
 		$created	= absint( $created );
 
-     	// Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -432,6 +432,9 @@ final class Eskimo_REST {
 			if ( is_wp_error( $api_products ) || empty( $api_products ) ) { continue; }
 			foreach ( $api_products as $result ) { $results[] = $result; }
 
+			// Done enough?
+			if ( $api_count <= $api_opts['RecordCount'] ) { break; }
+
         } while ( true );
 
         // Return results for Web_ID update
@@ -446,7 +449,7 @@ final class Eskimo_REST {
     public function get_products_all() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -526,7 +529,7 @@ final class Eskimo_REST {
         $start   	= absint( $start );
         $records 	= absint( $records );
 
-     	// Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -587,7 +590,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid Product ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -640,7 +643,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid Product ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -670,6 +673,25 @@ final class Eskimo_REST {
         return ( $import ) ? $this->wc->get_products_import_ID( $api_data, $path ) : $api_data;
 	}
 
+    /**
+     * Get & update local product by ID
+     *
+     * @param   string  $prod_ref
+     * @param   string  $trade_ref
+     * @return  boolean
+     */
+    public function get_products_trade_ID( $prod_ref, $trade_ref) {
+        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Prod[' . $prod_ref . '] Trade[' . $trade_ref . ']' ); }
+
+        // Test Product
+        if ( empty( $prod_ref ) || empty( $trade_ref ) ) {
+            return $this->api_error( 'Invalid Product ID' );
+        }
+
+        // Process Woocommerce Import
+        return $this->wc->get_products_trade_ID( $prod_ref, $trade_ref );
+	}
+
     //----------------------------------------------
     // Woocommerce Category & Product WebID Export
     //----------------------------------------------
@@ -695,7 +717,7 @@ final class Eskimo_REST {
     public function get_categories_meta_ID() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -729,7 +751,7 @@ final class Eskimo_REST {
     public function get_categories_cart_ID() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -769,7 +791,7 @@ final class Eskimo_REST {
             return $this->api_error( 'No Category API Data To Process' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -828,7 +850,7 @@ final class Eskimo_REST {
         $start   = absint( $start );
         $records = absint( $records );
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -877,7 +899,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid Product API Options' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -921,7 +943,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid Customer ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -961,7 +983,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid Customer Email' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1053,7 +1075,7 @@ final class Eskimo_REST {
 
 		if ( $this->debug ) { error_log( 'Customer Data: ' . print_r( $api_opts, true ) ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1087,7 +1109,7 @@ final class Eskimo_REST {
     public function get_customers_titles() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1126,7 +1148,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid Order ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1171,7 +1193,7 @@ final class Eskimo_REST {
 
 		if ( $this->debug ) { error_log( 'Order Data: ' . print_r( $api_opts, true ) ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1243,7 +1265,7 @@ final class Eskimo_REST {
 		$id = sanitize_text_field( $id );
 	 	if ( empty( $id ) ) { return $this->api_error( 'Invalid Order ID' ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
 		}
@@ -1296,7 +1318,7 @@ final class Eskimo_REST {
 		$id = absint( $id );
 	 	if ( $id === 0 ) { return $this->api_error( 'Invalid Order ID' ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
 		}
@@ -1360,7 +1382,7 @@ final class Eskimo_REST {
 		if ( empty( $date_1 ) ) { return $this->api_error( 'Invalid Order Date 1' ); }
 		if ( $route === 'range' && empty( $date_2 ) ) { return $this->api_error( 'Invalid Order Date 2' ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1442,7 +1464,7 @@ final class Eskimo_REST {
         $start   = absint( $start );
         $records = absint( $records );
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1506,7 +1528,7 @@ final class Eskimo_REST {
 		$records 	= absint( $records );
 		$import		= absint( $import );
 
-     	// Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1592,7 +1614,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid SKU ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1633,7 +1655,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid SKU ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1673,7 +1695,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid Product ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1718,7 +1740,7 @@ final class Eskimo_REST {
         $start   = absint( $start );
         $records = absint( $records );
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1770,7 +1792,7 @@ final class Eskimo_REST {
         $start   = absint( $start );
         $records = absint( $records );
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1845,7 +1867,7 @@ final class Eskimo_REST {
     public function get_shops_all() {
         if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
@@ -1885,7 +1907,7 @@ final class Eskimo_REST {
             return $this->api_error( 'Invalid Shops ID' );
         }
 
-        // Test connection
+        // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
         }
