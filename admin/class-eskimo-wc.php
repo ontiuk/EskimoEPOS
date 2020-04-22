@@ -57,10 +57,8 @@ final class Eskimo_WC {
 		// Set up class settings
 		$this->eskimo   	= $eskimo;
    		$this->version  	= ESKIMO_VERSION;
-		$this->debug    	= ESKIMO_DEBUG;
+		$this->debug    	= ESKIMO_WC_DEBUG;
 	 	$this->base_dir		= plugin_dir_url( __FILE__ ); 
-
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 	}
 
     //----------------------------------------------
@@ -74,7 +72,7 @@ final class Eskimo_WC {
 	 * @return	object|array
      */
     public function get_categories_all( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -82,11 +80,11 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Categories[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Categories[' . count( $api_data ) . ']', 'wc' ); }
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_category' ); 
-        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Prefix[' . $web_prefix . ']', 'wc' ); }
 
         // Process parent & child categories
         $parent = $child = [];
@@ -98,8 +96,8 @@ final class Eskimo_WC {
             if ( ! preg_match( '/product$/i', $api_cat->Eskimo_Category_ID ) ) { continue; }
             
             // Already with a Web_ID so pre-existing in WC & Temp 'zero' reset
-            if ( !empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) {
-                if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Exists [' . $api_cat->Web_ID . ']' ); }
+            if ( ! empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) {
+                if ( $this->debug ) { eskimo_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Exists [' . $api_cat->Web_ID . ']', 'wc' ); }
                 continue; 
             }
 
@@ -110,7 +108,7 @@ final class Eskimo_WC {
 				$child[] = $api_cat;
 			}
         }
-        if ( $this->debug ) { error_log( 'EPOS Cats: Parent[' . count( $parent ) . '] Child[' . count( $child ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS Cats: Parent[' . count( $parent ) . '] Child[' . count( $child ) . ']', 'wc' ); }
 
         // Return data
         $result = [];
@@ -121,16 +119,16 @@ final class Eskimo_WC {
             // Insert term
             $cat_term = $this->add_product_category_rest( $api_cat );
             if ( empty( $cat_term ) || is_wp_error( $cat_term ) ) {
-                if ( $this->debug ) { error_log( 'Bad parent term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad parent term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']', 'wc' ); }
                 continue;
             }
             
-            if ( $this->debug ) { error_log( 'Cat Term[' . print_r( $cat_term, true )  . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Cat Term[' . print_r( $cat_term, true ) . ']', 'wc' ); }
 
             // Update Eskimo CatID
             $term_meta_id = $this->add_term_eskimo_cat_id( $cat_term['id'], $api_cat );
             if ( false === $term_meta_id || is_wp_error( $term_meta_id ) ) {
-                if ( $this->debug ) { error_log( 'Bad term meta insert[' . $cat_term['id'] . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad term meta insert[' . $cat_term['id'] . ']', 'wc' ); }
                 continue;
             }
 
@@ -147,16 +145,16 @@ final class Eskimo_WC {
             // Insert term
             $cat_term = $this->add_product_category_rest( $api_cat, true );
             if ( empty( $cat_term ) || is_wp_error( $cat_term ) ) {
-                if ( $this->debug ) { error_log( 'Bad child term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad child term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']', 'wc' ); }
                 continue;
             }
 
-            if ( $this->debug ) { error_log( 'Cat Term[' . print_r( $cat_term, true )  . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Cat Term[' . print_r( $cat_term, true )  . ']', 'wc' ); }
 
             // Update Eskimo CatID
             $term_meta_id = $this->add_term_eskimo_cat_id( $cat_term['id'], $api_cat );
             if ( false === $term_meta_id || is_wp_error( $term_meta_id ) ) {
-                if ( $this->debug ) { error_log( 'Bad term meta insert[' . $cat_term['id'] . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad term meta insert[' . $cat_term['id'] . ']', 'wc' ); }
                 continue;
             }
 
@@ -178,7 +176,7 @@ final class Eskimo_WC {
 	 * @return	object|array
      */
     public function get_categories_specific_ID( $api_cat ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_cat ) ) {
@@ -186,19 +184,19 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Category[' . $api_cat->Eskimo_Category_ID . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Category[' . $api_cat->Eskimo_Category_ID . ']', 'wc' ); }
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_category' ); 
-        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Prefix[' . $web_prefix . ']', 'wc' ); }
 
         // Product Categories Only
         if ( ! preg_match( '/product$/i', $api_cat->Eskimo_Category_ID ) ) { return false; }
             
         // Already with a Web_ID so pre-existing in WC
         if ( ! empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) { 
-            if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Exists [' . $api_cat->Web_ID . ']' ); }
-            return $this->api_error( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Alreadt Imported [' . $api_cat->Web_ID . ']' );
+            if ( $this->debug ) { eskimo_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Exists [' . $api_cat->Web_ID . ']', 'wc' ); }
+            return $this->api_error( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Already Imported [' . $api_cat->Web_ID . ']' );
         }
 
         // Parent or Child
@@ -207,16 +205,16 @@ final class Eskimo_WC {
         // Insert term
         $cat_term = $this->add_product_category_rest( $api_cat, !$parent );
         if ( empty( $cat_term ) || is_wp_error( $cat_term ) ) {
-            if ( $this->debug ) { error_log( 'Bad term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']', 'wc' ); }
 			return $this->api_error( 'Bad category term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']' );
         }
         
-        if ( $this->debug ) { error_log( 'Cat Term[' . print_r( $cat_term, true )  . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Cat Term[' . print_r( $cat_term, true )  . ']', 'wc' ); }
 
         // Update Eskimo CatID
         $term_meta_id = $this->add_term_eskimo_cat_id( $cat_term['id'], $api_cat );
         if ( false === $term_meta_id || is_wp_error( $term_meta_id ) ) {
-            if ( $this->debug ) { error_log( 'Bad term meta insert[' . $cat_term['id'] . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad term meta insert[' . $cat_term['id'] . ']', 'wc' ); }
         }
 
         // OK, done 
@@ -235,7 +233,7 @@ final class Eskimo_WC {
 	 * @return	object|array
      */
     public function get_categories_child_categories_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -244,7 +242,7 @@ final class Eskimo_WC {
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_category' ); 
-        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Prefix[' . $web_prefix . ']', 'wc' ); }
 
         // Process parent & child categories
         $child = [];
@@ -257,7 +255,7 @@ final class Eskimo_WC {
             
             // Already with a Web_ID so pre-existing in WC
             if ( !empty( $api_cat->Web_ID ) && $api_cat->Web_ID !== '0' ) { 
-                if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Exists [' . $api_cat->Web_ID . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] Exists [' . $api_cat->Web_ID . ']', 'wc' ); }
                 continue; 
             }
 
@@ -267,7 +265,7 @@ final class Eskimo_WC {
             // Log cat
             $child[] = $api_cat;
         }
-        if ( $this->debug ) { error_log( 'EPOS Cats: [' . count( $child ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS Cats: [' . count( $child ) . ']', 'wc' ); }
 
         // Return data
         $result = [];
@@ -278,15 +276,15 @@ final class Eskimo_WC {
             // Insert term
             $cat_term = $this->add_product_category_rest( $api_cat, true );
             if ( empty( $cat_term ) || is_wp_error( $cat_term ) ) {
-                if ( $this->debug ) { error_log( 'Bad child term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad child term insert ID[' . $api_cat->Eskimo_Category_ID . '][' . $api_cat->ShortDescription . ']', 'wc' ); }
                 continue;
             }
-            if ( $this->debug ) { error_log( 'Cat Term[' . print_r( $cat_term, true )  . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Cat Term[' . print_r( $cat_term, true )  . ']', 'wc' ); }
 
             // Update Eskimo CatID
             $term_meta_id = $this->add_term_eskimo_cat_id( $cat_term['id'], $api_cat );
             if ( false === $term_meta_id || is_wp_error( $term_meta_id ) ) {
-                if ( $this->debug ) { error_log( 'Bad term meta insert[' . $cat_term['id'] . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad term meta insert[' . $cat_term['id'] . ']', 'wc' ); }
                 continue;
             }
 
@@ -308,7 +306,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     public function get_categories_cart_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -316,7 +314,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Categories ID[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Categories ID[' . count( $api_data ) . ']', 'wc' ); }
 
         // Process parent & child categories
         $categories = [];
@@ -329,14 +327,14 @@ final class Eskimo_WC {
             
             // Already with a Web_ID so pre-existing in WC
             if ( empty( $api_cat->Web_ID ) ) { 
-                if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] NOT Exists Web_ID' ); }
+                if ( $this->debug ) { eskimo_log( 'Cat ID[' . $api_cat->Eskimo_Category_ID . '] NOT Exists Web_ID', 'wc' ); }
                 continue; 
             }
 
             // Add cat
             $categories[] = $api_cat;
         }
-        if ( $this->debug ) { error_log( 'EPOS Cats:' . count( $categories ) ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS Cats:' . count( $categories ), 'wc' ); }
 
         // Return data
         $result = [];
@@ -400,7 +398,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     public function get_categories_meta_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -408,7 +406,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Categories ID[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Categories ID[' . count( $api_data ) . ']', 'wc' ); }
 
         // Process parent & child categories
         $categories = [];
@@ -424,8 +422,8 @@ final class Eskimo_WC {
 		}
 		
 		if ( $this->debug ) { 
-			error_log( 'EPOS Cats:' . count( $categories ) ); 
-			error_log( print_r( $categories, true ) );
+			eskimo_log( 'EPOS Cats:' . count( $categories ), 'wc' ); 
+			eskimo_log( print_r( $categories, true ), 'wc' );
 		}
 
         // Return data
@@ -434,7 +432,7 @@ final class Eskimo_WC {
 		// Get category data
 		foreach ( $categories as $category ) {
 			$slug = sanitize_title( $category->ShortDescription );
-			error_log( 'Slug:' . $slug . ']' ); 
+			eskimo_log( 'Slug:' . $slug . ']', 'wc' ); 
 
 			$term = get_term_by('slug', $slug, 'product_cat');
 			
@@ -468,7 +466,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_products_all( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
          // Validate API data
         if ( empty( $api_data ) ) {
@@ -476,11 +474,11 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Products All[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Products All[' . count( $api_data ) . ']', 'wc' ); }
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_product' ); 
-        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Prefix[' . $web_prefix . ']', 'wc' ); }
 
         // Process products
         $products = [];
@@ -493,25 +491,25 @@ final class Eskimo_WC {
 
             // Dodgy Title?
             if ( empty( $api_prod->title ) ) {
-                if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' ); }
+                if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists', 'wc' ); }
                 continue; 
             }
 
             // Requires that the Eskimo Category has been imported
             if ( empty( $api_prod->web_category_id ) || $api_prod->web_category_id === '0' ) { 
-                if ( $this->debug ) { error_log( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists Cat Web_ID' ); }
+                if ( $this->debug ) { eskimo_log( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists Cat Web_ID', 'wc' ); }
                 continue; 
             }
 
             // Requires that the Eskimo Product has NOT been imported
             if ( !empty( $api_prod->web_id ) && $api_prod->web_id !== '0' ) { 
-                if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']', 'wc' ); }
                 continue; 
             }
 
             // Required valid product sku data
             if ( empty( $api_prod->sku ) ) { 
-                if ( $this->debug ) { error_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']', 'wc' ); }
                 continue; 
             }
 
@@ -519,7 +517,7 @@ final class Eskimo_WC {
             $products[] = $api_prod;
         }
 
-        if ( $this->debug ) { error_log( 'EPOS Prods: [' . count( $products ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS Prods: [' . count( $products ) . ']', 'wc' ); }
 
         // Something to do?        
         if ( empty( $products ) ) { return $this->api_error( 'No Products To Process' ); }
@@ -537,25 +535,25 @@ final class Eskimo_WC {
             // Update Eskimo ProdID
             $prod_meta_id = $this->add_post_meta_eskimo_id( $prod['id'], $api_prod );
             if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-                if ( $this->debug ) { error_log( 'Bad post meta insert[' . $prod['id'] . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad post meta insert[' . $prod['id'] . ']', 'wc' ); }
 			}
 
             // Update Eskimo ProdID
             $prod_meta_id = $this->add_post_meta_extra( $prod['id'], $api_prod );
             if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-                if ( $this->debug ) { error_log( 'Bad post meta extra insert[' . $prod['id'] . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad post meta extra insert[' . $prod['id'] . ']', 'wc' ); }
 			}
 
             // Update Eskimo Style
             $prod_meta_id = $this->add_post_meta_more( $prod['id'], $api_prod );
             if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-                if ( $this->debug ) { error_log( 'Bad post meta more insert[' . $prod['id'] . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad post meta more insert[' . $prod['id'] . ']', 'wc' ); }
             }
 
 			// Update Eskimo ProdID
             $prod_meta_id = $this->add_post_meta_date( $prod['id'], $api_prod );
             if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-                if ( $this->debug ) { error_log( 'Bad post meta date insert[' . $prod['id'] . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Bad post meta date insert[' . $prod['id'] . ']', 'wc' ); }
             }
 
             // Load into response list
@@ -576,7 +574,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_products_new( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
          // Validate API data
         if ( empty( $api_data ) ) {
@@ -584,7 +582,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Products New[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Products New[' . count( $api_data ) . ']', 'wc' ); }
 
         // Process products
         $products = [];
@@ -597,19 +595,19 @@ final class Eskimo_WC {
 
             // Dodgy Title?
             if ( empty( $api_prod->title ) ) {
-                if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' ); }
+                if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists', 'wc' ); }
                 continue; 
             }
 				
 			// Requires that the Eskimo Category has been imported
             if ( empty( $api_prod->web_category_id ) || $api_prod->web_category_id === '0' ) { 
-                if ( $this->debug ) { error_log( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists Cat Web_ID' ); }
+                if ( $this->debug ) { eskimo_log( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists Cat Web_ID', 'wc' ); }
                 continue; 
             }
 
             // Requires that the Eskimo Product has NOT been imported
             if ( !empty( $api_prod->web_id ) && $api_prod->web_id !== '0' ) { 
-                if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']', 'wc' ); }
                 continue; 
 			}
 
@@ -619,7 +617,7 @@ final class Eskimo_WC {
 
 		// New product count
 		if ( $this->debug ) { 
-			error_log( 'New Prod Count[' . count( $products ) . '] Products[' . print_r( $products, true ) . ']' );
+			eskimo_log( 'New Prod Count[' . count( $products ) . '] Products[' . print_r( $products, true ) . ']', 'wc' );
 		}
 
         // OK, done
@@ -633,7 +631,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_products_specific_ID( $api_prod ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_prod ) ) {
@@ -641,36 +639,36 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Product [' . $api_prod->eskimo_category_id . '] SKUs[' . count( $api_prod->sku ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Product [' . $api_prod->eskimo_category_id . '] SKUs[' . count( $api_prod->sku ) . ']', 'wc' ); }
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_product' ); 
-        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Prefix[' . $web_prefix . ']', 'wc' ); }
 
         // Product Categories Only
         if ( ! preg_match( '/product$/i', $api_prod->eskimo_category_id ) ) { return false; }
 
         // Dodgy Title?
         if ( empty( $api_prod->title ) ) {
-            if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' ); }
+            if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists', 'wc' ); }
             return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title DOES NOT Exists' ); 
         }
 
         // Requires that the Eskimo Category has been imported
         if ( empty( $api_prod->web_category_id ) || $api_prod->web_category_id === '0' ) { 
-            if ( $this->debug ) { error_log( 'Cat ID[' . $api_cat->eskimo_category_id . '] NOT Exists Cat Web_ID' ); }
+            if ( $this->debug ) { eskimo_log( 'Cat ID[' . $api_cat->eskimo_category_id . '] NOT Exists Cat Web_ID', 'wc' ); }
             return $this->api_error( 'Cat ID[' . $api_cat->eskimo_category_id . '] NOT Exists Cat Web_ID' );; 
         }
 
         // Requires that the Eskimo Product has NOT been imported
         if ( !empty( $api_prod->web_id ) && $api_prod->web_id !== '0' ) { 
-            if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']', 'wc' ); }
             return $this->api_error( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Exists [' . $api_prod->web_id . ']' ); 
         }
 
         // Required valid product sku data
         if ( empty( $api_prod->sku ) ) { 
-            if ( $this->debug ) { error_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']', 'wc' ); }
             return $this->api_error( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']' );; 
         }
 
@@ -681,25 +679,25 @@ final class Eskimo_WC {
         // Update Eskimo ProdID
         $prod_meta_id = $this->add_post_meta_eskimo_id( $prod['id'], $api_prod );
         if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-            if ( $this->debug ) { error_log( 'Bad post meta insert[' . $prod['id'] . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad post meta insert[' . $prod['id'] . ']', 'wc' ); }
         }
 
 		// Update Eskimo ProdID
 		$prod_meta_id = $this->add_post_meta_extra( $prod['id'], $api_prod );
 		if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-			if ( $this->debug ) { error_log( 'Bad post meta extra insert[' . $prod['id'] . ']' ); }
+			if ( $this->debug ) { eskimo_log( 'Bad post meta extra insert[' . $prod['id'] . ']', 'wc' ); }
 		}
 		
         // Update Eskimo Style
         $prod_meta_id = $this->add_post_meta_more( $prod['id'], $api_prod );
         if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-            if ( $this->debug ) { error_log( 'Bad post meta more insert[' . $prod['id'] . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad post meta more insert[' . $prod['id'] . ']', 'wc' ); }
         }
 
 		// Update Eskimo ProdID
 		$prod_meta_id = $this->add_post_meta_date( $prod['id'], $api_prod );
 		if ( false === $prod_meta_id || is_wp_error( $prod_meta_id ) ) {
-			if ( $this->debug ) { error_log( 'Bad post meta date insert[' . $prod['id'] . ']' ); }
+			if ( $this->debug ) { eskimo_log( 'Bad post meta date insert[' . $prod['id'] . ']', 'wc' ); }
 		}
 
         // OK, done 
@@ -719,7 +717,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_products_import_ID( $api_prod, $path ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ':' . $path ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ':' . $path, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_prod ) ) {
@@ -727,32 +725,32 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Product SKUs[' . count( $api_prod->sku ) . '] path[' . $path . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Product SKUs[' . count( $api_prod->sku ) . '] path[' . $path . ']', 'wc' ); }
 
         // Product Categories Only
         if ( ! preg_match( '/product$/i', $api_prod->eskimo_category_id ) ) { return false; }
 
         // Dodgy Title?
         if ( empty( $api_prod->title ) ) {
-            if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' ); }
+            if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists', 'wc' ); }
             return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' );
         }
 
         // Requires that the Eskimo Category has been imported
         if ( empty( $api_prod->web_category_id ) || $api_prod->web_category_id === '0' ) { 
-            if ( $this->debug ) { error_log( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists: Cat Web_ID' ); }
+            if ( $this->debug ) { eskimo_log( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists: Cat Web_ID', 'wc' ); }
             return $this->api_error( 'Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists: Cat Web_ID' ); 
         }
 
         // Requires that the Eskimo Product has NOT been imported
         if ( empty( $api_prod->web_id ) || $api_prod->web_id == '0' ) { 
-            if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Not Exists [' . $api_prod->web_id . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Web_ID Not Exists [' . $api_prod->web_id . ']', 'wc' ); }
             return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' );
         }
 
         // Required valid product sku data
         if ( empty( $api_prod->sku ) ) { 
-            if ( $this->debug ) { error_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Product SKU Not Set ID[' . $api_prod->eskimo_identifier . ']', 'wc' ); }
             return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' );
         }
 
@@ -777,7 +775,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
 	public function get_products_trade_ID( $prod_ref, $trade_ref ) {
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': StyleRef[' . str_replace( '|', '', $prod_ref ) . ']' ); }
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': StyleRef[' . str_replace( '|', '', $prod_ref ) . ']', 'wc' ); }
 
 		// Default category args
 		$args = [
@@ -803,7 +801,7 @@ final class Eskimo_WC {
 		// Get the product prefix
         $web_prefix = get_option( 'eskimo_api_product' ); 
 
-        if ( $this->debug ) { error_log( 'Products[' . $the_query->found_posts . '] ProdID[' . $product->ID . '] Prefix[' . $web_prefix . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Products[' . $the_query->found_posts . '] ProdID[' . $product->ID . '] Prefix[' . $web_prefix . ']', 'wc' ); }
 
 		// Construct web_id results
 //		return [
@@ -833,7 +831,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_products_cart_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
          // Validate API data
         if ( empty( $api_data ) ) {
@@ -841,7 +839,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Products Cart ID[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Products Cart ID[' . count( $api_data ) . ']', 'wc' ); }
 
         // Process products
         $products = [];
@@ -854,13 +852,13 @@ final class Eskimo_WC {
 
             // Requires that the Eskimo Category has been imported
             if ( empty( $api_prod->web_category_id ) ) { 
-                if ( $this->debug ) { error_log( 'Prod Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists Cat Web_ID' ); }
+                if ( $this->debug ) { eskimo_log( 'Prod Cat ID[' . $api_prod->eskimo_category_id . '] NOT Exists Cat Web_ID', 'wc' ); }
                 continue; 
             }
 
             // Requires that the Eskimo Product has NOT been imported
             if ( empty( $api_prod->web_id ) || $api_prod->web_id === '0' ) { 
-                if ( $this->debug ) { error_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Not Exists Web_ID' ); }
+                if ( $this->debug ) { eskimo_log( 'Prod ID[' . $api_prod->eskimo_identifier . '] Not Exists Web_ID', 'wc' ); }
                 continue; 
             }
 
@@ -868,7 +866,7 @@ final class Eskimo_WC {
             $products[] = $api_prod;
         }
 
-        if ( $this->debug ) { error_log( 'EPOS Prods: [' . count( $products ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS Prods: [' . count( $products ) . ']', 'wc' ); }
 
         // Something to do?        
         if ( empty( $products ) ) { return $this->api_error( 'No Products To Process' ); }
@@ -896,7 +894,7 @@ final class Eskimo_WC {
 	 * @return	array
 	 */
 	public function get_products_web_ID() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
 		// Default category args
 		$args = [
@@ -915,7 +913,7 @@ final class Eskimo_WC {
 			return $this->api_error( 'No products found' );
 		}
 
-        if ( $this->debug ) { error_log( 'Products[' . $the_query->found_posts . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Products[' . $the_query->found_posts . ']', 'wc' ); }
 
 		// Get the product prefix
         $web_prefix = get_option( 'eskimo_api_product' ); 
@@ -925,7 +923,7 @@ final class Eskimo_WC {
 		foreach ( $the_query->posts as $product ) {
 
 			$eskimo_prod_id = get_post_meta( $product->ID, '_eskimo_product_id', true );
-	        if ( $this->debug ) { error_log( 'Product[' . $product->ID . '][' . $eskimo_prod_id . ']' ); }
+	        if ( $this->debug ) { eskimo_log( 'Product[' . $product->ID . '][' . $eskimo_prod_id . ']', 'wc' ); }
 			
 			if ( empty( $eskimo_prod_id ) ) { continue; }
 
@@ -949,7 +947,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_customers_specific_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -957,7 +955,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Customer[' . $api_data->EmailAddress . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Customer[' . $api_data->EmailAddress . ']', 'wc' ); }
 
 		// Email exists?
 		$email = filter_var( $api_data->EmailAddress, FILTER_SANITIZE_EMAIL );
@@ -965,20 +963,27 @@ final class Eskimo_WC {
 			return $this->api_error( 'Invalid Customer Email[' . esc_html( $email ) . ']' );
 		}
 
-		// Set up address	
-		$addr 	= explode( "\r\n", $api_data->Address );
-		$addr_1 = array_shift( $addr );
-		$city	= ( count( $addr ) ) ? $addr[0] : '';
-        if ( $this->debug ) { error_log( 'Customer Addr[' . $addr_1 . '] city[' . $city . ']' ); }
+		// Set up address
+		if ( ! empty( $api_data->Address ) ) {
+			$addr 	= $explode( "\r\n", $api_data->Address );
+			$addr_1 = array_shift( $addr );
+			$city	= ( count( $addr ) ) ? $addr[0] : '';
+		} else {
+			$addr_1 = $city = '';
+		}
+        if ( $this->debug ) { eskimo_log( 'Customer Addr[' . $addr_1 . '] city[' . $city . ']', 'wc' ); }
 
 		// Set up user with format forename.surname
 		$username = $api_data->Forename . '.' . $api_data->Surname;
-			
+
+        if ( $this->debug ) { eskimo_log( 'Create User: Email[' . $email . '] Username[' . $username . ']', 'wc' ); }
+
 		// Generate WC user if possible - autogenerate password
 		$user_id = wc_create_new_customer( $email, $username );
 		if ( is_wp_error( $user_id ) ) {
 			return $this->api_error( $user_id->get_error_message() );
 		}
+        if ( $this->debug ) { eskimo_log( 'User ID[' . $user_id . ']', 'wc' ); }
 
 		// Tweak user
 		$user_info = [
@@ -991,7 +996,7 @@ final class Eskimo_WC {
 		if ( is_wp_error( $user_id ) ) {
 			return $this->api_error( $user_id->get_error_message() );
 		}
-        if ( $this->debug ) { error_log( 'OK Customer ID[' . $user_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'OK Customer ID[' . $user_id . ']', 'wc' ); }
 
 		// User meta
 		add_user_meta( $user_id, 'epos_id', $api_data->ID );
@@ -1037,7 +1042,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_customers_insert_ID( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']', 'wc' ); }
 
         // Validate API data
         if ( empty( $id ) || $id <= 0 ) {
@@ -1045,7 +1050,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Customer ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Customer ID[' . $id . ']', 'wc' ); }
 
 		// User?
 		$user_data = get_user_by( 'ID', $id );
@@ -1100,7 +1105,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_customers_update_ID( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']', 'wc' ); }
 
         // Validate API data
         if ( empty( $id ) ) {
@@ -1108,7 +1113,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Customer ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Customer ID[' . $id . ']', 'wc' ); }
 
 		$user_data = get_user_by( 'ID', $id );
 		if ( false === $user_data ) { return $this->api_error( 'Invalid WP user ID[' . $id . ']' ); }
@@ -1165,7 +1170,7 @@ final class Eskimo_WC {
      * @return  object|boolean
      */
     public function get_customers_epos_ID( $id, $data, $update = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . ']', 'wc' ); }
 
         // Validate API data
         if ( empty( $data ) ) {
@@ -1173,7 +1178,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Customer ID[' . $id . ']EPOS ID[' . $data->ID . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Customer ID[' . $id . ']EPOS ID[' . $data->ID . ']', 'wc' ); }
 
 		// Process update
 		return ( $update === true ) ? ( update_user_meta( $id, 'epos_id', $data->ID ) ) ? 'ID[' . $id . '] EPOS ID[' . $data->ID . ']' : false : $data->ID;
@@ -1191,7 +1196,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_skus_all( $api_data, $import = true ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
          // Validate API data
         if ( empty( $api_data ) ) {
@@ -1199,7 +1204,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process SKUs All[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process SKUs All[' . count( $api_data ) . '] Import[' . (int) $import . ']', 'wc' ); }
 
         // Process products
         $skus = [];
@@ -1209,7 +1214,7 @@ final class Eskimo_WC {
 
             // Required valid product sku data
             if ( empty( $api_sku->eskimo_product_identifier ) ) { 
-                if ( $this->debug ) { error_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']', 'wc' ); }
                 continue; 
             }
 
@@ -1223,7 +1228,7 @@ final class Eskimo_WC {
             $skus[] = $api_sku;
         }
 
-        if ( $this->debug ) { error_log( 'EPOS SKUs: [' . count( $skus ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS SKUs: [' . count( $skus ) . ']', 'wc' ); }
 
         // Something to do?        
         if ( empty( $skus ) ) { return $this->api_error( 'No Product SKUs To Process' ); }
@@ -1247,6 +1252,60 @@ final class Eskimo_WC {
         // OK, done
         return $result;
 	}
+	
+    /**
+     * Get EskimoEPOS API skus
+     *
+     * @param   array   		$api_data
+     * @return  object|array
+     */
+    public function get_skus_orphan( $api_data ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
+
+         // Validate API data
+        if ( empty( $api_data ) ) {
+            return $this->api_rest_error();
+        }
+
+        // Process data
+        if ( $this->debug ) { eskimo_log( 'Process SKUs Orphan[' . count( $api_data ) . ']', 'wc' ); }
+
+        // Process products
+        $skus = [];
+
+        // Get products list
+        foreach ( $api_data as $api_sku ) {
+
+            // Valid product sku data
+            if ( ! empty( $api_sku->eskimo_product_identifier ) ) { continue; }
+			
+            // OK add products
+            $skus[] = $api_sku;
+        }
+
+        if ( $this->debug ) { eskimo_log( 'EPOS SKUs: [' . count( $skus ) . ']', 'wc' ); }
+
+        // Something to do?        
+        if ( empty( $skus ) ) { return $this->api_error( 'No Orphaned Product SKUs To Process' ); }
+
+        // Return data
+        $result = [];
+
+        // Process parent categories first
+        foreach ( $skus as $api_sku ) {
+
+            // Load into response list
+            $result[] = [
+				'SKU'						=> $api_sku->sku_code,
+				'StockAmount'				=> $api_sku->StockAmount,
+				'SellPrice'					=> $api_sku->SellPrice,
+				'TaxCodeID'					=> $api_sku->TaxCodeID
+            ];
+        }
+
+        // OK, done
+        return $result;
+	}
 
     /**
      * Get EskimoEPOS API product by ID
@@ -1255,7 +1314,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_skus_specific_code( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
          // Validate API data
         if ( empty( $api_data ) ) {
@@ -1263,11 +1322,11 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process SKUs All[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process SKUs All[' . count( $api_data ) . ']', 'wc' ); }
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_product' ); 
-        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Prefix[' . $web_prefix . ']', 'wc' ); }
 
         // Process products
         $skus = [];
@@ -1277,7 +1336,7 @@ final class Eskimo_WC {
 
             // Required valid product sku data
             if ( empty( $api_sku->eskimo_product_identifier ) ) { 
-                if ( $this->debug ) { error_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']', 'wc' ); }
                 continue; 
             }
 
@@ -1289,7 +1348,7 @@ final class Eskimo_WC {
             $skus[] = $api_sku;
         }
 
-        if ( $this->debug ) { error_log( 'EPOS SKUs: [' . count( $skus ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS SKUs: [' . count( $skus ) . ']', 'wc' ); }
 
         // Something to do?        
         if ( empty( $skus ) ) { return $this->api_error( 'No Product SKUs To Process' ); }
@@ -1321,7 +1380,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_skus_specific_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
          // Validate API data
         if ( empty( $api_data ) ) {
@@ -1329,11 +1388,11 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process SKUs ID[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process SKUs ID[' . count( $api_data ) . ']', 'wc' ); }
 
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_product' ); 
-        if ( $this->debug ) { error_log( 'Web Prefix[' . $web_prefix . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Prefix[' . $web_prefix . ']', 'wc' ); }
 
         // Process products
         $skus = [];
@@ -1343,7 +1402,7 @@ final class Eskimo_WC {
 
             // Required valid product sku data
             if ( empty( $api_sku->eskimo_product_identifier ) ) { 
-                if ( $this->debug ) { error_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']' ); }
+                if ( $this->debug ) { eskimo_log( 'SKU Product Not Set ID[' . $api_sku->eskimo_product_identifier . ']', 'wc' ); }
                 continue; 
             }
 
@@ -1355,7 +1414,7 @@ final class Eskimo_WC {
             $skus[] = $api_sku;
         }
 
-        if ( $this->debug ) { error_log( 'EPOS SKUs: [' . count( $skus ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS SKUs: [' . count( $skus ) . ']', 'wc' ); }
 
         // Something to do?        
         if ( empty( $skus ) ) { return $this->api_error( 'No Product SKUs To Process' ); }
@@ -1391,7 +1450,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_orders_website_order( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -1399,13 +1458,13 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Order[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Order[' . count( $api_data ) . ']', 'wc' ); }
 
 		// Validate content? order, customer
 		return $this->api_error( 'Order Import Not Yet Implemented' );
 		
 		// Set up order 	
-		if ( $this->debug ) { error_log( 'Order [' . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Order [' . ']', 'wc' ); }
 
 		// Set up customer
 		$username = $api_data->Forename . '.' . $api_data->Surname;
@@ -1416,7 +1475,7 @@ final class Eskimo_WC {
 			return $this->api_error( $order_id->get_error_message() );
 		}
 
-     	if ( $this->debug ) { error_log( 'OK Order ID[' . $order_id . ']' ); }
+     	if ( $this->debug ) { eskimo_log( 'OK Order ID[' . $order_id . ']', 'wc' ); }
 
 		// Order meta
 		add_post_meta( $user_id, 'epos_id', $api_data->ID );
@@ -1432,7 +1491,7 @@ final class Eskimo_WC {
      * @return  object|array
      */
     public function get_orders_insert_ID( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']', 'wc' ); }
 
 		// Validate API data
 		$id = absint( $id );
@@ -1441,7 +1500,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Order ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Order ID[' . $id . ']', 'wc' ); }
 
 		// Woocommerce order required
 		$order = wc_get_order( $id );
@@ -1457,19 +1516,19 @@ final class Eskimo_WC {
 
 		// Get order items
 		$order_items = $order->get_items();
-		if ( $this->debug ) { error_log( 'Order Items: ' . count( $order_items ) ); }
+		if ( $this->debug ) { eskimo_log( 'Order Items: ' . count( $order_items ), 'wc' ); }
 		
 		// Get the customer
 		$cust_id 	= $order->get_customer_id();
-		if ( $this->debug ) { error_log( 'Order User: ' . $cust_id ); }
+		if ( $this->debug ) { eskimo_log( 'Order User: ' . $cust_id, 'wc' ); }
 		
 		// Guest Checkout
 		if ( $cust_id === 0 ) {
-			$guest_user = get_user_by( 'email', apply_filters( 'eskimo_guest_user_email', 'guest@trutexmacclesfield.com' ) );
+			$guest_user = get_user_by( 'email', apply_filters( 'eskimo_guest_user_email', 'guest@classworx.co.uk' ) );
 			if ( ! $guest_user ) { return $this->api_error( 'EskimoEPOS Invalid Customer' ); }
 			$cust_id = $guest_user->ID;
 		}
-		if ( $this->debug ) { error_log( 'Order User UPD: ' . $cust_id ); }
+		if ( $this->debug ) { eskimo_log( 'Order User UPD: ' . $cust_id, 'wc' ); }
 
 		// Customer meta
 		$epos_id = get_user_meta( $cust_id, 'epos_id', true );
@@ -1478,14 +1537,14 @@ final class Eskimo_WC {
 		// Order reference
 		$epos_ei = get_option( 'eskimo_api_customer' );
 		$epos_ei = ( empty( $epos_ei ) ) ? $epos_id . '-' . $cust_id . '-' . $order_id : $epos_ei . $epos_id . '-' . $cust_id . '-' . $order_id;  
-		if ( $this->debug ) { error_log( 'Customer ID: [' . $cust_id . '] EPOS Customer ID[' . $epos_id . '] EPOS API ID[' . $epos_ei . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Customer ID: [' . $cust_id . '] EPOS Customer ID[' . $epos_id . '] EPOS API ID[' . $epos_ei . ']', 'wc' ); }
 
 		// Notes
 		$order_notes = $order->get_customer_order_notes(); 
 		if ( is_array( $order_notes ) && ! empty( $order_notes ) ) {
 			$order_note = '';
 			foreach ( $order_notes as $n ) {
-				error_log( 'Note: [' . gettype( $n ) . '][' . print_r( $n, true ) . ']' );
+				eskimo_log( 'Note: [' . gettype( $n ) . '][' . print_r( $n, true ) . ']', 'wc' );
 				$order_note .= $n->comment_content; 
 			}
 		} else {
@@ -1563,11 +1622,12 @@ final class Eskimo_WC {
      *
      * @param   array   		$id
 	 * @param   array   		$data
-	 * @param	boolean			$update
+	 * @param	boolean			$update default false
+	 * @param	boolean			$return	default true
      * @return  boolean
      */
-    public function get_orders_epos_ID( $id, $data, $update = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . ']' ); }
+    public function get_orders_epos_ID( $id, $data, $update = false, $return = false ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . '] Order[' . (int) $order . ']', 'wc' ); }
 
         // Validate API data
         if ( empty( $data ) ) {
@@ -1575,10 +1635,13 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Order ID[' . $id . ']EPOS ID[' . $data->ExternalIdentifier . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Order ID[' . $id . ']EPOS ID[' . $data->ExternalIdentifier . ']', 'wc' ); }
+
+		// Set field
+		$web_field = ( true === $return ) ? '_web_return_id' : '_web_order_id';
 
 		// Process update
-		return ( $update === true ) ? ( update_post_meta( $id, '_web_order_id', $data->ExternalIdentifier ) ) ? 'ID[' . $id . '] EPOS WebOrder ID[' . $data->ExternalIdentifier . ']' : false : $data->ExternalIdentifier;
+		return ( $update === true ) ? ( update_post_meta( $id, $web_field, $data->ExternalIdentifier ) ) ? 'ID[' . $id . '] EPOS WebOrder ID[' . $data->ExternalIdentifier . ']' : false : $data->ExternalIdentifier;
 	}
 
     //----------------------------------------------
@@ -1592,7 +1655,7 @@ final class Eskimo_WC {
      * @return  object|boolean
      */
     public function get_image_links_all( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -1600,7 +1663,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Image Links[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Image Links[' . count( $api_data ) . ']', 'wc' ); }
 
         // OK, done
         return true;
@@ -1613,7 +1676,7 @@ final class Eskimo_WC {
      * @return  object|boolean
      */
     public function get_images_all( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -1621,7 +1684,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Images All[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Images All[' . count( $api_data ) . ']', 'wc' ); }
 
         // OK, done
         return true;
@@ -1638,7 +1701,7 @@ final class Eskimo_WC {
      * @return  object|boolean
      */
     public function get_tax_codes( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -1646,7 +1709,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Tax Codes[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Tax Codes[' . count( $api_data ) . ']', 'wc' ); }
 
         // OK, done
         return true;
@@ -1659,7 +1722,7 @@ final class Eskimo_WC {
      * @return  object|boolean
      */
     public function get_shops_all( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -1667,7 +1730,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Shops All[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Shops All[' . count( $api_data ) . ']', 'wc' ); }
 
         // OK, done
         return true;
@@ -1680,7 +1743,7 @@ final class Eskimo_WC {
      * @return  object|boolean
      */
     public function get_shops_specific_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Validate API data
         if ( empty( $api_data ) ) {
@@ -1688,7 +1751,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( 'Process Shops ID[' . count( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Shops ID[' . count( $api_data ) . ']', 'wc' ); }
 
         // OK, done
         return true;
@@ -1706,7 +1769,7 @@ final class Eskimo_WC {
      * @return  object  New term or error
      */
     protected function add_product_cat_term( $data, $parent = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' Parent[' . (int) $parent . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' Parent[' . (int) $parent . ']', 'wc' ); }
         
         // Set term args
         $args = [ 'description' => $data->LongDescription ];            
@@ -1726,7 +1789,7 @@ final class Eskimo_WC {
      * @return  object  new term or error
      */
     protected function add_product_category_rest( $data, $parent = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' Parent[' . (int) $parent . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' Parent[' . (int) $parent . ']', 'wc' ); }
 
         // Set term args
         $args = [ 
@@ -1744,7 +1807,7 @@ final class Eskimo_WC {
         $wp_rest_request->set_body_params( $args );
         $res = $products_controller->create_item( $wp_rest_request );
 
-        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $res ) ) { eskimo_log( 'Error:' .  $res->get_error_message() . ']', 'wc' ); }
 
         // OK, done 
         return is_wp_error( $res ) ? false : $res->data;
@@ -1757,7 +1820,7 @@ final class Eskimo_WC {
      * @param   object  $api_cat
      */
     protected function add_term_eskimo_cat_id( $cat_id, $api_cat ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': CatID[' . $cat_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': CatID[' . $cat_id . ']', 'wc' ); }
         return update_term_meta( $cat_id, 'eskimo_category_id', sanitize_text_field( $api_cat->Eskimo_Category_ID ) );
     }
 
@@ -1769,7 +1832,7 @@ final class Eskimo_WC {
      * @param   object  $data   Category data
      */
     protected function get_parent_category_id( $data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
         
         // Get terms with the epos category id... should be 1 or 0
         $args = [
@@ -1786,15 +1849,15 @@ final class Eskimo_WC {
         // Get terms from product_cat taxonomy
         $terms = get_terms( 'product_cat', $args );
 
-        if ( $this->debug && is_wp_error( $terms ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $terms ) ) { eskimo_log( 'Error:' .  $res->get_error_message() . ']', 'wc' ); }
 
         // No terms or Error
         if ( empty( $terms ) || is_wp_error( $terms ) ) {
-            if ( $this->debug ) { error_log( 'Bad Parent Term[' . $data->Eskimo_Category_ID . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad Parent Term[' . $data->Eskimo_Category_ID . ']', 'wc' ); }
             return 0;
         }
 
-        if ( $this->debug ) { error_log( 'Parent Terms[' . print_r( $terms, true ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Parent Terms[' . print_r( $terms, true ) . ']', 'wc' ); }
 
         // OK, use parent term
         return $terms[0]->term_id;
@@ -1812,11 +1875,11 @@ final class Eskimo_WC {
      * @return  object  new term or error
      */
     protected function add_category_product_rest( $data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Set product type: simple or variable by sku count
         $type = $this->get_product_type( $data );
-        if ( $this->debug ) { error_log( 'Type[' . $type . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Type[' . $type . ']', 'wc' ); }
 
         // Treat simple & variable products a bit differently
         switch( $type ) {
@@ -1836,11 +1899,11 @@ final class Eskimo_WC {
      * @return  boolean|object
      */
     protected function add_category_product_simple( $data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // Single SKU OK?
         $sku = array_shift( $data->sku );
-        if ( $this->debug ) { error_log( 'SKU:' . print_r( $sku, true ) ); }
+        if ( $this->debug ) { eskimo_log( 'SKU:' . print_r( $sku, true ), 'wc' ); }
         if ( true === $this->get_product_check_sku( $sku->sku_code ) ) { return false; }        
 
         // Set term args
@@ -1864,7 +1927,7 @@ final class Eskimo_WC {
         $args['tax_class']      = $this->get_product_tax_class( $sku );
         $args['attributes']     = $this->get_product_attributes( $sku );
 
-        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $args, true ), 'wc' ); }
 
         // Set up REST process
         $products_controller = new WC_REST_Products_Controller();
@@ -1872,7 +1935,7 @@ final class Eskimo_WC {
         $wp_rest_request->set_body_params( $args );
         $res = $products_controller->create_item( $wp_rest_request );
         
-        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $res ) ) { eskimo_log( 'Error:' .  $res->get_error_message() . ']', 'wc' ); }
 
         return is_wp_error( $res ) ? false : $res->data;
     }
@@ -1884,11 +1947,11 @@ final class Eskimo_WC {
      * @return  boolean|object
      */
     protected function add_category_product_variable( $data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
        
         // Initial check. Already posted SKU?
         $skus = array_map( function( $sku ) { return $sku->sku_code; }, $data->sku );
-        if ( $this->debug ) { error_log( 'SKUs[' . print_r( $skus, true ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'SKUs[' . print_r( $skus, true ) . ']', 'wc' ); }
         if ( true === $this->get_product_check_sku( $skus, true ) ) { return false; }
 
         // Set term args @todo: set_manage_stock as option for variations
@@ -1910,7 +1973,7 @@ final class Eskimo_WC {
         $args['attributes']         = $this->get_product_variable_attributes( $data );
         $args['default_attributes'] = $this->get_product_variable_attributes_default( $data );
 
-        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $args, true ), 'wc' ); }
 
         // Set up REST process
         $wp_rest_request = new WP_REST_Request( 'POST' );
@@ -1926,7 +1989,7 @@ final class Eskimo_WC {
             $res_var = $this->add_category_product_variation( $sku, $data );
         }
 
-        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $res ) ) { eskimo_log( 'Error:' .  $res->get_error_message() . ']', 'wc' ); }
 
         return is_wp_error( $res ) ? false : $res->data;
 	}
@@ -1940,11 +2003,11 @@ final class Eskimo_WC {
      * @return  object  new term or error
      */
     protected function update_category_product_rest( $data, $path ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']', 'wc' ); }
 
         // Set product type: simple or variable by sku count
         $type = $this->get_product_type( $data );
-        if ( $this->debug ) { error_log( 'Type[' . $type . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Type[' . $type . ']', 'wc' ); }
 
         // Treat simple & variable products a bit differently
         switch( $type ) {
@@ -1965,21 +2028,21 @@ final class Eskimo_WC {
      * @return  boolean|object
      */
     protected function update_category_product_simple( $data, $path ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']', 'wc' ); }
 
         // Single SKU OK?
         $sku = array_shift( $data->sku );
-        if ( $this->debug ) { error_log( 'SKU:' . print_r( $sku, true ) ); }
+        if ( $this->debug ) { eskimo_log( 'SKU:' . print_r( $sku, true ), 'wc' ); }
         if ( false === $this->get_product_check_sku( $sku->sku_code ) ) { return false; }        
 
 		// Get product
 		$product_id = $this->get_product_by_sku( $sku->sku_code, false );
-        if ( $this->debug ) { error_log( 'product ID[' . $product_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'product ID[' . $product_id . ']', 'wc' ); }
 		if ( false === $product_id ) { return false; }
 		
 		// Update product attributes, sku, stock for Simple products
 		$args = $this->update_category_product_simple_args( $path, $data, $sku, $product_id );
-        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $args, true ), 'wc' ); }
 
 		// Set up REST process
 		$wp_rest_request = new WP_REST_Request( 'POST' );
@@ -1989,7 +2052,7 @@ final class Eskimo_WC {
         $products_controller = new WC_REST_Products_Controller();
         $res = $products_controller->update_item( $wp_rest_request );
         
-        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $res ) ) { eskimo_log( 'Error:' .  $res->get_error_message() . ']', 'wc' ); }
 
         return is_wp_error( $res ) ? false : $res->data;
     }
@@ -2002,16 +2065,16 @@ final class Eskimo_WC {
      * @return  boolean|object
      */
     protected function update_category_product_variable( $data, $path ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']', 'wc' ); }
        
         // Initial check. Already posted SKU?
         $skus = array_map( function( $sku ) { return $sku->sku_code; }, $data->sku );
-        if ( $this->debug ) { error_log( 'SKUs[' . print_r( $skus, true ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'SKUs[' . print_r( $skus, true ) . ']', 'wc' ); }
         if ( false === $this->get_product_check_sku( $skus, true ) ) { return false; }
 
 		// Get product
 		$product_id = $this->get_product_by_id( $data->eskimo_identifier, false );
-        if ( $this->debug ) { error_log( 'product ID[' . $product_id . '][' . $data->eskimo_identifier . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'product ID[' . $product_id . '][' . $data->eskimo_identifier . ']', 'wc' ); }
 		if ( false === $product_id ) { return false; }
 
         // Set term args
@@ -2036,7 +2099,7 @@ final class Eskimo_WC {
 		if ( $path === 'stock' ) {
 	        $args['stock_quantity'] = $this->get_product_variable_stock( $data );
 		}
-        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $args, true ), 'wc' ); }
 
         // Set up REST process
         $wp_rest_request = new WP_REST_Request( 'POST' );
@@ -2052,7 +2115,7 @@ final class Eskimo_WC {
             $res_var = $this->update_category_product_variation( $sku, $data, $path );
         }
 
-        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $res ) ) { eskimo_log( 'Error:' .  $res->get_error_message() . ']', 'wc' ); }
 
         return is_wp_error( $res ) ? false : $res->data;
 	}
@@ -2066,16 +2129,16 @@ final class Eskimo_WC {
      * @return  object|boolean
      */
     protected function update_category_product_variation( $sku, $data, $path ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $sku->product_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $sku->product_id . ']', 'wc' ); }
 
 		// Get product
 		$product_id = $this->get_product_by_sku( $sku->sku_code, true );
-        if ( $this->debug ) { error_log( 'product ID[' . $product_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'product ID[' . $product_id . ']', 'wc' ); }
 		if ( false === $product_id ) { return false; }
 
 		// Update product attributes, sku, stock for Variable products
 		$args = $this->update_category_product_variable_args( $path, $data, $sku, $product_id );
-        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $args, true ), 'wc' ); }
 		
 		// Set up REST process
 		$wp_rest_request = new WP_REST_Request( 'POST' );
@@ -2085,7 +2148,7 @@ final class Eskimo_WC {
         $products_controller = new WC_REST_Product_Variations_Controller();
         $res = $products_controller->update_item( $wp_rest_request );
         
-        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $res ) ) { eskimo_log( 'Error:' .  $res->get_error_message() . ']', 'wc' ); }
         
         return is_wp_error( $res ) ? false : $res->data;
     }
@@ -2100,7 +2163,7 @@ final class Eskimo_WC {
 	 * @return 	array
 	 */
 	protected function update_category_product_simple_args( $path, $data, $sku, $product_id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . '] productID[' . $product_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . '] productID[' . $product_id . ']', 'wc' ); }
 
         // Set term args
 		if ( $path === 'all' ) {
@@ -2205,7 +2268,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     protected function get_product_by_sku( $code, $variation = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
         
         // Set up query
         $args = [
@@ -2239,7 +2302,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     protected function get_product_by_id( $id, $variation = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']'  ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'wc' ); }
         
         // Set up query
         $args = [
@@ -2273,7 +2336,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     protected function get_product_check_sku( $code, $variable = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': variable[' . (int) $variable . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': variable[' . (int) $variable . ']', 'wc' ); }
         
         // Set up query
         $args = [
@@ -2304,7 +2367,7 @@ final class Eskimo_WC {
 
         // Process query
         $the_query = new WP_Query( $args );
-		if ( $this->debug ) { error_log( 'Found[' . $the_query->found_posts . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Found[' . $the_query->found_posts . ']', 'wc' ); }
 
         // Found post sku?
         return ( $the_query->found_posts > 0 ) ? true : false;
@@ -2317,7 +2380,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     protected function get_sku_by_id( $code ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' SKU: [' . $code . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' SKU: [' . $code . ']', 'wc' ); }
         
         // Set up query
         $args = [
@@ -2426,7 +2489,7 @@ final class Eskimo_WC {
      * @return  object|boolean
      */
     protected function add_category_product_variation( $sku, $data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $sku->product_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $sku->product_id . ']', 'wc' ); }
 
         // Set variation args
         $args = [ 
@@ -2443,7 +2506,7 @@ final class Eskimo_WC {
         $args['tax_class']      = $this->get_product_tax_class( $sku );
         $args['attributes']     = $this->get_product_attributes( $sku, true );
 
-        if ( $this->debug ) { error_log( print_r( $args, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $args, true ), 'wc' ); }
 
 		// Set up REST process
         $wp_rest_request = new WP_REST_Request( 'POST' );
@@ -2453,7 +2516,7 @@ final class Eskimo_WC {
         $products_controller = new WC_REST_Product_Variations_Controller();
         $res = $products_controller->create_item( $wp_rest_request );
         
-        if ( $this->debug && is_wp_error( $res ) ) { error_log( 'Error:' .  $res->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $res ) ) { eskimo_log( 'Error:' .  $res->get_error_message() . ']', 'wc' ); }
         
         return is_wp_error( $res ) ? false : $res->data;
     }
@@ -2466,7 +2529,7 @@ final class Eskimo_WC {
 	 * @return	boolean
      */
     protected function add_post_meta_eskimo_id( $prod_id, $api_prod ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']', 'wc' ); }
         $cat_id     = add_post_meta( $prod_id, '_eskimo_category_id', sanitize_text_field( $api_prod->eskimo_category_id ) );
         $post_id    = add_post_meta( $prod_id, '_eskimo_product_id', sanitize_text_field( $api_prod->eskimo_identifier ) );
         return ( $cat_id && $post_id ) ? true : false;
@@ -2480,7 +2543,7 @@ final class Eskimo_WC {
 	 * @return 	boolean
 	 */
 	protected function add_post_meta_extra( $prod_id, $api_prod ) {
-    	if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
+    	if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']', 'wc' ); }
 		$meta_keywords 		= add_post_meta( $prod_id, '_meta_keywords', sanitize_text_field( $api_prod->meta_keywords ) );
 		$meta_description 	= add_post_meta( $prod_id, '_meta_description', sanitize_text_field( $api_prod->meta_description ) );
         return ( $meta_keywords && $meta_description ) ? true : false;
@@ -2494,7 +2557,7 @@ final class Eskimo_WC {
 	 * @return 	boolean
 	 */
 	protected function add_post_meta_more( $prod_id, $api_prod ) {
-    	if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
+    	if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']', 'wc' ); }
 		$style_ref 	= add_post_meta( $prod_id, '_eskimo_style_reference', sanitize_text_field( $api_prod->style_reference ) );
 		$addfield04	= add_post_meta( $prod_id, '_addfield04', sanitize_text_field( $api_prod->addfield04 ) );
         return ( $style_ref ) ? true : false;
@@ -2508,7 +2571,7 @@ final class Eskimo_WC {
 	 * @return 	boolean
 	 */
 	protected function add_post_meta_date( $prod_id, $api_prod ) {
-    	if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']' ); }
+    	if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ProdID[' . $prod_id . ']', 'wc' ); }
 		$date_created 	= add_post_meta( $prod_id, '_date_created', $api_prod->date_created );
 		$last_updated	= add_post_meta( $prod_id, '_last_updated', $api_prod->last_updated );
         return ( $date_created && $last_updated ) ? true : false;
@@ -2521,7 +2584,7 @@ final class Eskimo_WC {
      * @return  string
      */
     protected function get_product_tax_class( $sku ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // EPOS defaults
         $epos = [
@@ -2544,7 +2607,7 @@ final class Eskimo_WC {
      * @return  integer
      */
     protected function get_product_attribute_id( $name ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Name[' . $name . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Name[' . $name . ']', 'wc' ); }
 
         // Get attribute list
         $attr = wc_get_attribute_taxonomies();
@@ -2566,7 +2629,7 @@ final class Eskimo_WC {
      * @return  array
      */
     protected function get_product_attributes( $sku, $variation = false ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ':  Variation[' . (int) $variation . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ':  Variation[' . (int) $variation . ']', 'wc' ); }
 
         // Add color
         $colour = [
@@ -2602,17 +2665,17 @@ final class Eskimo_WC {
      * @return  string 
      */
     protected function get_product_type( $data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
 
         // SKU's should be in object
         if ( !isset( $data->sku ) ) {
-            if ( $this->debug ) { error_log( 'Bad Product SKU[' . $data->eskimo_identifier . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad Product SKU[' . $data->eskimo_identifier . ']', 'wc' ); }
             return false;
         }
         
         // Set SKU count
         $sku_count = count( $data->sku );
-        if ( $this->debug) { error_log( 'SKU Product[' . $data->eskimo_identifier . '] Count[' . count( $data->sku ) . ']' ); }
+        if ( $this->debug) { eskimo_log( 'SKU Product[' . $data->eskimo_identifier . '] Count[' . count( $data->sku ) . ']', 'wc' ); }
 
         // Bad SKU
         if ( 0 === $sku_count ) { return false; }
@@ -2630,7 +2693,7 @@ final class Eskimo_WC {
 	 * @return	array
      */
     protected function get_category_by_id( $data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
         
         // Get terms with the epos category id... should be 1 or 0
         $args = [
@@ -2647,15 +2710,15 @@ final class Eskimo_WC {
         // Get terms from product_cat taxonomy
         $terms = get_terms( 'product_cat', $args );
 
-        if ( $this->debug && is_wp_error( $terms ) ) { error_log( 'Error:' .  $terms->get_error_message() . ']' ); }
+        if ( $this->debug && is_wp_error( $terms ) ) { eskimo_log( 'Error:' .  $terms->get_error_message() . ']', 'wc' ); }
 
         // No terms or Error
         if ( empty( $terms ) || is_wp_error( $terms ) ) {
-            if ( $this->debug ) { error_log( 'Bad Product Category Term[' . $data->eskimo_category_id . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad Product Category Term[' . $data->eskimo_category_id . ']', 'wc' ); }
             return false;
         }
 
-        if ( $this->debug ) { error_log( 'Product Category Terms[' . print_r( $terms, true ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Product Category Terms[' . print_r( $terms, true ) . ']', 'wc' ); }
 
         // Structure cats
         $cats = [];
@@ -2663,7 +2726,7 @@ final class Eskimo_WC {
             $cats[] = [ 'id' => $t->term_id ];
         }
 
-        if ( $this->debug ) { error_log( 'Cats[' . print_r( $cats, true ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Cats[' . print_r( $cats, true ) . ']', 'wc' ); }
 
         return $cats;
     }
@@ -2679,7 +2742,7 @@ final class Eskimo_WC {
 	 * @return	object
      */
     protected function api_error( $error ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']', 'wc' ); }
 		return new WP_Error( 'data', $error );
 	}
 
@@ -2689,7 +2752,7 @@ final class Eskimo_WC {
 	 * @return	object
      */
     protected function api_rest_error() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Process REST data from API', 'eskimo' ) ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Process REST data from API', 'eskimo' ), 'wc' ); }
 		return new WP_Error( 'rest', __( 'API Error: Could Not Process REST data from API', 'eskimo' ) );
 	}
 

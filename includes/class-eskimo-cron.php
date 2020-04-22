@@ -60,13 +60,27 @@ final class Eskimo_Cron {
    		$this->version		= ESKIMO_VERSION;
 		$this->debug        = ESKIMO_CRON_DEBUG;
 		$this->base_dir		= plugin_dir_url( __FILE__ ); 
-
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 	}
     
     //----------------------------------------------
-    //  Cron Functions 
+    //  Cron Functions - New Categories
     //----------------------------------------------
+
+	/**
+	 * Import & update new categories
+	 */
+	public function categories_new() {
+
+		// skus import?
+	    $path	= strtolower( filter_input( INPUT_GET, 'eskimo_path', FILTER_SANITIZE_STRING ) );
+    	$new  	= absint( filter_input( INPUT_GET, 'eskimo_new', FILTER_SANITIZE_NUMBER_INT ) );
+
+	    // check & run
+		if ( $new === 0 || $path !== 'categories' ) { return; }
+
+		// Long form process		
+		$this->categories_do_new();
+	}
 
 	/**
 	 * Process new categories
@@ -76,11 +90,11 @@ final class Eskimo_Cron {
 		// Timeout
 		set_time_limit( 900 );
 
-		if ( $this->debug ) { error_log( '=== Categories Do New ===' ); }
+		if ( $this->debug ) { eskimo_log( '=== Categories Do New ===', 'cron' ); }
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/categories-new';
-		if ( $this->debug ) { error_log( 'REST URL [' . $rest_url . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 		// Get category list
 		$response 	= wp_remote_get( $rest_url, [ 'timeout' => 60 ] );
@@ -88,13 +102,10 @@ final class Eskimo_Cron {
 		$categories	= $data['result'];
 
 		// Bad call?
-		if ( ! is_array( $categories ) ) {				
-			return ( $this->debug ) ? error_log( 'REST Result [' . $categories . ']' ) : '';
-		}
-
-		// Nothing returned
-		if ( empty( $categories ) ) {
-			return ( $this->debug ) ? error_log( 'REST No New Categories Found' ) : ''; 
+		if ( ! is_array( $categories ) || empty( $categories ) ) {
+			if ( $this->debug ) {				
+				return ( empty( $categories ) ) ? eskimo_log( 'REST No New Categories Found', 'cron' ) : eskimo_log( 'REST Result [' . $categories . ']', 'cron' );
+			} else { return; }
 		}
 
 		$results = [];
@@ -106,7 +117,7 @@ final class Eskimo_Cron {
 
 			// Construct REST url
 			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/category-update/' . $cat_id[0] . '/' . $cat_id[1] . '/' . $category['Web_ID'];
-			if ( $this->debug ) { error_log( 'REST URL [' . $rest_url . ']' ); }
+			if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 			// Get update response
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 60 ] );
@@ -116,7 +127,29 @@ final class Eskimo_Cron {
 			$results[] = $result;
 		}
 
-		if ( $this->debug ) { error_log( 'Category UPD[' . print_r( $results, true ) . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Category UPD[' . print_r( $results, true ) . ']', 'cron' ); }
+	}
+
+    //----------------------------------------------
+    //  Cron Functionality - New Products
+    //----------------------------------------------
+
+	/**
+	 * Import & update new products
+	 */
+	public function products_new() {
+
+		// skus import?
+	    $path		= strtolower( filter_input( INPUT_GET, 'eskimo_path', FILTER_SANITIZE_STRING ) );
+    	$new  		= absint( filter_input( INPUT_GET, 'eskimo_new', FILTER_SANITIZE_NUMBER_INT ) );
+	 	$route	 	= strtolower( filter_input( INPUT_GET, 'eskimo_route', FILTER_SANITIZE_STRING ) );
+    	$created	= absint( filter_input( INPUT_GET, 'eskimo_created', FILTER_SANITIZE_NUMBER_INT ) );
+
+	    // check & run
+		if ( $new === 0 || $path !== 'products' || empty( $route ) || $created === 0 ) { return; }
+
+		// Long form process		
+		$this->products_do_new( $route, $created );
 	}
 
 	/**
@@ -132,7 +165,7 @@ final class Eskimo_Cron {
 
 		// Set Cron Header
 		$dt = new DateTime;
-		if ( $this->debug ) {	error_log( '=== Products Do New ===: Date[' . $dt->format( 'Y-m-d H:i:s') . '] ===' ); }
+		if ( $this->debug ) { eskimo_log( '=== Products Do New ===: Date[' . $dt->format( 'Y-m-d H:i:s') . '] ===', 'cron' ); }
 
 		// Valid paths
 		$routes = [ 'hours', 'days', 'weeks', 'months', 'all' ];
@@ -150,7 +183,7 @@ final class Eskimo_Cron {
 		// Set some defaults
 		$route 		= ( empty( $route ) ) ? $api_defaults['route'] : $route;
 		$created	= ( $created === 0 ) ? $api_defaults['created'] : $created;
-		if ( $this->debug ) { error_log( 'Products Do Modified: Route[' . $route . '] Created[' . $created . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Route[' . $route . '] Created[' . $created . ']', 'cron' ); }
 
 		// Valid path & route
 		if ( ! in_array( $route, $routes ) ) { return; }
@@ -158,7 +191,7 @@ final class Eskimo_Cron {
 		// Initiate REST call to update EPOS order status
 		$rest_url = ( $route === 'all' ) ? esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/products-new/' . $route :
 										   esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/products-new/' . $route . '/' . $created;
-		if ( $this->debug ) {	error_log( 'REST URL [' . $rest_url . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 		// Retrieve product list
 		$response 	= wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
@@ -166,13 +199,10 @@ final class Eskimo_Cron {
 		$products 	= $data['result'];
 
 		// Bad call
-		if ( ! is_array( $products ) ) {
-			return ( $this->debug ) ? error_log( 'REST Result [' . $products . ']' ) : '';
-		}
-
-		// Nothing to do?
-		if ( empty( $result ) ) {
-			return ( $this->debug ) ? error_log( 'REST No New Products Found' ) : '';
+		if ( ! is_array( $products ) || empty( $products ) ) {
+			if ( $this->debug ) {				
+				return ( empty( $products ) ) ? eskimo_log( 'REST No New Products Found', 'cron' ) : eskimo_log( 'REST Result [' . $products . ']' );
+			} else { return; }
 		}
 
 		// Import
@@ -187,7 +217,7 @@ final class Eskimo_Cron {
 			$rest_url = ( empty( $product_parts[2] ) ) ? esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product/' . $product_parts[0] . '/' . $product_parts[1] :
 														 esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product/' . $product_parts[0] . '/' . $product_parts[1] . '/' . $product_parts[2];
 
-			if ( $this->debug ) { error_log( 'REST URL [' . $rest_url . ']' ); }
+			if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 			// Retrieve 
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
@@ -197,7 +227,40 @@ final class Eskimo_Cron {
 			$results[] = $result;
 		}
 
-		if ( $this->debug ) {	error_log( 'Product UPD[' . print_r( $results, true ) . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Product UPD[' . print_r( $results, true ) . ']', 'cron' ); }
+	}
+
+    //----------------------------------------------
+    //  Cron Functionality - Modified SKUs
+    //----------------------------------------------
+
+	/**
+	 * Import & update modified SKUs
+	 */
+	public function skus_modified() {
+
+		// skus import?
+    	$skus		= absint( filter_input( INPUT_GET, 'eskimo_skus', FILTER_SANITIZE_NUMBER_INT ) );
+	    $path		= strtolower( filter_input( INPUT_GET, 'eskimo_path', FILTER_SANITIZE_STRING ) );
+    	$route	 	= strtolower( filter_input( INPUT_GET, 'eskimo_route', FILTER_SANITIZE_STRING ) );
+    	$modified	= absint( filter_input( INPUT_GET, 'eskimo_modified', FILTER_SANITIZE_NUMBER_INT ) );
+    	$start		= absint( filter_input( INPUT_GET, 'eskimo_start', FILTER_SANITIZE_NUMBER_INT ) );
+		$records	= absint( filter_input( INPUT_GET, 'eskimo_records', FILTER_SANITIZE_NUMBER_INT ) );
+		$all		= absint( filter_input( INPUT_GET, 'eskimo_all', FILTER_SANITIZE_NUMBER_INT ) );
+
+	    // check & run
+		if ( $skus === 0 || empty( $path ) || empty( $route ) || $modified === 0 ) { return; }
+
+		// Long form process		
+		if ( $all === 1 ) {
+			$modified	= ( $modified === 0 ) ? 1 : $modified;
+			$this->skus_do_modified_all( $path, $route, $modified );
+		} else {
+			$modified	= ( $modified === 0 ) ? 1 : $modified;
+			$start 		= ( $start === 0 ) ? 1 : $start;
+			$records 	= ( $records === 0 ) ? 250 : $records;
+			$this->skus_do_modified( $path, $route, $modified, $start, $records );
+		}
 	}
 
 	/**
@@ -216,11 +279,11 @@ final class Eskimo_Cron {
 
 		// Set Cron Header
 		$dt = new DateTime;
-		if ( $this->debug ) { error_log( '=== SKUS Do Modified: Date[' . $dt->format( 'Y-m-d H:i:s') . '] ===' ); }
+		if ( $this->debug ) { eskimo_log( '=== SKUS Do Modified: Date[' . $dt->format( 'Y-m-d H:i:s') . '] ===', 'cron' ); }
 
 		// Valid paths
 		$paths 	= [ 'all', 'stock', 'price' ];
-		$routes = [ 'hours', 'days', 'weeks', 'months' ];
+		$routes = [ 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months' ];
 
 		$api_defaults = [
 			'path'		=> 'all',
@@ -242,15 +305,15 @@ final class Eskimo_Cron {
 		$route 		= ( empty( $route ) ) 	? $api_defaults['route'] 	: $route;
 		$modified	= ( $modified === 0 ) 	? $api_defaults['modified'] : $modified;
 		$start		= ( $start === 0 ) 		? $api_defaults['start'] 	: $start;
-		$records	= ( $records === 0 || $records > 250 ) ? $api_defaults['records'] : $records;
-		if ( $this->debug ) { error_log( 'SKUS Do Modified: Path[' . $path . '] Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']' ); }
+		$records	= ( $records === 0 || $records > 2500 ) ? $api_defaults['records'] : $records;
+		if ( $this->debug ) { eskimo_log( 'Path[' . $path . '] Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']', 'cron' ); }
 
 		// Valid path & route
 		if ( ! in_array( $path, $paths ) || ! in_array( $route, $routes ) ) { return; }
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/skus-modified/' . $path . '/' . $route . '/' . $modified . '/' . $start . '/' . $records;
-		if ( $this->debug ) { error_log( 'REST URL [' . $rest_url . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 		// Retrieve SKU list
 		$response 	= wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
@@ -258,13 +321,10 @@ final class Eskimo_Cron {
 		$skus 		= $data['result'];
 
 		// Bad call
-		if ( ! is_array( $skus ) ) {
-			return ( $this->debug ) ? error_log( 'REST Result [' . $skus . ']' ) : '';
-		}
-
-		// Nothing to do...
-		if ( empty( $skus ) ) {
-			return ( $this->debug ) ? error_log( 'REST No SKUs Found' ) : '';
+		if ( ! is_array( $skus ) || empty( $skus ) ) {
+			if ( $this->debug ) {				
+				return ( empty( $skus ) ) ? eskimo_log( 'REST SKUs not found', 'cron' ) : eskimo_log( 'REST Result [' . $skus . ']', 'cron' );
+			} else { return; }
 		}
 
 		// Get unique products
@@ -273,7 +333,7 @@ final class Eskimo_Cron {
 			$products[] = $sku['Eskimo_Product_Identifier'];
 		}
 		$products = array_values( array_unique( $products, SORT_STRING ) );
-		if ( $this->debug ) { error_log( print_r( $products, true ) ); }
+		if ( $this->debug ) { eskimo_log( 'Products[' . print_r( $products, true ) . ']', 'cron' ); }
 
 		$results = [];
 		foreach ( $products as $product ) {
@@ -285,7 +345,7 @@ final class Eskimo_Cron {
 			// Construct REST url
 			$rest_url = ( empty( $product_parts[2] ) ) ? esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product-import/adjust/' . $product_parts[0] . '/' . $product_parts[1] :
 														 esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product-import/adjust/' . $product_parts[0] . '/' . $product_parts[1] . '/' . $product_parts[2];
-			if ( $this->debug ) {	error_log( 'REST URL [' . $rest_url . ']' ); }
+			if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 			// Retrieve import result
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 900 ] );
@@ -296,28 +356,168 @@ final class Eskimo_Cron {
 			sleep(6);
 		}
 
-		if ( $this->debug ) {	error_log( 'Prod UPD[' . print_r( $results, true ) . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Prod UPD[' . print_r( $results, true ) . ']', 'cron' ); }
+	}
+	
+	/**
+	 * Process modified SKUs
+	 *
+	 * @param	string $path
+	 * @param	string $route
+	 * @param	string $modified
+	 * @param	string $start
+	 * @param	string $records
+	 */
+	public function skus_do_modified_all( $path, $route = 'hours', $modified = 1 ) {
+
+		// Timeout
+		set_time_limit( 900 );
+
+		// Set Cron Header
+		$dt = new DateTime;
+		if ( $this->debug ) { eskimo_log( '=== SKUS Do Modified ALL: Cron Date[' . $dt->format( 'Y-m-d H:i:s') . '] ===', 'cron' ); }
+
+		// Valid paths
+		$paths = [ 'all', 'stock', 'price' ];
+		$routes = [ 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months' ];
+
+		// Defaults
+		$api_defaults = [
+			'path'		=> 'all',
+		   	'route'		=> 'hours', 
+			'modified' 	=> 1, 
+		];
+
+		// Sanity
+		$path		= sanitize_text_field( $path );
+		$route		= sanitize_text_field( $route );
+		$modified	= absint( $modified );
+		$start 		= 1;
+		$records	= 1000;
+
+		// Set some defaults
+		$path 		= ( empty( $path ) ) ? $api_defaults['path'] : $path;
+		$route 		= ( empty( $route ) ) ? $api_defaults['route'] : $route;
+		$modified	= ( $modified === 0 ) ? $api_defaults['modified'] : $modified;
+		if ( $this->debug ) { skimo_log( 'Path[' . $path . '] Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']', 'cron' ); }
+
+		// Valid path & route
+		if ( ! in_array( $path, $paths ) || ! in_array( $route, $routes ) ) { return; }
+
+		// Initiate REST call to update EPOS order status
+		$results = [];
+		do {
+			
+			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/skus-modified/' . $path . '/' . $route . '/' . $modified . '/' . $start . '/' . $records;
+			if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
+
+			$response 	= wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
+			$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
+			$result 	= $data['result'];
+
+			// Trigger end of loop
+			if ( ! is_array( $result ) || empty( $result ) ) { break; }
+
+			// Add on result
+			$results = array_merge( $result, $results );
+
+			// Iterate start & records
+			$start += $records;
+			if ( $this->debug ) { eskimo_log( 'Loop: [' . $start . '] Records[' . $records . ']', 'cron' ); }
+
+		} while( true );
+
+		// No results?
+		if ( empty( $results ) ) {
+			return ( $this->debug ) ? eskimo_log( 'REST SKUs not found', 'cron' ) : '';
+		}
+
+		// Get unique products
+		$products = [];
+		foreach ( $results as $k => $r ) {	
+			$products[] = $r['Eskimo_Product_Identifier'];
+		}
+		$products = array_values( array_unique( $products, SORT_STRING ) );
+		if ( $this->debug ) { eskimo_log( print_r( $products, true ), 'cron' ); }
+
+		$results = [];
+		foreach ( $products as $product ) {
+			
+			$product_parts = explode( '|', $product );
+			if ( count( $product_parts ) < 3 ) { continue; }
+
+			$rest_url = ( empty( $product_parts[2] ) ) ? esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product-import/adjust/' . $product_parts[0] . '/' . $product_parts[1] :
+														 esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product-import/adjust/' . $product_parts[0] . '/' . $product_parts[1] . '/' . $product_parts[2];
+			if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']' ); }
+
+			$response = wp_remote_get( $rest_url, [ 'timeout' => 900 ] );
+			$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
+			$result 	= $data['result'];
+
+			$results[] = $result;
+
+			sleep(6);
+		}
+		
+		if ( $this->debug ) { eskimo_log( 'Products UPD[' . print_r( $results, true ) . ']', 'cron' ); }
+ 	}
+
+    //----------------------------------------------
+    //  Cron Functionality - Modified Products
+    //----------------------------------------------
+
+	/**
+	 * Import & update modified SKU products by batch
+	 */
+	public function skus_modified_products() {
+
+		// skus import?
+    	$products	= absint( filter_input( INPUT_GET, 'eskimo_products', FILTER_SANITIZE_NUMBER_INT ) );
+   		$date		= filter_input( INPUT_GET, 'eskimo_date', FILTER_SANITIZE_STRING );
+		$route		= filter_input( INPUT_GET, 'eskimo_route', FILTER_SANITIZE_STRING );
+
+		// check & run
+		if ( $products === 0 || empty( $data ) || empty( $route ) ) { return; }
+
+		// Long form process
+		$this->skus_do_modified_products( $route, $data );
 	}
 
 	/**
 	 * Process modified SKU products
 	 * - One-off scheduled run from comma separated list of product EPOS IDs
 	 *
+	 * @param	string $route
 	 * @param	string $list
 	 */
-	public function products_do_modified( $list ) {
+	public function skus_do_modified_products( $route, $data ) {
 	
 		// Timeout
 		set_time_limit(900);
 
 		// Get unique products
-		$products = explode( ',', $list );
+		switch ( $route ) {
+			case 'list':
+				$products = explode( ',', $data );
+				break;
+			case 'file':
+				$file_name = WP_CONTENT_DIR . '/uploads/eskimo/' . $file;
+				if ( file_exists( $file_name ) && is_readable( $file_name ) ) { 
+					$products = array_map( 'str_getcsv', file( $file_name ) );
+				} else { $products = []; }
+				break;
+			default:
+				return;
+		}
+
+		// First test		
 		if ( empty( $products ) ) { return; }
 
-		if ( $this->debug ) {	error_log( '=== SKU Do Modified Products[' . count( $products ) . '] ===' ); }
+		//Ok, process
+		if ( $this->debug ) { eskimo_log( '=== SKU Do Modified Products[' . count( $products ) . '] ===', 'cron' ); }
 				
 		$results = [];
-		foreach ( $products as $k=>$product ) {
+		foreach ( $products as $k => $product ) {
 
 			// Set up product
 			$product_parts = explode( '|', $product );
@@ -326,7 +526,7 @@ final class Eskimo_Cron {
 			// Construct product REST Url
 			$rest_url = ( empty( $product_parts[2] ) ) ? esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product-import/adjust/' . $product_parts[0] . '/' . $product_parts[1] :
 														 esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product-import/adjust/' . $product_parts[0] . '/' . $product_parts[1] . '/' . $product_parts[2];
-			if ( $this->debug ) {	error_log( 'REST URL [' . $rest_url . ']' ); }
+			if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 			// Process product import
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
@@ -336,6 +536,258 @@ final class Eskimo_Cron {
 			$results[] = $result;
 		}
 		
-		if ( $this->debug ) {	error_log( 'Products UPD[' . print_r( $results, true ) . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Products UPD[' . print_r( $results, true ) . ']', 'cron' ); }
+	}
+
+    //----------------------------------------------
+    //  Cron Functionality - Expired SKUs
+    //----------------------------------------------
+
+	/**
+	 * Delete merchant deals
+	 */
+	public function skus_expired() {
+
+		// expire delete?
+	    $file	= strtolower( filter_input( INPUT_GET, 'eskimo_file', FILTER_SANITIZE_STRING ) );
+		$delete = (int) filter_input( INPUT_GET, 'eskimo_delete', FILTER_SANITIZE_NUMBER_INT );
+		$image 	= (int) filter_input( INPUT_GET, 'eskimo_image', FILTER_SANITIZE_NUMBER_INT );
+
+		// check & run
+		if ( $delete === 0 || empty( $file ) ) { return; }
+		$this->skus_do_expired( $file, $image );
+	}
+
+	/**
+	 * Delete expired posts from file
+	 *
+	 * @param	string	$file
+	 * @param	integer	$image
+	 */
+	public function skus_do_expired( $file, $image ) { 
+
+		global $wpdb;
+
+		// Validate & get file
+		if ( empty( $file ) ) { return; }
+
+		if ( $this->debug ) { eskimo_log( '=== SKUs Do Expired: File[' . $file . '][' . $image . '] OK ===', 'cron' ); }
+
+		// Set filepath
+		$file_name = WP_CONTENT_DIR . '/uploads/eskimo/' . $file;
+		if ( $this->debug ) { eskimo_log( 'FileName[' . $file_name . ']', 'cron' ); }
+
+		// Validate 
+		if( ! file_exists( $file_name ) || ! is_readable( $file_name ) ) { return; }
+		if ( $this->debug ) { eskimo_log( 'FileName OK', 'cron' ); }
+		
+		// Get SKUs
+		$skus = array_map( 'str_getcsv', file( $file_name ) );
+
+		// Get posts list from SKUs
+		$posts = [];
+		foreach ( $skus as $k => $v ) {
+			$post = $this->skus_get_post( $v[0] );
+			if ( false === $post ) { continue; }
+			$posts[] = $post;
+		}
+
+		// Validate posts
+		if ( empty( $posts ) ) { return; }
+		if ( $this->debug ) { eskimo_log( 'Product Count [' . count( $posts ) . '][' . print_r( $posts, true ) . ']', 'cron' ); }
+
+		$count = 0;
+		foreach ( $posts as $post_id ) {
+
+			// delete merchant image
+			if ( $image ) {
+				$this->skus_expired_media( $post_id );
+			}
+				
+			// delete post
+			$ret = wp_delete_post( $post_id, true );
+			if ( $ret !== false ) { $count ++; }
+
+			// slowly
+			if ( $count % 25 === 0 ) {
+				if ( $this->debug ) { eskimo_log( 'Deleted... [' . $count . ']', 'cron' ); }
+				sleep( 10 );
+			}
+		}
+
+		if ( $this->debug ) { eskimo_log( 'Done...[' . $count . ']', 'cron' ); }
+	}
+
+	/**
+	 * Get products from SKU ID
+	 *
+	 * @param	integer			$sku_id
+	 * @return	boolean|false
+	 */
+	protected function skus_get_post( $sku_id ) {
+        
+        // Set up query
+        $args = [
+            'post_type'     => [ 'product_variation', 'product' ],
+            'post_status'   => 'publish',
+            'nopaging'      => true,
+            'cache_results' => false
+        ];
+
+        // Test array or string
+        $args['meta_query'] = [
+            [
+		        'key'     => '_sku',
+		        'value'   => $sku_id,
+		        'compare' => '='
+            ]
+        ];
+
+        // Process query
+        $the_query = new WP_Query( $args );
+
+        // Found post sku?
+        return ( $the_query->found_posts > 0 ) ? $the_query->posts[0]->ID : false;
+	}
+
+	/**
+	 * Delete associated media attachments
+	 *
+	 * @param integer	$post_id
+	 */
+	protected function skus_expired_media( $post_id ) {
+
+		// Get child attachment files
+		$media = get_children( [
+			'post_parent' => $post_id,
+			'post_type'   => 'attachment',
+			'numberposts' => -1,
+			'post_status' => 'any' 
+		] );
+		if ( empty( $media ) ) { return; }
+
+		// Iterate and delete
+		$count = 0;
+		foreach( $media as $post ) {
+			wp_delete_attachment( $post->ID, true );
+			$count++;
+		}
+
+		if ( $this->debug ) { eskimo_log( 'Deleted Images... [' . $count . ']', 'cron' ); }
+	}
+
+	//----------------------------------------------
+    //  Cron Functionality - Product Variations
+    //----------------------------------------------
+
+	/**
+	 * Get variable products with no variations
+	 */
+	public function skus_product_variations() {
+
+		// variations?
+		$variation 	= (int) filter_input( INPUT_GET, 'eskimo_var', FILTER_SANITIZE_NUMBER_INT );
+		$process	= (int) filter_input( INPUT_GET, 'eskimo_process', FILTER_SANITIZE_NUMBER_INT );
+		$delete		= (int) filter_input( INPUT_GET, 'eskimo_delete', FILTER_SANITIZE_NUMBER_INT );
+
+		// check & run
+		if ( $variation === 0 || $process === 0 ) { return; }
+		$this->skus_do_product_variations();
+	}
+
+	/**
+	 * Variable products with no variations
+	 *
+	 * @param	integer	$delete default 0
+	 */
+	public function skus_do_product_variations( $delete = 0 ) { 
+	
+		$products = $this->skus_variable_products();
+		if ( false === $products ) { return; }
+		
+		if ( $this->debug ) { eskimo_log( '=== SKUs Product Variations [' . count( $products ) . '] ===', 'cron' ); }
+
+		// Get variable products with variations
+		foreach ( $products as $k => $product ) {
+			$variants = $this->skus_variations( $product->get_id() );
+			if ( $this->debug ) { eskimo_log( 'Product ID[' . $product->get_id() . '] Variants[' . $variants . ']', 'cron' ); }
+			if ( $variants > 0 ) { 
+				unset( $products[$k] );
+				continue; 
+			}
+		}
+
+		// Delete Products
+		if ( empty( $products ) ) { return; }
+
+		$count = 0;
+		$deleted = $orphan = [];
+		foreach ( $products as $k => $product ) {
+
+			// Set product
+			$product_id = $product->get_id();;
+
+			// delete post
+			if ( $delete ) {
+				$ret = wp_delete_post( $product_id, true );
+				if ( $ret !== false ) { 
+					$count ++; 
+					$deleted[] = $product_id;
+				}
+			} else {
+				$orphan[] = $product_id;
+			}
+
+			// slowly
+			if ( $delete && $count % 25 === 0 ) {
+				if ( $this->debug ) { eskimo_log( 'Deleted... [' . $count . ']', 'cron' ); }
+				sleep( 6 );
+			}
+		}
+
+		if ( $this->debug ) {
+			if ( $delete ) {	
+				eskimo_log( 'Done...[' . $count . '][' . print_r( $deleted, true ). ']', 'cron' );
+			} else {
+				eskimo_log( 'Done...[' . print_r( $orphan, true ). ']', 'cron' );
+			}
+		}
+	}
+
+	/**
+	 * Get product from SKU
+	 *
+	 * @param	integer			$limit
+	 * @return	boolean|false
+	 */
+	protected function skus_variable_products() {
+        
+		// Set up query
+		$args = [
+			'status' 	=> 'publish', 
+			'limit' 	=> -1, 
+			'type' 		=> 'variable' 
+		]; 
+
+		// Process query
+		$products = wc_get_products( $args );
+
+		// Return
+		return ( count( $products ) > 0 ) ? $products : false;
+	}
+
+	/**
+	 * Delete associated media attachments
+	 *
+	 * @param integer	$post_id
+	 */
+	protected function skus_variations( $product_id ) {
+
+		global $wpdb;
+
+		$q = 'SELECT count( p.ID ) FROM wp_posts p WHERE p.post_type = "product_variation" AND p.post_parent = %d'; 
+		$qs = $wpdb->prepare( $q, $product_id );	
+
+		return (int) $wpdb->get_var( $qs );
 	}
 }

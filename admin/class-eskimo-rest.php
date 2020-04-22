@@ -71,10 +71,8 @@ final class Eskimo_REST {
         $this->api      = $api;
         $this->wc       = new Eskimo_WC( $eskimo );
    		$this->version  = ESKIMO_VERSION;
-		$this->debug    = ESKIMO_DEBUG;
+		$this->debug    = ESKIMO_REST_DEBUG;
     	$this->base_dir	= plugin_dir_url( __FILE__ ); 
-
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 	}
 
     //----------------------------------------------
@@ -87,7 +85,7 @@ final class Eskimo_REST {
      * @return boolean
      */
     public function get_categories_all() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -104,7 +102,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Category Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Category Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -122,12 +120,15 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_categories_specific_ID( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
         // Validate Category ID
         if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Category ID' );
         }
+
+        // Final sanity
+        $id = sanitize_text_field( $id );
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -144,14 +145,14 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { error_log( 'Cateory ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Cateory ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
-        if ( $this->debug ) { error_log( 'Cat[' . print_r( $api_data, true ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Cat[' . print_r( $api_data, true ) . ']', 'rest' ); }
 
         // Process Woocommerce Import
         return $this->wc->get_categories_specific_ID( $api_data );
@@ -164,12 +165,15 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_categories_child_categories_ID( $id = '' ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
         // Validate Category ID
         if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Category Parent ID' );
         }
+
+        // Final sanity
+        $id = sanitize_text_field( $id );
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -186,7 +190,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Child Category Count[' . $api_count . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Child Category Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -204,19 +208,19 @@ final class Eskimo_REST {
     /**
      * Get remote API products by category
      * - Requires 2 parameters: StartPosition & RecordCount
-     * - Deprecated
+     * - Deprecated, use /Products/All to import products
      *
      * @param   integer $start      default 1  
      * @param   integer $records    default 25
      * @return  boolean
      */
-    public function get_category_products_all( $start = 1, $records = 25 ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
+    public function get_category_products( $start = 1, $records = 250 ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']', 'rest' ); }
 
         // Sensible defaults
         $api_defaults = [
             'StartPosition' => 1,
-            'RecordCount'   => 25
+            'RecordCount'   => 250
         ];
 
         // Pre-Sanitize
@@ -225,8 +229,8 @@ final class Eskimo_REST {
 
         // Validate options & set a sensible batch range
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
-        $api_opts['RecordCount']    = ( $records === 0 || $records > 25 ) ? $api_defaults['RecordCount'] : $records;
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        $api_opts['RecordCount']    = ( $records === 0 || $records > $api_defaults['RecordCount'] ) ? $api_defaults['RecordCount'] : $records;
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
                     
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -237,7 +241,7 @@ final class Eskimo_REST {
         $results = [];
         
         // Get remote data
-        $api_data = $this->api->category_products_all( $api_opts );
+        $api_data = $this->api->category_products( $api_opts );
 
         // Validate API data
         if ( false === $api_data ) {
@@ -246,32 +250,36 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Category Product Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Category Product Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
             
 		// No API data
         if ( $api_count === 0 ) {
             return $this->api_error( 'No Results Returned' );
         }
 
-        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
 
         // Return data set
         return $api_data;
     }
 
     /**
-     * Get remote API category by ID
+	 * Get remote API category by ID
+	 * - Performs no import, returns API data
      * 
      * @param   string  $id
      * @return  boolean
      */
-    public function get_category_products_specific_category( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+    public function get_category_products_specific_category_ID( $id ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
         // Test Category ID
         if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Category ID' );
         }
+
+        // Final sanity
+        $id = sanitize_text_field( $id );
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -279,7 +287,7 @@ final class Eskimo_REST {
         }
 
         // Get remote data
-        $api_data = $this->api->category_products_specific_category( $id );
+        $api_data = $this->api->category_products_specific_category_ID( $id );
 
         // Validate API data
         if ( false === $api_data ) {
@@ -288,7 +296,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Category Product Count[' . $api_count . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Category Product Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -311,12 +319,13 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_products( $start = 1, $records = 25 ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']', 'rest' ); }
 
         // Sensible defaults
         $api_defaults = [
             'StartPosition' => 1,
-            'RecordCount'   => 25
+			'RecordMax'   	=> 50,
+			'RecordDefault'	=> 25
         ];
 
         // Pre-Sanitize
@@ -331,8 +340,8 @@ final class Eskimo_REST {
         // Validate Opts
         $api_opts = [];
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
-        $api_opts['RecordCount']    = ( $records === 0 || $records > 50 ) ? $api_defaults['RecordCount'] : $records;
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        $api_opts['RecordCount']    = ( $records === 0 || $records > $api_defaults['RecordMax'] ) ? $api_defaults['RecordDefault'] : $records;
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
         // Get remote data
         $api_data = $this->api->products_all( $api_opts );
@@ -344,7 +353,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -352,12 +361,14 @@ final class Eskimo_REST {
         }
 
         // Get products data per batch item & add product SKU
-        foreach ( $api_data as $k=>$v ) {
-            $v->sku = $this->get_skus_specific_ID( $v->eskimo_identifier, false );
+		foreach ( $api_data as $k=>$v ) {
+			$sku = $this->get_skus_specific_ID( $v->eskimo_identifier, false );
+			if ( is_wp_error( $sku ) ) { continue; }
+            $v->sku = $sku;
         }
 
         // Process data
-        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
 
         // Process Woocommerce Import for Web_ID update
 		return $this->wc->get_products_all( $api_data );
@@ -366,12 +377,78 @@ final class Eskimo_REST {
     /**
      * Get remote API products
      * 
+     * @return  boolean
+     */
+    public function get_products_all() {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
+
+        // Test API connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+        // Validate Opts
+        $api_opts = [];
+        $api_opts['StartPosition']  = 1;
+        $api_opts['RecordCount']    = 25;
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
+
+        // Batched Results
+        $results = [];
+
+        // Iterate batched results
+        do { 
+    
+            // Get remote data
+            $api_data = $this->api->products_all( $api_opts );
+
+			// Validate API data
+			if ( false === $api_data ) {
+				return $this->api_rest_error();
+			}
+
+            // OK process data
+            $api_count =  $this->api_count( $api_data );
+            if ( $this->debug ) { eskimo_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
+
+            // Nothing to do here...
+            if ( $api_count === 0 ) { break; }
+
+            // Get products data per batch item & add product SKU
+            foreach ( $api_data as $k=>$v ) {
+   				$sku = $this->get_skus_specific_ID( $v->eskimo_identifier, false );
+				if ( is_wp_error( $sku ) ) { continue; }
+        	    $v->sku = $sku;
+            }
+
+            // Process data
+            if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
+
+            // Process Woocommerce Import
+            $api_results = $this->wc->get_products_all( $api_data );
+
+            // Update loop position
+            $api_opts['StartPosition'] += $api_opts['RecordCount'];
+
+			// Log products for update
+			if ( is_wp_error( $api_results ) || empty( $api_results ) ) { continue; }
+			foreach ( $api_results as $result ) { $results[] = $result; }
+
+        } while ( true );
+
+        // Return results for Web_ID update
+        return $results;
+	}
+	
+    /**
+     * Get remote API products
+     * 
      * @param   string  $route 
      * @param   integer $created 
      * @return  boolean
      */
     public function get_products_new( $route, $created ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Created[' . $created . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Created[' . $created . ']', 'rest' ); }
 
 		// Pre-Sanitize
 		$route 		= sanitize_text_field( $route );
@@ -389,13 +466,13 @@ final class Eskimo_REST {
         // Validate Opts
         $api_opts = [];
         $api_opts['StartPosition']  = 1;
-        $api_opts['RecordCount']    = 100;
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        $api_opts['RecordCount']    = 25;
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
 		// Set timestamp		
 		if ( $timestamp_from !== 0 ) {
 			$api_opts['TimeStampFrom']	=  $timestamp_from;				
-    	    if ( $this->debug ) { error_log( 'TimeStamp[' . $api_opts['TimeStampFrom'] . ']' ); }
+    	    if ( $this->debug ) { eskimo_log( 'TimeStamp[' . $api_opts['TimeStampFrom'] . ']', 'rest' ); }
 		}
 
         // Batched Results
@@ -414,13 +491,13 @@ final class Eskimo_REST {
 
             // OK process data
             $api_count =  $this->api_count( $api_data );
-            if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+            if ( $this->debug ) { eskimo_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
             // Nothing to do here...
             if ( $api_count === 0 ) { break; }
 
             // Process data
-            if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+            if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
 
             // Process Woocommerce Import
             $api_products = $this->wc->get_products_new( $api_data );
@@ -443,84 +520,20 @@ final class Eskimo_REST {
 
     /**
      * Get remote API products
-     * 
-     * @return  boolean
-     */
-    public function get_products_all() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
-
-        // Test API connection
-        if ( false === $this->api->init() ) {
-            return $this->api_connect_error();
-        }
-
-        // Validate Opts
-        $api_opts = [];
-        $api_opts['StartPosition']  = 1;
-        $api_opts['RecordCount']    = 25;
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
-
-        // Batched Results
-        $results = [];
-
-        // Iterate batched results
-        do { 
-    
-            // Get remote data
-            $api_data = $this->api->products_all( $api_opts );
-
-			// Validate API data
-			if ( false === $api_data ) {
-				return $this->api_rest_error();
-			}
-
-            // OK process data
-            $api_count =  $this->api_count( $api_data );
-            if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
-
-            // Nothing to do here...
-            if ( $api_count === 0 ) { break; }
-
-            // Get products data per batch item & add product SKU
-            foreach ( $api_data as $k=>$v ) {
-                $v->sku = $this->get_skus_specific_ID( $v->eskimo_identifier, false );
-            }
-
-            // Process data
-            if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
-
-            // Process Woocommerce Import
-            $api_results = $this->wc->get_products_all( $api_data );
-
-            // Update loop position
-            $api_opts['StartPosition'] += $api_opts['RecordCount'];
-
-			// Log products for update
-			if ( is_wp_error( $api_results ) || empty( $api_results ) ) { continue; }
-			foreach ( $api_results as $result ) { $results[] = $result; }
-
-        } while ( true );
-
-        // Return results for Web_ID update
-        return $results;
-	}
-
-    /**
-     * Get remote API products
      *
      * @param   integer $start      default 1  
      * @param   integer $records    default 25
      * @param   integer $records    default 2000-01-01
      * @return  boolean
      */
-    public function get_products_modified( $route, $modified, $start = 1, $records = 25 ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']' ); }
+    public function get_products_modified( $route, $modified, $start = 1, $records = 250 ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']', 'rest' ); }
 
         // Sensible defaults
         $api_defaults = [
             'StartPosition' => 1,
-            'RecordCount'   => 100,
-            'TimeStampFrom' => date( 'Y-m-d H:i:s', current_time( 'timestamp' ) - 3600 )
+			'RecordMax'   	=> 2500,
+			'RecordDefault'	=> 250
         ];
 
 		// Pre-Sanitize
@@ -539,11 +552,11 @@ final class Eskimo_REST {
 		if ( is_wp_error( $timestamp_from ) ) { return $timestamp_from; }
 		
         // Validate Opts
-        $api_opts = [];
+		$api_opts = [];
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
-		$api_opts['RecordCount']    = ( $records === 0 || $records > 100 ) ? $api_defaults['RecordCount'] : $records;
+		$api_opts['RecordCount']    = ( $records === 0 || $records > $api_defaults['RecordMax'] ) ? $api_defaults['RecordDefault'] : $records;
 		$api_opts['TimeStampFrom']	=  $timestamp_from;				
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStamp[' . $api_opts['TimeStampFrom'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStamp[' . $api_opts['TimeStampFrom'] . ']', 'rest' ); }
 
         // Get remote data
         $api_data = $this->api->products_all( $api_opts );
@@ -555,7 +568,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStamp [' . $api_opts['TimeStampFrom'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStamp [' . $api_opts['TimeStampFrom'] . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -569,7 +582,7 @@ final class Eskimo_REST {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( print_r( $api_products, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $api_products, true ), 'rest' ); }
 
 		// OK
 		return $api_products;
@@ -583,12 +596,15 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_products_specific_ID( $id, $import = true ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . '] Import[' . (int) $import . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . '] Import[' . (int) $import . ']', 'rest' ); }
 
         // Test Product
         if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Product ID' );
         }
+
+		// Final sanity
+		$id = sanitize_text_field( $id );
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -605,16 +621,20 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { error_log( 'Product ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Product ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
-        // Add Product SKU
-        $api_data->sku = $this->get_skus_specific_ID( $api_data->eskimo_identifier, false );
-        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+		// Get Product SKU
+		$sku = $this->get_skus_specific_ID( $api_data->eskimo_identifier, false );
+		if ( is_wp_error( $sku ) ) { return $sku; }
+
+		// Add Product SKU
+		$api_data->sku = $sku;
+        if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
 
         // Process Woocommerce Import
         return ( $import ) ? $this->wc->get_products_specific_ID( $api_data ) : $api_data;
@@ -628,7 +648,7 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_products_import_ID( $id, $path, $import = true ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . '] Path[' . $path . '] Import[' . (int) $import . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . '] Path[' . $path . '] Import[' . (int) $import . ']', 'rest' ); }
 
 		// Valid paths
 		$paths = [ 'stock', 'tax', 'price', 'category', 'adjust', 'all' ];
@@ -658,7 +678,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { error_log( 'Product ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Product ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
@@ -667,7 +687,7 @@ final class Eskimo_REST {
 
         // Add Product SKU
         $api_data->sku = $this->get_skus_specific_ID( $api_data->eskimo_identifier, false );
-        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
 
         // Process Woocommerce Import
         return ( $import ) ? $this->wc->get_products_import_ID( $api_data, $path ) : $api_data;
@@ -681,7 +701,7 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_products_trade_ID( $prod_ref, $trade_ref) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Prod[' . $prod_ref . '] Trade[' . $trade_ref . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Prod[' . $prod_ref . '] Trade[' . $trade_ref . ']', 'rest' ); }
 
         // Test Product
         if ( empty( $prod_ref ) || empty( $trade_ref ) ) {
@@ -702,7 +722,7 @@ final class Eskimo_REST {
 	 * @return	object|array
 	 */
 	public function get_categories_web_ID() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
 		// Get Woocommerce categories
 		$cat_web_ids = $this->wc->get_categories_web_ID();
@@ -715,7 +735,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_categories_meta_ID() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -732,7 +752,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Category Count[' . $api_count . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Category Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -749,7 +769,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_categories_cart_ID() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -766,7 +786,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Category Count[' . $api_count . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Category Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -784,7 +804,7 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_categories_update_cart_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
         // Validate Options
         if ( empty( $api_data ) ) {
@@ -806,7 +826,7 @@ final class Eskimo_REST {
 
 		// OK process data
         $api_has_status = $this->api_has_status( $api_response );
-        if ( $this->debug ) { error_log( 'EPOS Categories UPD Status [' . $api_response . '][' . (int)$api_has_status . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS Categories UPD Status [' . $api_response . '][' . (int)$api_has_status . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_has_status ) {
@@ -823,7 +843,7 @@ final class Eskimo_REST {
 	 * @return	object|array
 	 */
 	public function get_products_web_ID() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
 		// Get Woocommerce categories
 		$prod_web_ids = $this->wc->get_products_web_ID();
@@ -838,7 +858,7 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_products_cart_ID( $start = 1, $records = 250 ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']', 'rest' ); }
 
         // Sensible defaults
         $api_defaults = [
@@ -859,7 +879,7 @@ final class Eskimo_REST {
         $api_opts = [];
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
         $api_opts['RecordCount']    = ( $records === 0 || $records > 250 ) ? $api_defaults['RecordCount'] : $records;
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
         // Batched Results
         $results = [];
@@ -874,7 +894,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Products Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -892,7 +912,7 @@ final class Eskimo_REST {
      * @return  boolean
      */
     public function get_products_update_cart_ID( $api_data ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
         // Validate Options
         if ( empty( $api_data ) ) {
@@ -914,7 +934,7 @@ final class Eskimo_REST {
 
 		// OK process data
         $api_has_status = $this->api_has_status( $api_response );
-        if ( $this->debug ) { error_log( 'EPOS Product UPD Status [' . $api_response . '][' . (int)$api_has_status . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'EPOS Product UPD Status [' . $api_response . '][' . (int)$api_has_status . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_has_status ) {
@@ -932,21 +952,25 @@ final class Eskimo_REST {
     /**
      * Get remote API customer data
      *
-     * @param   string			$id
+	 * @param   string			$id
+	 * @param	boolean			$import	default false
      * @return  object|array
      */
-    public function get_customers_specific_ID( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+    public function get_customers_specific_ID( $id, $import = false ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
         // Test Options
-        if ( empty( $id )) {
+        if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Customer ID' );
         }
 
         // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
-        }
+		}
+
+		// Final sanity
+		$id = sanitize_key( $id );
 
         // Get remote data
         $api_data = $this->api->customers_specific_ID( $id );
@@ -958,7 +982,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { error_log( 'Customer ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Customer ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
@@ -966,7 +990,7 @@ final class Eskimo_REST {
         }
 
         // Process user update
-        return $this->wc->get_customers_specific_ID( $api_data, true );
+        return ( true === $import ) ? $this->wc->get_customers_specific_ID( $api_data, true ) : $api_data;
 	}
 
     /**
@@ -976,7 +1000,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_customers_specific_email( $email ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Email[' . $email . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Email[' . $email . ']', 'rest' ); }
 
         // Test Options
         if ( empty( $email )) {
@@ -986,7 +1010,10 @@ final class Eskimo_REST {
         // Test API connection
         if ( false === $this->api->init() ) {
             return $this->api_connect_error();
-        }
+		}
+
+		// Final sanity
+		$email = sanitize_email( $email );
 
 		// Set API opts
 		$api_opts = [ 'EmailAddress' => $email ];
@@ -1001,7 +1028,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Customer Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Customer Count[' . $api_count . ']', 'rest' ); }
 
         // Process return
         return ( $api_count > 0 ) ? true : false;
@@ -1014,9 +1041,9 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_customers_insert( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
-		// Test Options
+		// Final sanity
 		$id = absint( $id );
 		if ( $id === 0 ) {
             return $this->api_error( 'Invalid Customer ID[' . $id . ']' );
@@ -1026,7 +1053,7 @@ final class Eskimo_REST {
 		$api_opts = $this->wc->get_customers_insert_ID( $id );
         if ( is_wp_error( $api_opts ) ) { return $api_opts; }
 
-		if ( $this->debug ) { error_log( 'Customer Data: ' . print_r( $api_opts, true ) ); }
+		if ( $this->debug ) { eskimo_log( 'Customer Data: ' . print_r( $api_opts, true ), 'rest' ); }
 
         // Test connection
         if ( false === $this->api->init() ) {
@@ -1043,7 +1070,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { error_log( 'Cateory ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Cateory ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
@@ -1061,9 +1088,9 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_customers_update( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
-   		// Test Options
+   		// Final sanity
 		$id = absint( $id );
 		if ( $id === 0 ) {
             return $this->api_error( 'Invalid Customer ID[' . $id . ']' );
@@ -1073,7 +1100,7 @@ final class Eskimo_REST {
 		$api_opts = $this->wc->get_customers_update_ID( $id );
         if ( is_wp_error( $api_opts ) ) { return $api_opts;	}
 
-		if ( $this->debug ) { error_log( 'Customer Data: ' . print_r( $api_opts, true ) ); }
+		if ( $this->debug ) { eskimo_log( 'Customer Data: ' . print_r( $api_opts, true ), 'rest' ); }
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -1090,7 +1117,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { error_log( 'Customer ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Customer ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
@@ -1107,7 +1134,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_customers_titles() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -1124,7 +1151,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Titles Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Titles Count[' . $api_count . ']', 'rest' ); }
 
         // Process return
         return $api_data;
@@ -1137,11 +1164,12 @@ final class Eskimo_REST {
     /**
 	 * Import EskimoEPOS WebOrder into Woocommerce
      *
-     * @param   array   		$id
+	 * @param   array   		$id
+	 * @param	boolean			$import	default false
      * @return  object|array
      */
-    public function get_orders_website_order( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+    public function get_orders_website_order( $id, $import = false ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
         // Test Options
         if ( empty( $id )) {
@@ -1153,6 +1181,9 @@ final class Eskimo_REST {
             return $this->api_connect_error();
         }
 
+		// Final sanity
+		$id = sanitize_text_field( $id );
+
         // Get remote data
         $api_data = $this->api->orders_website_order( $id );
 
@@ -1163,7 +1194,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { error_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
@@ -1171,7 +1202,7 @@ final class Eskimo_REST {
         }
 
         // Process order update
-        return $this->wc->get_orders_website_order( $api_data, true );
+        return ( true === $import ) ? $this->wc->get_orders_website_order( $api_data, true ) : $api_data;
     }
 
     /**
@@ -1181,7 +1212,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_orders_insert( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
 		// Sanitize
 		$id = absint( $id );
@@ -1191,7 +1222,7 @@ final class Eskimo_REST {
 		$api_opts = $this->wc->get_orders_insert_ID( $id );
 		if ( is_wp_error( $api_opts ) ) { return $api_opts;	}
 
-		if ( $this->debug ) { error_log( 'Order Data: ' . print_r( $api_opts, true ) ); }
+		if ( $this->debug ) { eskimo_log( 'Order Data: ' . print_r( $api_opts, true ), 'rest' ); }
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -1208,7 +1239,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { error_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
@@ -1218,6 +1249,51 @@ final class Eskimo_REST {
         // Generate woocommerce meta data reference 
         return $this->wc->get_orders_epos_ID( $id, $api_data, true );
 	}
+	
+    /**
+     * Export Woocommerce return to EskimoEPOS WebOrder
+     *
+     * @param   array   		$id
+     * @return  object|array
+     */
+    public function get_orders_return( $id ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
+
+		// Sanitize
+		$id = absint( $id );
+	 	if ( $id === 0 ) { return $this->api_error( 'Invalid Order ID[' . $id . ']' ); }
+
+        // Get Order Data
+		$api_opts = $this->wc->get_orders_return_ID( $id );
+		if ( is_wp_error( $api_opts ) ) { return $api_opts;	}
+
+		if ( $this->debug ) { eskimo_log( 'Order Data: ' . print_r( $api_opts, true ), 'rest' ); }
+
+        // Test API connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+        // Insert order to EPOS
+        $api_data = $this->api->orders_insert_return( $api_opts );
+
+        // Validate API data
+        if ( false === $api_data ) {
+            return $this->api_rest_error();
+        }
+
+        // OK process data
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { eskimo_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
+
+		// No API data or invalid
+        if ( false === $api_data ) {
+            return $this->api_error( 'No Results Returned' );
+        }
+
+        // Generate woocommerce meta data reference 
+        return $this->wc->get_orders_epos_ID( $id, $api_data, true, true );
+	}
 
     /**
      * Retrieve EskimoEPOS Fulfilment Methods
@@ -1225,7 +1301,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_orders_fulfilment_methods() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
         // Test connection
         if ( false === $this->api->init() ) {
@@ -1233,7 +1309,7 @@ final class Eskimo_REST {
         }
 
         // Insert order to EPOS
-        $api_data = $this->api->orders_methods();
+        $api_data = $this->api->orders_fulfilment_methods();
 
         // Validate API data
         if ( false === $api_data ) {
@@ -1242,7 +1318,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Order Methods Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Order Methods Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1258,8 +1334,8 @@ final class Eskimo_REST {
      * @param   array   		$id
      * @return  object|array
      */
-    public function get_orders_search_ID( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+    public function get_orders_search_ID( $id, $date_from = '', $date_to = '' ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
 		// Sanitize
 		$id = sanitize_text_field( $id );
@@ -1271,10 +1347,14 @@ final class Eskimo_REST {
 		}
 
 		// Dates
-		$dt = new DateTime( '2000-01-01');
-		$from = $dt->format('c');
-		$dt->setTimestamp( time() );
-		$to = $dt->format('c');
+		$date_from 	= ( empty( $date_from ) ) ? '' : sanitize_text_field( $date_from );
+		$date_to 	= ( empty( $date_to ) ) ? '' : sanitize_text_field( $date_to );
+
+		// Dates
+		$dt 	= ( empty( $date_from ) ) ? new DateTime( '2000-01-01') : new DateTime( $date_from );
+		$from 	= $dt->format('c');
+		$to 	= ( empty( $date_to ) ) ? $dt->setTimestamp( time() )->format('c') : $dt->setTimestamp( strtotime( $date_to ) )->format('c');
+		if ( $this->debug ) { eskimo_log( 'Customer ID[' . $id . '] From[' . $from . '] To[' . $to . ']', 'rest' ); }
 
 		$api_opts = [ 
 			'FromDate'					=> $from,
@@ -1295,7 +1375,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Orders Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Orders Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1311,8 +1391,8 @@ final class Eskimo_REST {
      * @param   array   		$id
      * @return  object|array
      */
-    public function get_orders_search_type( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+    public function get_orders_search_type( $id, $date_from = '', $date_to = ''  ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
 		// Sanitize
 		$id = absint( $id );
@@ -1324,10 +1404,14 @@ final class Eskimo_REST {
 		}
 		
 		// Dates
-		$now	= current_time( 'timestamp' );
-		$dt 	= new DateTime( '2000-01-01');
+		$date_from 	= ( empty( $date_from ) ) ? '' : sanitize_text_field( $date_from );
+		$date_to 	= ( empty( $date_to ) ) ? '' : sanitize_text_field( $date_to );
+
+		// Dates
+		$dt 	= ( empty( $date_from ) ) ? new DateTime( '2000-01-01') : new DateTime( $date_from );
 		$from 	= $dt->format('c');
-		$to 	= $dt->setTimestamp( $now )->format('c');
+		$to 	= ( empty( $date_to ) ) ? $dt->setTimestamp( time() )->format('c') : $dt->setTimestamp( strtotime( $date_to ) )->format('c');
+		if ( $this->debug ) { eskimo_log( 'Customer ID[' . $id . '] From[' . $from . '] To[' . $to . ']', 'rest' ); }
 
 		$api_opts = [ 
 			'FromDate'  				=> $from,
@@ -1347,7 +1431,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Orders Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Orders Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1363,11 +1447,11 @@ final class Eskimo_REST {
      * @param   array   		$id
      * @return  object|array
      */
-    public function get_orders_search_date( $route, $date_1, $date_2 ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+    public function get_orders_search_date( $route, $date_1 = '', $date_2 = '' ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Date 1[' . $date_1 . '] Date 2[' . $date_2 . ']', 'rest' ); }
 
 		// Valid Routes
-		$routes = [ 'from', 'to', 'range' ];
+		$routes = [ 'from', 'to', 'range', 'on' ];
 		
 		// Sanitize
 		$route = sanitize_text_field( $route );
@@ -1389,8 +1473,8 @@ final class Eskimo_REST {
 
 		// Dates
 		switch ( $route ) {
-			case 'from':
-				$dt 	= new DateTime( $from );
+			case 'from': // Use first date
+				$dt 	= new DateTime( $date_1 );
 				$from 	= $dt->format('c');
 				$to 	= $dt->setTimestamp( $now )->format('c');
 				break;
@@ -1400,12 +1484,19 @@ final class Eskimo_REST {
 				$to 	= $dt->setTimestamp( strtotime( $to ) )->format('c');
 				break;
 			case 'range':
-				$dt 	= new DateTime( $from );
+				$dt 	= new DateTime( $date_1 );
 				$from 	= $dt->format('c');
-				$to 	= $dt->setTimestamp( strtotime( $to ) )->format('c');
+				$to 	= $dt->setTimestamp( strtotime( $date_2 ) )->format('c');
 				break;
+			case 'on':
+				$dt 	= new DateTime( $date_1 );
+				$from 	= $dt->format('c');
+				$to 	= $dt->setTimestamp( strtotime( 'tomorrow' ) )->format('c');
+				break;
+			default:
+	            return $this->api_rest_error();			
 		}
-        if ( $this->debug ) { error_log( 'Route[' . $route . ' FromDate[' . $from . '] ToDate[' . $to . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Route[' . ucfirst( $route ) . '] From[' . $from . '] To[' . $to . ']', 'rest' ); }
 
 		$api_opts = [ 
 			'FromDate'  				=> $from,
@@ -1425,7 +1516,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Orders Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Orders Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1442,18 +1533,20 @@ final class Eskimo_REST {
     /**
      * Get remote API SKUs
      *
+     * @param   string 	$path      	default 'all'  
      * @param   integer $start      default 1  
-     * @param   integer $records    default 20
+     * @param   integer $records    default 250
      * @param   integer $records    default 2000-01-01
      * @return  object|array
      */
-    public function get_skus( $start = 1, $records = 100 ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
+    public function get_skus( $path = 'all', $start = 1, $records = 250 ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Path [' . $path . '] Start[' . $start . '] Records[' . $records . ']', 'rest' ); }
 
         // Sensible defaults
         $api_defaults = [
             'StartPosition' => 1,
-			'RecordCount'   => 100
+			'RecordMax'   	=> 2500,
+			'RecordDefault'	=> 250
         ];
 
 		// Set Time
@@ -1472,9 +1565,9 @@ final class Eskimo_REST {
         // Validate Opts
         $api_opts = [];
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
-		$api_opts['RecordCount']    = ( $records === 0 || $records > 100 ) ? $api_defaults['RecordCount'] : $records;
+		$api_opts['RecordCount']    = ( $records === 0 || $records > $api_defaults['RecordMax'] ) ? $api_defaults['RecordDefault'] : $records;
 		$api_opts['TimeStampFrom']	= '2000-01-01T00:00:00';
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStampFrom[' . $TimeStampFrom . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStampFrom[' . $TimeStampFrom . ']', 'rest' ); }
 
         // Get remote data
         $api_data = $this->api->skus_all( $api_opts );
@@ -1486,7 +1579,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'SKU Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'SKU Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1494,12 +1587,12 @@ final class Eskimo_REST {
         }
 
         // Process data
-        if ( $this->debug ) { error_log( print_r( $api_data, true ) ); }
+        if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
 
         // Process Woocommerce Import for Web_ID update
-		return $this->wc->get_skus_all( $api_data );
+		return ( $path === 'batch' ) ? $this->wc->get_skus_all( $api_data, false ) : $this->wc->get_skus_all( $api_data );
 	}
-
+	
 	/**
 	 * Retrieve SKUs by modified date
 	 *
@@ -1508,16 +1601,17 @@ final class Eskimo_REST {
 	 * @param	integer			$modified
 	 * @param	integer			$start
 	 * @param	integer			$records
-	 * @param	integer			$import
+	 * @param	boolean			$import
      * @return  object|array
 	 */
-	public function get_skus_modified( $path, $route, $modified, $start, $records, $import = 0 ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Path[' . $path . '] Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . ']' ); }
+	public function get_skus_modified( $path, $route, $modified, $start, $records = 250, $import = false ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Path[' . $path . '] Route[' . $route . '] Modified[' . $modified . '] Start[' . $start . '] Records[' . $records . '] Import[' . (int) $import . ']', 'rest' ); }
 
         // Sensible defaults
         $api_defaults = [
             'StartPosition' => 1,
-            'RecordCount'   => 1000
+			'RecordMax'   	=> 2500,
+			'RecordDefault'	=> 250
         ];
 
 		// Pre-Sanitize
@@ -1526,7 +1620,6 @@ final class Eskimo_REST {
 		$modified	= absint( $modified );
         $start   	= absint( $start );
 		$records 	= absint( $records );
-		$import		= absint( $import );
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -1544,10 +1637,10 @@ final class Eskimo_REST {
         // Validate Opts
         $api_opts = [];
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
-		$api_opts['RecordCount']    = ( $records === 0 || $records > 1000 ) ? $api_defaults['RecordCount'] : $records;
+		$api_opts['RecordCount']    = ( $records === 0 || $records > $api_defaults['RecordMax'] ) ? $api_defaults['RecordDefault'] : $records;
 		$api_opts['TimeStampFrom']	= $timestamp_from;				
 		if ( true === $stock_adjust ) { $api_opts['IncludeStockAdjustments'] = true; }
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStamp[' . $api_opts['TimeStampFrom'] . '] StockAdjust[' . (int) $stock_adjust . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStamp[' . $api_opts['TimeStampFrom'] . '] StockAdjust[' . (int) $stock_adjust . ']', 'rest' ); }
 
         // Get remote data
         $api_data = $this->api->skus_all( $api_opts );
@@ -1559,7 +1652,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'SKU Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'SKU Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1570,9 +1663,71 @@ final class Eskimo_REST {
 		$api_products = $this->wc->get_skus_all( $api_data, false );
 
 		// No import	
-		return ( $import === 0 ) ? $api_products : $this->get_skus_product_import( $api_products );
+		return ( true === $import ) ? $this->get_skus_product_import( $api_products ) : $api_products;
 	}
 
+    /**
+     * Get remote API SKUs
+     *
+     * @param   integer $start      default 1  
+     * @param   integer $records    default 250
+     * @param   integer $records    default 2000-01-01
+     * @return  object|array
+     */
+    public function get_skus_orphan( $start = 1, $records = 250 ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']', 'rest' ); }
+
+        // Sensible defaults
+        $api_defaults = [
+            'StartPosition' => 1,
+			'RecordMax'   	=> 1000,
+			'RecordDefault'	=> 250
+        ];
+
+		// Set Time
+		$dt = new DateTime('2000-01-01');		
+        $TimeStampFrom = $dt->format('c');
+
+		// Pre-Sanitize
+        $start   = absint( $start );
+        $records = absint( $records );
+
+        // Test API connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+        // Validate Opts
+        $api_opts = [];
+        $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
+		$api_opts['RecordCount']    = ( $records === 0 || $records > $api_defaults['RecordMax'] ) ? $api_defaults['RecordDefault'] : $records;
+		$api_opts['TimeStampFrom']	= '2000-01-01T00:00:00';
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . '] TimeStampFrom[' . $TimeStampFrom . ']', 'rest' ); }
+
+        // Get remote data
+        $api_data = $this->api->skus_all( $api_opts );
+
+        // Validate API data
+        if ( false === $api_data ) {
+            return $this->api_rest_error();
+		}
+
+        // OK process data
+        $api_count = $this->api_count( $api_data );
+        if ( $this->debug ) { eskimo_log( 'SKU Count[' . $api_count . '] Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
+
+		// No API data
+        if ( $api_count === 0 ) {
+            return $this->api_error( 'No Results Returned' );
+        }
+
+        // Process data
+        if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
+
+        // Process Woocommerce Import for Web_ID update, no import signal
+		return $this->wc->get_skus_orphan( $api_data );
+	}
+	
 	/**
 	 * Import SKUs by product
 	 *
@@ -1580,7 +1735,7 @@ final class Eskimo_REST {
      * @return  object|array
 	 */	
 	protected function get_skus_product_import( $api_products ) {
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
 		// Get unique products
 		$products = [];
@@ -1588,7 +1743,7 @@ final class Eskimo_REST {
 			$products[] = $r['Eskimo_Product_Identifier'];
 		}
 		$products = array_values( array_unique( $products, SORT_STRING ) );
-		if ( $this->debug ) { error_log( print_r( $products, true ) ); }
+		if ( $this->debug ) { eskimo_log( print_r( $products, true ), 'rest' ); }
 
 		$results = [];
 		foreach ( $products as $k=>$product ) {
@@ -1607,7 +1762,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_skus_specific_code( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': SKU ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': SKU ID[' . $id . ']', 'rest' ); }
 
         // Test Product
         if ( empty( $id ) ) {
@@ -1629,7 +1784,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Product SKU Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Product SKU Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1648,12 +1803,15 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_skus_specific_ID( $id, $import = true ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . '] Import[' . (int) $import . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . '] Import[' . (int) $import . ']', 'rest' ); }
 
         // Test SKU
         if ( empty( $id ) ) {
             return $this->api_error( 'Invalid SKU ID' );
-        }
+		}
+
+		// Final sanity
+		$id = sanitize_text_field( $id );
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -1670,7 +1828,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'Product SKU Count[' . $api_count . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Product SKU Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1688,7 +1846,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_skus_product_ID( $prod_id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Prod ID[' . $prod_id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Prod ID[' . $prod_id . ']', 'rest' ); }
 
         // Test Product
         if ( empty( $prod_id ) ) {
@@ -1710,7 +1868,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-        if ( $this->debug ) { error_log( 'SKU Count[' . $api_count . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'SKU Count[' . $api_count . ']', 'rest' ); }
         
         // Process Woocommerce Import
         return ( $import ) ? $this->wc->get_skus_product_ID( $api_data ) : $api_data;
@@ -1728,7 +1886,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_image_links_all( $start = 1, $records = 100) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']', 'rest' ); }
 
         // Sensible defaults
         $api_defaults = [
@@ -1749,7 +1907,7 @@ final class Eskimo_REST {
         $api_opts = [];
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
         $api_opts['RecordCount']    = ( $records === 0 || $records > 100 ) ? $api_defaults['RecordCount'] : $records;
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
         // Get remote data
         $api_data = $this->api->image_links_all( $api_opts );
@@ -1761,7 +1919,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Image Links Count[' . $api_count . ']' );	}
+		if ( $this->debug ) { eskimo_log( 'Image Links Count[' . $api_count . ']', 'rest' );	}
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1780,7 +1938,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_images_all( $start = 1, $records = 100 ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Start[' . $start . '] Records[' . $records . ']', 'rest' ); }
 
         // Sensible defaults
         $api_defaults = [
@@ -1801,7 +1959,7 @@ final class Eskimo_REST {
         $api_opts = [];
         $api_opts['StartPosition']  = ( $start === 0 ) ? $api_defaults['StartPosition'] : $start;
         $api_opts['RecordCount']    = ( $records === 0 || $records > 100 ) ? $api_defaults['RecordCount'] : $records;
-        if ( $this->debug ) { error_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Start[' . $api_opts['StartPosition'] . '] Records[' . $api_opts['RecordCount'] . ']', 'rest' ); }
 
 
         // Get remote data
@@ -1814,7 +1972,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Image Links Count[' . $api_count . ']' );	}
+		if ( $this->debug ) { eskimo_log( 'Image Links Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1836,7 +1994,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_tax_codes( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
         // Get remote data
         $api_data = ( empty( $id ) ) ? $this->api->tax_codes_all() : $this->api->tax_codes_specificID( $id );
@@ -1848,7 +2006,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Tax Code Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Tax Code Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1865,7 +2023,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_shops_all() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -1882,7 +2040,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Shopss Count[' . $api_count . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'Shopss Count[' . $api_count . ']', 'rest' ); }
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1900,7 +2058,7 @@ final class Eskimo_REST {
      * @return  object|array
      */
     public function get_shops_specific_ID( $id ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
         // Test Options
         if ( empty( $id ) ) {
@@ -1922,7 +2080,7 @@ final class Eskimo_REST {
 
         // OK process data
         $api_count = $this->api_count( $api_data );
-		if ( $this->debug ) { error_log( 'Shops Count[' . $api_count . ']' );	}
+		if ( $this->debug ) { eskimo_log( 'Shops Count[' . $api_count . ']', 'rest' );	}
 
 		// No API data
         if ( $api_count === 0 ) {
@@ -1963,7 +2121,7 @@ final class Eskimo_REST {
      * @return  object|array
 	 */
 	protected function get_modified_time( $route, $modified ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Modified[' . $modified . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Modified[' . $modified . ']', 'rest' ); }
 		
 		// Valid routes
 		$routes = [ 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'timestamp' ];
@@ -2017,7 +2175,7 @@ final class Eskimo_REST {
      * @return  object|array
 	 */
 	protected function get_created_time( $route, $created ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Created[' . $created . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Route[' . $route . '] Created[' . $created . ']', 'rest' ); }
 		
 		// Valid routes
 		$routes = [ 'hours', 'days', 'weeks', 'months', 'timestamp' ];
@@ -2105,7 +2263,7 @@ final class Eskimo_REST {
      * @return  object
      */
     protected function api_error( $error ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Error[' . $error . ']', 'rest' ); }
 		return new WP_Error( 'data', $error );
     }
 
@@ -2115,7 +2273,7 @@ final class Eskimo_REST {
      * @return  object
      */
     protected function api_connect_error() {
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Connect To API', 'eskimo' ) );	}
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Connect To API', 'eskimo' ), 'rest' ); }
 		return new WP_Error( 'api', __( 'API Error: Could Not Connect To API', 'eskimo' ) );
     }
 
@@ -2125,7 +2283,7 @@ final class Eskimo_REST {
      * @return  object
 	 */
     protected function api_rest_error() {
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ) ); }
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ' . __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ), 'rest' ); }
 		return new WP_Error( 'rest', __( 'API Error: Could Not Retrieve REST data from API', 'eskimo' ) ); 
     }
 }

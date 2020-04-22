@@ -8,9 +8,6 @@
  * @subpackage Eskimo/admin
  */
 
-// Curl class namespace
-use \Curl\Curl;
-
 /**
  * EskimoEPOS API creation 
  *
@@ -81,10 +78,8 @@ final class Eskimo_EPOS {
 		// Set up class settings
 		$this->eskimo       = $eskimo;
    		$this->version  	= ESKIMO_VERSION;
-		$this->debug    	= ESKIMO_DEBUG;
+		$this->debug    	= ESKIMO_EPOS_DEBUG;
     	$this->base_dir		= plugin_dir_url( __FILE__ ); 
-
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
 	}
     
     //----------------------------------------------
@@ -97,24 +92,24 @@ final class Eskimo_EPOS {
      * @return boolean
      */
     public function init() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'epos' ); }
 
         // Get API settings
         $this->domain   = get_option( 'eskimo_epos_domain', '' );
         $this->username = get_option( 'eskimo_epos_username', '' );
         $this->password = get_option( 'eskimo_epos_password', '' );
 
-        if ( $this->debug ) { error_log( 'API SETTINGS domain[' . $this->domain . '] username[' . $this->username . '] password[' . $this->password . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'API SETTINGS domain[' . $this->domain . '] username[' . $this->username . '] password[' . $this->password . ']', 'epos' ); }
 
         // Validate settings
         if ( empty( $this->domain ) || empty( $this->username ) || empty( $this->password ) ) {
-            if ( $this->debug ) { error_log( 'Bad EPOS Settings' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad EPOS Settings', 'epos' ); }
             return add_action( 'admin_notices', [ $this, 'settings_error' ] );
         } 
 
         // Required Woocommerce REST API
         if ( false === woocommerce_rest_api_active() ) {
-            if ( $this->debug ) { error_log( 'Bad Woocommerce REST API Setting' ); }
+            if ( $this->debug ) { eskimo_log( 'Bad Woocommerce REST API Setting', 'epos' ); }
             return add_action( 'admin_notices', [ $this, 'rest_api_settings_error' ] );
         }
     }
@@ -125,11 +120,11 @@ final class Eskimo_EPOS {
      * @return  boolean
      */
     protected function authenticate() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'epos' ); }
 
         // authenticated?
         $auth = get_transient( 'eskimo_access_authenticated' );
-        if ( $this->debug ) { error_log( 'Auth[' . (int) $auth . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'Auth[' . (int) $auth . ']', 'epos' ); }
 
         // validate token or create
         return ( false === $auth ) ? $this->get_access_token() : true; 
@@ -155,35 +150,43 @@ final class Eskimo_EPOS {
      * @return  boolean|object
      */
     protected function get_access_token() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'epos' ); }
 
         // Get current settings
         $oauth_data = $this->get_oauth_params();
-        if ( $this->debug ) { error_log( 'oAuth[' . print_r( $oauth_data, true ) . ']' ); }
+        if ( $this->debug ) { eskimo_log( 'oAuth[' . print_r( $oauth_data, true ) . ']', 'epos' ); }
 
         // Set access token
         $access_token_url = $oauth_data['domain'] . 'token';
 
-        // Set up remote connection
-        $curl = new Curl();
-        $curl->post( $access_token_url, $oauth_data );
+		// Remote request for access token & expiry
+		$res = wp_remote_post( $access_token_url, [ 'body' => $oauth_data ] );
 
-        // Bad response?
-        if ( $curl->error ) {
-            return $this->api_error( $curl );
-        } 
+		// Bad response
+		if ( is_wp_error( $res ) ) {
+            return $this->api_error( $res );
+		}
+
+		// Set up token and details
+		$access_response = json_decode( $res['body'] );
+
+		// Retrieve expiry time in secs
+		$api_expiry = absint( $access_response->expires_in );
+		$api_token 	= trim( $access_response->access_token );
 
         // Set token data. Default to standard PHP.ini session timeout value
         $api_timeout = absint( ini_get('session.gc_maxlifetime') );
         $api_timeout = ( $api_timeout > 0 ) ? $api_timeout : 1440;
 
+		// Last override
+		$api_timeout = ( $api_expiry > 0 ) ? $api_expiry : $api_timeout;
+		
         if ( $this->debug ) { 
-            error_log( 'API Timeout[' . $api_timeout . ']' );
-            error_log( 'API Token[' . $curl->response->access_token . ']' );
+            eskimo_log( 'API Timeout[' . $api_timeout . '] API Token[' . $api_token . ']', 'epos' );
         }
 
         // Set WordPress transients        
-        set_transient( 'eskimo_access_token', $curl->response->access_token, $api_timeout );
+        set_transient( 'eskimo_access_token', $api_token, $api_timeout );
         set_transient( 'eskimo_access_authenticated', true, $api_timeout );
 
         // OK, done
@@ -196,7 +199,7 @@ final class Eskimo_EPOS {
      * @return  boolean
      */
     public function connect() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'epos' ); }
         return $this->authenticate();
     }
 
@@ -209,34 +212,24 @@ final class Eskimo_EPOS {
      *
 	 * @param   object  cUrl instance
 	 * @return	boolean
-     */ 
-    public function api_error( $curl ) {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+	 */ 
+	public function api_error( $res ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'epos' ); }
 
         // Log if debugging is active
         if ( $this->debug ) {
-            $request_headers    = ( isset( $curl->request_headers ) ) ? $curl->request_headers : '';
-            $response_headers   = ( isset( $curl->response_headers ) ) ? $curl->response_headers : '';
-            if ( $this->debug ) {
-                error_log( 'cUrl Headers[' . print_r( $request_headers, true ) . ']' );
-                error_log( 'cUrl Response[' . print_r( $response_headers, true ) . ']' );        
-                error_log( 'cUrl Message[' . $curl->Message . ']' );
-            }
-
-            if ( isset( $curl->ExceptionMessage ) ) {
-                if ( $this->debug ) { error_log( 'cUrl Exception[' . $curl->ExceptionMessage . ']' ); }
-            }
-        }
-        
+			eskimo_log( 'cUrl Message[' . $res->get_error_message() . ']', 'epos' );
+		}
+		
         // OK, done
         return false;
-    }
+	}
 
     /**
      * Bad EPOS Settings 
      */
     public function settings_error() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'epos' ); }
         $error_msg = __( 'Eskimo EPOS Settings are required. Please update.', 'eskimo' );
         echo sprintf( '<div class="notice notice-warning"><p>%s</p></div>', $error_msg );
     }
@@ -245,7 +238,7 @@ final class Eskimo_EPOS {
      * Bad EPOS API Connection 
      */
     public function connect_error() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'epos' ); }
         $error_msg = __( 'Error Creating Eskimo EPOS Connection', 'eskimo' );
         echo sprintf( '<div class="notice notice-error"><p>%s</p></div>', $error_msg );
     }
@@ -254,7 +247,7 @@ final class Eskimo_EPOS {
      * Bad REST API Settings 
      */
     public function rest_api_settings_error() {
-        if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'epos' ); }
         $error_msg = __( 'Woocommerce REST API is required. Please activate in Woocommerce settings.', 'eskimo' );
         echo sprintf( '<div class="notice notice-warning"><p>%s</p></div>', $error_msg );
     }

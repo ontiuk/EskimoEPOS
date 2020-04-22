@@ -62,11 +62,9 @@ final class Eskimo_Admin {
 		// Set up class settings
 		$this->eskimo	= $eskimo;
    		$this->version  = ESKIMO_VERSION;
-		$this->debug    = ESKIMO_DEBUG;
+		$this->debug    = ESKIMO_TRACE;
 	 	$this->base_dir	= plugin_dir_url( __FILE__ ); 
 		$this->suffix	= ( true === $this->debug ) ? '' : '.min';
-
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
     }
 
     //----------------------------------------------

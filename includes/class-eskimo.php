@@ -69,7 +69,7 @@ class Eskimo {
 		// Set name & process
 		$this->eskimo   = 'eskimo';
    		$this->version  = ESKIMO_VERSION;
-		$this->debug    = ESKIMO_DEBUG;
+		$this->debug    = ESKIMO_TRACE;
 
 		$this->load_dependencies();
 		$this->set_locale();
@@ -128,6 +128,11 @@ class Eskimo {
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-utils.php';
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-cart.php';
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-cron.php';
+
+		/**
+		 * Load logging
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-eskimo-logger.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area
@@ -190,17 +195,33 @@ class Eskimo {
 	private function define_public_hooks() {
 
 		// Register styles and scripts
-		$this->loader->add_action( 'wp_enqueue_scripts', $this->eskimo_public, 'enqueue_styles' );
-		$this->loader->add_action( 'wp_enqueue_scripts', $this->eskimo_public, 'enqueue_scripts' );
+		$this->loader->add_action( 'wp_enqueue_scripts', 			$this->eskimo_public, 'enqueue_styles' );
+		$this->loader->add_action( 'wp_enqueue_scripts', 			$this->eskimo_public, 'enqueue_scripts' );
 
-		// Register cron hooks - Sync categories & products
-		$this->loader->add_action( 'eskimo_do_categories_new', 		$this->eskimo_cron, 'categories_do_new' );
+		// Register cron hooks - Sync categories 
+		$this->loader->add_action( 'wp', 							$this->eskimo_cron, 'categories_new' );
+		$this->loader->add_action( 'eskimo_do_categories_new', 		$this->eskimo_cron, 'categories_do_new', 10 );
+
+		// Register cron hooks - Sync products 
+		$this->loader->add_action( 'wp', 							$this->eskimo_cron, 'products_new' );
 		$this->loader->add_action( 'eskimo_do_products_new', 		$this->eskimo_cron, 'products_do_new', 10, 2 );
+
+		// Register cron hooks - Sync SKUs 
+		$this->loader->add_action( 'wp', 							$this->eskimo_cron, 'skus_modified' );
 		$this->loader->add_action( 'eskimo_do_skus_modified', 		$this->eskimo_cron, 'skus_do_modified', 10, 3 );
-		$this->loader->add_action( 'eskimo_do_products_modified', 	$this->eskimo_cron, 'products_do_modified', 10, 1 );
+
+		// Register cron hooks - Sync SKUs by product
+		$this->loader->add_action( 'wp', 							$this->eskimo_cron, 'skus_modified_products' );
+		$this->loader->add_action( 'eskimo_do_products_modified', 	$this->eskimo_cron, 'skus_do_modified_products', 10, 1 );
+
+		// Delete End Of Life SKUs
+		$this->loader->add_action( 'wp', 							$this->eskimo_cron, 'skus_expired' );
+
+		// Get product variants with no variations
+		$this->loader->add_action( 'wp', 							$this->eskimo_cron, 'skus_product_variations' );
 
         // REST API Init
-		$this->loader->add_action( 'rest_api_init', $this->eskimo_route, 'register_routes' );
+		$this->loader->add_action( 'rest_api_init', 				$this->eskimo_route, 'register_routes' );
 	}
 
 	/**
@@ -213,19 +234,15 @@ class Eskimo {
 
 		// Woocommerce customers & orders 
 		$this->loader->add_action( 'woocommerce_created_customer', $this->eskimo_cart, 'customer_created', 99 );
-//		$this->loader->add_action( 'profile_update', $this->eskimo_cart, 'customer_updated', 99 );
+		$this->loader->add_action( 'profile_update', $this->eskimo_cart, 'customer_updated', 99 );
 	
-		// Order Processing Tests - Actions
+		// Order Processing status, defaults to 'processing'
 		$order_status = get_option( 'eskimo_epos_order', '' );
-		if ( $this->debug ) { error_log( 'EPOS Order Status[' . $order_status . ']' ); } 
-		if ( $order_status === 'completed' ) {
-			$this->loader->add_action( 'woocommerce_order_status_completed', 	$this->eskimo_cart, 'order_status_completed' );
+		if ( empty( $order_status ) ) { 
+			$this->loader->add_action( 'woocommerce_order_status_processing', $this->eskimo_cart, 'order_status_processing' );
 		} else {
-			$this->loader->add_action( 'woocommerce_order_status_processing', 	$this->eskimo_cart, 'order_status_processing' );
+			$this->loader->add_action( 'woocommerce_order_status_' . $order_status, $this->eskimo_cart, 'order_status_' . $order_status );
 		}
-
-		// Cron jobs
-		// TBD
 	}
 
 	/**

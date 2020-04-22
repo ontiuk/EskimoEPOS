@@ -59,7 +59,12 @@ final class Eskimo_Cart {
 		$this->debug        = ESKIMO_CART_DEBUG;
 		$this->base_dir		= plugin_dir_url( __FILE__ ); 
 
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ ); }
+		// Set guest user?
+		if ( defined( 'ESKIMO_MODE' ) && 'test' === ESKIMO_MODE ) {
+			add_filter( 'ipress_guest_user_email', function() {
+				return 'guest@trutexmacclesfield.com';
+			} );
+		}
 	}
     
     //----------------------------------------------
@@ -72,7 +77,7 @@ final class Eskimo_Cart {
 	 * @param	string	$cust_id
 	 */
 	public function customer_created( $cust_id ) {
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' Customer ID[' . $cust_id . ']' ); }
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' Customer ID[' . $cust_id . ']', 'cart' ); }
 	
 		// Not for guest
 		if ( $cust_id === 0 ) { return; }
@@ -90,10 +95,10 @@ final class Eskimo_Cart {
 			$response = wp_remote_get( $rest_url );
 			$data = $response['body'];
 			if ( $data === true ) {
-				return ( $this->debug ) ? error_log( 'Customer ID [' . $cust_id . '] Email[' . $user_email . '] Exists' ) : '';
+				return ( $this->debug ) ? eskimo_log( 'Customer ID [' . $cust_id . '] Email[' . $user_email . '] Exists', 'cart' ) : '';
 			} else {
 				$data = json_decode( $response['body'] );
-				if ( $this->debug ) { error_log( 'Customer EPOS [' . $data->params . '] Result[' . $data->result . ']' ); }
+				if ( $this->debug ) { eskimo_log( 'Customer EPOS [' . $data->params . '] Result[' . $data->result . ']', 'cart' ); }
 			}
 
 			// Create it if not...
@@ -101,7 +106,7 @@ final class Eskimo_Cart {
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 			$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-			if ( $this->debug ) { error_log( 'EPOS Customer:  Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
+			if ( $this->debug ) { eskimo_log( 'EPOS Customer:  Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
 		}
 	}
 	
@@ -111,7 +116,7 @@ final class Eskimo_Cart {
 	 * @param	string	$cust_id
 	 */
 	public function customer_updated( $cust_id ) {
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' Customer ID[' . $cust_id . ']' ); }
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' Customer ID[' . $cust_id . ']', 'cart' ); }
 
 		// Get user & role
 		$user_role = get_user_by( 'ID', $cust_id )->roles[0];
@@ -122,7 +127,7 @@ final class Eskimo_Cart {
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 			$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-			if ( $this->debug ) { error_log( 'EPOS Customer: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
+			if ( $this->debug ) { eskimo_log( 'EPOS Customer: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
 		}
 	}
 
@@ -136,26 +141,26 @@ final class Eskimo_Cart {
 	 * @param integer $order_id
 	 */
 	public function new_order_created( $order_id ) {
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' Order ID[' . $order_id . ']' ); }
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' Order ID[' . $order_id . ']', 'cart' ); }
 
 		$order	= wc_get_order( $order_id );
 		$user 	= $order->get_user();
 
 		// We don't do anything for guest checkout
 		if ( false === $user ) {
-			return ( $this->debug ) ? error_log( 'No user for this order[' . $order_id . ']' ) : '';
+			return ( $this->debug ) ? eskimo_log( 'No user for this order[' . $order_id . ']', 'cart' ) : '';
 		}
 
 		// OK, get user ID
 		$user_id = $order->get_user_id();
-		if ( $this->debug ) { error_log( 'New Order ID[' . $order_id . '] Status[' . $order->get_status() . '] User[' . $user_id . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'New Order ID[' . $order_id . '] Status[' . $order->get_status() . '] User[' . $user_id . ']', 'cart' ); }
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-insert/' . $user_id;
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { error_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
 	}
 
 	/**
@@ -164,7 +169,7 @@ final class Eskimo_Cart {
 	 * @param integer $order_id
 	 */
 	public function order_status_processing( $order_id ) {
-   		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']' ); }
+   		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']', 'cart' ); }
 		
 		$order 		 = wc_get_order( $order_id );
 		$order_items = $order->get_items();  
@@ -174,19 +179,19 @@ final class Eskimo_Cart {
 		// We don't do anything for guest checkout
 		if ( false === $user ) {
 			// OK, get dummy guest account
-			$guest_user = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@trutexmacclesfield.com' ) );
+			$guest_user = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@classworx.co.uk' ) );
 			if ( false ===  $guest_user ) {
-				return ( $this->debug ) ? error_log( 'No user for this order[' . $order_id . ']' ) : '';
+				return ( $this->debug ) ? eskimo_log( 'No user for this order[' . $order_id . ']', 'cart' ) : '';
 			}
 		}
-		if ( $this->debug ) { error_log( 'order_status_processing id[' . $order_id . '] user[' . $user_id . ']items[' . count( $order_items ) . ']status[' . $order->get_status() . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'order_status_processing id[' . $order_id . '] user[' . $user_id . ']items[' . count( $order_items ) . ']status[' . $order->get_status() . ']', 'cart' ); }
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-insert/' . $order_id;
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { error_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
 	}	
 
 	/**
@@ -195,7 +200,7 @@ final class Eskimo_Cart {
 	 * @param integer $order_id
 	 */
 	public function order_status_completed( $order_id ) {
-		if ( $this->debug ) { error_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']' ); }
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']', 'cart' ); }
 		
 		$order 		 = wc_get_order( $order_id );
 		$order_items = $order->get_items();  
@@ -205,18 +210,18 @@ final class Eskimo_Cart {
 		// We don't do anything for guest checkout
 		if ( false === $user ) {
 			// OK, get dummy guest account
-			$guest_user = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@trutexmacclesfield.com' ) );
+			$guest_user = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@classworx.co.uk' ) );
 			if ( false ===  $guest_user ) {
-				return ( $this->debug ) ? error_log( 'No user for this order[' . $order_id . ']' ) : '';
+				return ( $this->debug ) ? eskimo_log( 'No user for this order[' . $order_id . ']', 'cart' ) : '';
 			}
 		}
-		if ( $this->debug ) { error_log( 'order_status_completed id[' . $order_id . '] user[' . $user_id . ']items[' . count( $order_items ) . ']status[' . $order->get_status() . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'order_status_completed id[' . $order_id . '] user[' . $user_id . ']items[' . count( $order_items ) . ']status[' . $order->get_status() . ']', 'cart' ); }
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-insert/' . $order_id;
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { error_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']' ); }
+		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
 	}
 }
