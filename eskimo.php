@@ -4,7 +4,7 @@
  * Plugin Name:       EskimoEPOS
  * Plugin URI:        https://github.com/ontiuk
  * Description:       Connect to Eskimo EPOS via Eskimo API and resistered Eskimo Reporting / EPOS account
- * Version:           1.3.0
+ * Version:           1.4.0
  * Author:            Stephen Betley
  * Author URI:        https://on.tinternet.co.uk
  * License:           GPL-2.0+
@@ -15,8 +15,8 @@
  * @link              https://on.tinternet.co.uk
  * @package           Eskimo
  *
- * WC requires at least: 3.0.0
- * WC tested up to: 4.0.0
+ * WC requires at least: 4.4.0
+ * WC tested up to: 4.6.0
  * 
 EskimoEPOS is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ if ( is_woocommerce_active() ) {
 	define( 'ESKIMO_NAME', 'eskimo' );
 	
     // Currently Eskimo EPOS plugin version
-    define( 'ESKIMO_VERSION', '1.3.0' );
+    define( 'ESKIMO_VERSION', 		'1.4.0' );
 
     // Eskimo debugging mode
 	define( 'ESKIMO_DEBUG', 		true );
@@ -55,7 +55,8 @@ if ( is_woocommerce_active() ) {
 	define( 'ESKIMO_WC_DEBUG', 		true );
 	define( 'ESKIMO_REST_DEBUG', 	true );
     define( 'ESKIMO_CART_DEBUG', 	true );
-    define( 'ESKIMO_API_DEBUG', 	false );
+    //define( 'ESKIMO_API_DEBUG', 	false );
+    define( 'ESKIMO_API_DEBUG', 	true );
     define( 'ESKIMO_CRON_DEBUG', 	true );
     define( 'ESKIMO_EPOS_DEBUG', 	false );
 
@@ -89,9 +90,6 @@ if ( is_woocommerce_active() ) {
     // Register activation and deactivation hooks
     register_activation_hook( __FILE__, 'activate_eskimo' );
     register_deactivation_hook( __FILE__, 'deactivate_eskimo' );
-
-    // Include the core cUrl class & dependencies
-//    require_once plugin_dir_path( __FILE__ ) . 'includes/lib/curl.php';
 
     /**
 	 * The core plugin class 

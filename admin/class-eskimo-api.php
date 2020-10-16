@@ -269,6 +269,80 @@ final class Eskimo_API {
 	}
 
     //--------------------------------------------------
+    //  Eskimo API Functions: Account REST ImpEx
+    //--------------------------------------------------
+
+	/**
+	 * Return remote EskimoEPOS Account User Info Of Authenticated Account
+	 * - GET api/Account/UserInfo
+     *
+     * @return  array|boolean
+     */
+	public function account_user_info() {
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__, 'api' ); }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Account/UserInfo';
+        $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
+    /**
+	 * Change remote EskimoEPOS zccount password
+	 * - POST api/Account/ChangePassword
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */       	
+   	public function account_password( $api_opts ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__, 'api' ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Account/ChangePassword';
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );	
+	}
+
+    /**
+	 * Register remote EskimoEPOS Account. Not Yet Implemented
+	 * - POST api/Account/Register
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */       	
+   	public function account_register( $api_opts ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__, 'api' ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Account/Register';
+    	$api_opts   = json_encode( $api_opts );
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );	
+	}
+
+    //--------------------------------------------------
     //  Eskimo API Functions: Addresses REST ImpEx
     //--------------------------------------------------
 	
@@ -276,6 +350,7 @@ final class Eskimo_API {
 	 * Insert remote EskimoEPOS Address information
 	 * - POST api/Addresses/Insert/{CustomerID}/{AddressRef}
 	 * - Requires customer ID and Address Reference
+	 * - Not Yet Implemented
      *
      * @param   string   		$cust_id 
      * @param   string   		$addr_ref 
@@ -292,7 +367,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-    	$api_url    = $oauth['domain'] . 'api/Addresses/Insert/' . sanitize_text_field( $cust_id ) . '/' . sanitize_text_field( $addr_ref );
+    	$api_url    = $oauth['domain'] . 'api/Addresses/Insert/' . $cust_id . '/' . $addr_ref;
     	$api_opts   = json_encode( $api_opts );
         $api_data   = $this->post_data( $api_url, $api_opts );
 
@@ -304,6 +379,7 @@ final class Eskimo_API {
 	 * Update remote EskimoEPOS Address information
 	 * - POST api/Addresses/Update/{CustomerID}/{AddressRef}
 	 * - Requires customer ID and Address Reference
+	 * - Not Yet Implemented
      *
      * @param   string   		$cust_id 
      * @param   string   		$addr_ref 
@@ -320,7 +396,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-    	$api_url    = $oauth['domain'] . 'api/Addresses/Update/' . sanitize_text_field( $cust_id ) . '/' . sanitize_text_field( $addr_ref );
+    	$api_url    = $oauth['domain'] . 'api/Addresses/Update/' . $cust_id . '/' . $addr_ref;
     	$api_opts   = json_encode( $api_opts );
         $api_data   = $this->post_data( $api_url, $api_opts );
 
@@ -331,6 +407,7 @@ final class Eskimo_API {
     /**
 	 * Search remote EskimoEPOS Address information
 	 * - POST api/Addresses/Search
+	 * - Not Yet Implemented
 	 * 
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -356,6 +433,7 @@ final class Eskimo_API {
     /**
 	 * Return remote EskimoEPOS Address description based on postcode
 	 * - POST api/Addresses/AddressValidationSummary
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -378,13 +456,14 @@ final class Eskimo_API {
     	return ( false === $api_data ) ? false : json_decode( $api_data );	
 	}
 
-   /**
-	* Return remote EskimoEPOS Address description based on postcode
-	* - GET api/Addresses/AddressValidationDetailed/{id}
-    *
-    * @param   string   		$id 
-    * @return  array|boolean
-    */
+    /**
+	 * Return remote EskimoEPOS Address description based on postcode
+	 * - GET api/Addresses/AddressValidationDetailed/{id}
+	 * - Not Yet Implemented
+     *
+     * @param   string   		$id 
+     * @return  array|boolean
+     */
    	public function addresses_validation_detailed( $id ) {
 		if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']', 'api' ); }
 
@@ -395,7 +474,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-    	$api_url    = $oauth['domain'] . 'api/Addresses/AddressValidationDetailed/' . sanitize_text_field( $id );
+    	$api_url    = $oauth['domain'] . 'api/Addresses/AddressValidationDetailed/' . $id;
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -409,6 +488,7 @@ final class Eskimo_API {
     /**
 	 * Download remote EskimoEPOS Amazon Orders not yet in Eskimo system
 	 * - POST api/Amazon/DownloadOrders
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -433,7 +513,8 @@ final class Eskimo_API {
 
     /**
 	 * Update remote EPOS stock levels of all FBA products
-	 * GET api/Amazon/DownloadFBAInventory
+	 * - GET api/Amazon/DownloadFBAInventory
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -468,7 +549,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get api response
-        $api_url    = $oauth['domain'] . 'api/Amazon/GetOrderInfo/' . absint( $id );
+        $api_url    = $oauth['domain'] . 'api/Amazon/GetOrderInfo/' . $id;
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -478,6 +559,7 @@ final class Eskimo_API {
     /**
 	 * Remote EPOS Amazon Product Info
 	 * - POST api/Amazon/UploadProductInfo
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -506,6 +588,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve remote EskimoEPOS barcode information
 	 * - POST api/Barcode/GetInfo
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -531,6 +614,7 @@ final class Eskimo_API {
     /**
 	 * Apply remote EskimoEPOS note of an action for a particular barcode 
 	 * - POST api/Barcode/ApplyAction
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -745,7 +829,7 @@ final class Eskimo_API {
      * @return  array|boolean
      */
    	public function customers_specific_ID( $id ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__, 'api' ); }
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__ . ' : ID [' . $id . ']', 'api' ); }
 
 		// Basic parameter check
 		if ( empty( $id ) ) { return false; }
@@ -756,6 +840,31 @@ final class Eskimo_API {
         // Set remote url and get response
     	$api_url    = $oauth['domain'] . 'api/Customers/SpecificID/' . $id;	
         $api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
+    /**
+	 * Get EPOS customer data by matching records
+	 * - POST api/Customers/SearchAccountPayments
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+   	public function customers_search_account_payments( $api_opts ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__, 'api' ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+    	$api_url    = $oauth['domain'] . 'api/Customers/SearchAccountPayments';	
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : json_decode( $api_data );
@@ -807,7 +916,7 @@ final class Eskimo_API {
 	}
 
 	/**
-	 * Get EPOS customer marketing flags for opt-in to varying options.
+	 * Get EPOS customer marketing flags for opt-in to varying options
 	 * - POST api/Customers/CustomersDump	
      *
      * @param   array   		$api_opts 
@@ -910,10 +1019,11 @@ final class Eskimo_API {
     //  Eskimo API Functions: External Categories ImpEX
     //--------------------------------------------------
 
-    /**
+	/**
 	 * Insert/Update remote EPOS external category and Item Specific information
-	 *  - POST api/ExternalCategories/Insert
-	 *  - Used with category information from eBay or Amazon
+	 * - POST api/ExternalCategories/Insert
+	 * - Used with category information from eBay or Amazon
+	 * - Not Yet Implemented
 	 *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -939,6 +1049,7 @@ final class Eskimo_API {
 	/**
 	 * Retrieves a remote EskimoEPOS singular external category class for a specific ID and Type
 	 * - POST api/ExternalCategories/SpecificID
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -968,6 +1079,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve EskimoEPOS gift card balance
 	 * - POST api/GiftCards/BalanceEnquiry
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -993,6 +1105,7 @@ final class Eskimo_API {
     /**
 	 * Remote EskimoEPOS gift card update
 	 * - POST api/GiftCards/Increment
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1018,6 +1131,7 @@ final class Eskimo_API {
     /**
 	 * Remote EskimoEPOS gift card redeem
 	 * - POST api/GiftCards/Redeem
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1047,6 +1161,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve EskimoEPOS product new image links by batch
 	 * - POST api/ImageLinks/AllNew
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -1067,6 +1182,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve EskimoEPOS product image links by batch
 	 * - POST api/ImageLinks/All
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1092,6 +1208,7 @@ final class Eskimo_API {
 	/**
 	 * Updates EskimoEPOS Image Link Cart IDs
 	 * - POST api/ImageLinks/UpdateCartIDs
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1115,9 +1232,37 @@ final class Eskimo_API {
     //  Eskimo API Functions: Images REST ImpEx
     //--------------------------------------------------
 
+	/** 
+	 * Retrieve image data / url from direct link 
+	 * - GET api/Images/ImageURL?token={token}&image_id={image_id}
+	 * - Not Yet Implemented
+	 *
+     * @param   integer   		$image_id 
+     * @param   string    		$token 
+     * @return  array|boolean
+     */
+    public function images_image_url_with_file_name( $image_id, $token ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__ . ' : Image ID [' . $image_id . ']', 'api' ); }
+
+		// Basic parameter check
+		if ( empty( $image_id ) || empty( $token ) ) { return false; }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+		$api_url 	= $oauth['domain'] . 'api/Images/ImageURLWithFileName';	
+		$api_url 	= add_query_arg( [ 'token' => $token, 'image_id' => $image_id ], $api_url );
+		$api_data   = $this->get_data( $api_url );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+	}
+
     /**
 	 * Retrieve remote EskimoEPOS product images objects (max 10,000)
 	 * - POST api/Images/All
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1143,6 +1288,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve remote EskimoEPOS product images objects (max 10,000)
 	 * - POST api/Images/All
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -1163,6 +1309,7 @@ final class Eskimo_API {
 	/**
 	 * Updates EskimoEPOS Images Cart IDs
 	 * - POST api/Images/UpdateCartIDs
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1188,6 +1335,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve image data for a singular image
 	 * - GET api/Images/ImageData/{id}
+	 * - Not Yet Implemented
      *
      * @param   integer   		$id 
      * @return  array|boolean
@@ -1202,7 +1350,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-        $api_url    = $oauth['domain'] . 'api/Images/ImageData/' . absint( $id );	
+        $api_url    = $oauth['domain'] . 'api/Images/ImageData/' . $id;	
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1212,6 +1360,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve image data for a singular image as base64
 	 * - GET api/Images/AsBase64/{id}	
+	 * - Not Yet Implemented
      *
      * @param   integer   		$id 
      * @return  array|boolean
@@ -1226,7 +1375,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-        $api_url    = $oauth['domain'] . 'api/Images/AsBase64/' . absint( $id );	
+        $api_url    = $oauth['domain'] . 'api/Images/AsBase64/' . $id;	
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1236,6 +1385,7 @@ final class Eskimo_API {
 	/** 
 	 * Retrieve image data / url from direct link 
 	 * - GET api/Images/ImageURL?token={token}&image_id={image_id}
+	 * - Not Yet Implemented
 	 *
      * @param   integer   		$image_id 
      * @param   string    		$token 
@@ -1252,46 +1402,21 @@ final class Eskimo_API {
 
         // Set remote url and get response
 		$api_url 	= $oauth['domain'] . 'api/Images/ImageURL';	
-		$api_url 	= add_query_arg( [ 'token' => $token, 'image_id' => absint( $image_id ) ], $api_url );
+		$api_url 	= add_query_arg( [ 'token' => $token, 'image_id' => $image_id ], $api_url );
 		$api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
     	return ( false === $api_data ) ? false : json_decode( $api_data );
 	}
 	
-	/** 
-	 * Retrieve image data / url from direct link 
-	 * - GET api/Images/ImageURL?token={token}&image_id={image_id}
-	 *
-     * @param   integer   		$image_id 
-     * @param   string    		$token 
-     * @return  array|boolean
-     */
-    public function images_image_url_with_file_name( $image_id, $token ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__ . ' : Image ID [' . $image_id . ']', 'api' ); }
-
-		// Basic parameter check
-		if ( empty( $image_id ) || empty( $token ) ) { return false; }
-
-        // Get authentication parameters
-        $oauth = $this->api->get_oauth_params();
-
-        // Set remote url and get response
-		$api_url 	= $oauth['domain'] . 'api/Images/ImageURLWithFileName';	
-		$api_url 	= add_query_arg( [ 'token' => $token, 'image_id' => absint( $image_id ) ], $api_url );
-		$api_data   = $this->get_data( $api_url );
-
-        // Retrieve decoded data as array or false 
-    	return ( false === $api_data ) ? false : json_decode( $api_data );
-	}
-
     //--------------------------------------------------
     //  Eskimo API Functions: Layaways ImpEX
     //--------------------------------------------------
 
  	/**
 	 * retrieve remote EskimoEPOS layaways
-	 * - POST api/Operators/Search
+	 * - POST api/Layaways/Search
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1316,10 +1441,11 @@ final class Eskimo_API {
 
 	/** 
 	 * Retrieve image data / url from direct link 
-	 * - GET api/Images/ImageURL?token={token}&image_id={image_id}
+	 * - GET api/Layaways/DeleteLayaway/{id}?store_num={store_num}
+	 * - Not Yet Implemented
 	 *
-     * @param   integer   		$image_id 
-     * @param   string    		$token 
+     * @param   integer   		$id 
+     * @param   string    		$store_num 
      * @return  array|boolean
      */
     public function layaways_delete_layaway( $id, $store_num ) {
@@ -1332,8 +1458,8 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-		$api_url 	= $oauth['domain'] . 'api/Layaways/DeleteLayaway/' . absint( $id );	
-		$api_url 	= add_query_arg( [ 'store_num' => absint( $store_num ) ], $api_url );
+		$api_url 	= $oauth['domain'] . 'api/Layaways/DeleteLayaway/' . $id;	
+		$api_url 	= add_query_arg( [ 'store_num' => $store_num ], $api_url );
 		$api_data   = $this->delete_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1343,6 +1469,7 @@ final class Eskimo_API {
     /**
 	 * Insert remote EskimoEPOS layaway
 	 * - POST api/Layaways/Insert
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1369,6 +1496,7 @@ final class Eskimo_API {
 	/**
 	 * Retrieves a list of all items that have not yet been listed externally
 	 * - POST api/Listings/AllUnlisted
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1392,8 +1520,9 @@ final class Eskimo_API {
     }
 
 	/** 
-	 * Retrieve image data / url from direct link 
+	 * Retrieve listing image data / url from direct link 
 	 * - GET api/Listings/ListingImage?strDataKey={strDataKey}
+	 * - Not Yet Implemented
 	 *
      * @param   string   		$key 
      * @return  array|boolean
@@ -1448,6 +1577,7 @@ final class Eskimo_API {
     /**
 	 * Retrieves a list of all the measurement units setup in Eskimo
 	 * - GET api/MeasureUnits/All	
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -1513,7 +1643,7 @@ final class Eskimo_API {
 
         // Set remote url and get response
     	$api_url    = $oauth['domain'] . 'api/Orders/Insert';
-    	$api_opts   = json_encode( $api_opts ); 
+		$api_opts   = json_encode( $api_opts );
 		$api_data   = $this->post_data( $api_url, $api_opts );
 
         // Retrieve decoded data as array or false 
@@ -1534,7 +1664,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-    	$api_url    = $oauth['domain'] . 'api/Orders/Insert/Return';
+    	$api_url    = $oauth['domain'] . 'api/Orders/InsertReturn';
     	$api_opts   = json_encode( $api_opts ); 
 		$api_data   = $this->post_data( $api_url, $api_opts );
 
@@ -1579,7 +1709,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-        $api_url    = $oauth['domain'] . 'api/Orders/CustomerSale/' . absint( $id );	
+        $api_url    = $oauth['domain'] . 'api/Orders/CustomerSale/' . $id;	
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1603,7 +1733,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-        $api_url    = $oauth['domain'] . 'api/Orders/MailOrder/' . absint( $id );	
+        $api_url    = $oauth['domain'] . 'api/Orders/MailOrder/' . $id;	
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1627,7 +1757,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-        $api_url    = $oauth['domain'] . 'api/Orders/CustomerOrder/' . absint( $id );	
+        $api_url    = $oauth['domain'] . 'api/Orders/CustomerOrder/' . $id;	
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1651,7 +1781,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-        $api_url    = $oauth['domain'] . 'api/Orders/WebsiteOrder/' . absint( $id );
+        $api_url    = $oauth['domain'] . 'api/Orders/WebsiteOrder/' . $id;
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1675,7 +1805,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-        $api_url    = $oauth['domain'] . 'api/Orders/eBayOrder/' . absint( $id );	
+        $api_url    = $oauth['domain'] . 'api/Orders/eBayOrder/' . $id;	
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -1861,6 +1991,7 @@ final class Eskimo_API {
 	/** 
 	 * Retrieve single quote by id and store 
 	 * - GET api/Quotes/SingleQuote/{quote_id}/{store}
+	 * - Not Yet Implemented
 	 *
      * @param   integer   		$image_id 
      * @param   string    		$token 
@@ -1886,6 +2017,7 @@ final class Eskimo_API {
     /**
 	 * Search remote EskimoEPOS quotes
 	 * - POST api/Quotes/Search
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1908,6 +2040,7 @@ final class Eskimo_API {
     /**
 	 * Insert remote EskimoEPOS quote
 	 * - POST api/Quotes/Insert
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1930,6 +2063,7 @@ final class Eskimo_API {
     /**
 	 * Changet remote EskimoEPOS quote status
 	 * - POST api/Quotes/Insert
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1956,6 +2090,7 @@ final class Eskimo_API {
     /**
 	 * Search remote EskimoEPOS reasons
 	 * - POST api/Quotes/Search
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -1982,6 +2117,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve remote EPOS store receipt
 	 * - GET api/Sales/RetrieveSale/{Store}/{Till}/{Receipt}
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -2005,6 +2141,7 @@ final class Eskimo_API {
     /**
 	 * Insert a sale into the Eskimo system
 	 * - POST api/Sales/InsertSale
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2030,6 +2167,7 @@ final class Eskimo_API {
     /**
 	 * Return a sale into the Eskimo system
 	 * - POST api/Sales/SaleReturnItems
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2055,6 +2193,7 @@ final class Eskimo_API {
     /**
 	 * Retrieve remote Eskimo list of sales based on the search criteria
 	 * - POST api/Sales/Search
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2109,6 +2248,7 @@ final class Eskimo_API {
     /**
 	 * Get all current EPOS shops
 	 * - GET api/Shops/All
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -2129,6 +2269,7 @@ final class Eskimo_API {
     /**
 	 * Get an EPOS shop by specific ID
 	 * - GET api/Shops/SpecificID/{id}
+	 * - Not Yet Implemented
      *
      * @param   string  		$id
      * @return  array|boolean
@@ -2143,7 +2284,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-    	$api_url    = $oauth['domain'] . 'api/Shops/SpecificID/' . absint( $id );	
+    	$api_url    = $oauth['domain'] . 'api/Shops/SpecificID/' . $id;	
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -2253,12 +2394,69 @@ final class Eskimo_API {
     }
 
     //--------------------------------------------------
+    //  Eskimo API Functions: Stock REST ImpEx
+    //--------------------------------------------------
+
+    /**
+	 * Update EPOS Stock by SKU
+	 * - POST api/Stock/Adjust
+	 * - Not Yet Implemented
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+   	public function stock_adjust( $api_opts ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__, 'api' ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/Stock/Adjust';
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    /**
+	 * Update EPOS Stock by SKUs batch
+	 * - POST api/Stock/MultiAdjust
+	 * - Not Yet Implemented
+     *
+     * @param   array   		$api_opts 
+     * @return  array|boolean
+     */
+   	public function stock_multi_adjust( $api_opts ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__, 'api' ); }
+
+		// Basic parameter check
+		if ( empty( $api_opts ) ) { return false; }
+
+        // Get authentication parameters
+        $oauth = $this->api->get_oauth_params();
+
+        // Set remote url and get response
+        $api_url    = $oauth['domain'] . 'api/Stock/MultiAdjust';
+    	$api_opts   = json_encode( $api_opts ); 
+        $api_data   = $this->post_data( $api_url, $api_opts );
+
+        // Retrieve decoded data as array or false 
+    	return ( false === $api_data ) ? false : json_decode( $api_data );
+    }
+
+    //--------------------------------------------------
     //  Eskimo API Functions: StockTaking REST ImpEx
     //--------------------------------------------------
 
     /**
 	 * Retrieves a list of products and operators that can be used for stock taking
 	 * - GET api/StockTaking/GetProductData
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -2279,6 +2477,7 @@ final class Eskimo_API {
     /**
 	 * Increments the counted figure for a collection of products
 	 * - POST api/StockTaking/IncrementCounts
+	 * - Not Yet Implemented
 	 *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2304,6 +2503,7 @@ final class Eskimo_API {
 	/**
 	 * Retrieves a distinct list of all areas counted in this stock take
 	 * - GET api/StockTaking/RetrieveAreas
+	 * - Not Yet Implemented
 	 *
      * @return  array|boolean
      */
@@ -2324,6 +2524,7 @@ final class Eskimo_API {
 	/**
 	 * Validate stock take
 	 * - POST api/StockTaking/ValidateStockTake
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2401,6 +2602,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Tenders
 	 * - POST api/Tenders/All
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2430,6 +2632,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till menu price list
 	 * - GET api/TillMenu/PriceListDump
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -2443,7 +2646,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-    	$api_url    = $oauth['domain'] . 'api/TillMenu/PriceListDump/' . absint( $page_size ) . '/' . absint( $page_required );
+    	$api_url    = $oauth['domain'] . 'api/TillMenu/PriceListDump/' . $page_size . '/' . $page_required;
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -2453,10 +2656,11 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till menu price breaks
 	 * - GET api/TillMenu/PriceBreaksDump
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
-    public function till_menu_price_break_dump( $page_size, $page_required ) {
+    public function till_menu_price_breaks_dump( $page_size, $page_required ) {
         if ( $this->debug ) { eskimo_log( __CLASS__ . ' : ' . __METHOD__. ' : PageSize [' . (int) $page_size . '] PageRequired [' . (int) $page_required . ']', 'api' ); }
 
 		// Validate data
@@ -2466,7 +2670,7 @@ final class Eskimo_API {
         $oauth = $this->api->get_oauth_params();
 
         // Set remote url and get response
-    	$api_url    = $oauth['domain'] . 'api/TillMenu/PriceBreaksDump/' . absint( $page_size ) . '/' . absint( $page_required );
+    	$api_url    = $oauth['domain'] . 'api/TillMenu/PriceBreaksDump/' . $page_size . '/' . $page_required;
         $api_data   = $this->get_data( $api_url );
 
         // Retrieve decoded data as array or false 
@@ -2476,6 +2680,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Till menu areas
 	 * - POST api/TillMenu/Areas
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2501,6 +2706,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Till menu products
 	 * - POST api/TillMenu/Products
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2526,6 +2732,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Till menu sale IDs
 	 * - POST api/TillMenu/SaleIDs
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2551,6 +2758,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Till menu products
 	 * - POST api/TillMenu/ProductsDump
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2576,6 +2784,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Till menu sections
 	 * - POST api/TillMenu/Sections
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2601,6 +2810,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Till menu log entry
 	 * - POST api/TillMenu/LogEntry
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2626,6 +2836,7 @@ final class Eskimo_API {
 	/** 
 	 * Retrieve till menu pending actions by token 
 	 * - GET api/TillMenu/GetPendingActions?token={token}
+	 * - Not Yet Implemented
 	 *
      * @param   string    		$token 
      * @return  array|boolean
@@ -2651,6 +2862,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Till menu record action result
 	 * - POST api/TillMenu/RecordActionResult
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2676,6 +2888,7 @@ final class Eskimo_API {
     /**
 	 * Get EskimoEPOS Till menu product search
 	 * - POST api/TillMenu/ProductSearch
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2700,7 +2913,7 @@ final class Eskimo_API {
 
     /**
 	 * Get EskimoEPOS Till menu functions
-	 * Deprecated: No longer part of the EskimoEPOS API
+	 * - Deprecated: No longer part of the EskimoEPOS API
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2726,6 +2939,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till menu source codes
 	 * - GET api/TillMenu/SourceCodes
+	 * - Not Yet Implemented
      *
      * @return  array|boolean
      */
@@ -2746,6 +2960,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till menu cashing up
 	 * - POST api/TillMenu/CashingUp
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2771,6 +2986,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till menu cashing up breakdown
 	 * - POST api/TillMenu/CashingUpBreakdown
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2796,6 +3012,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till follow on products
 	 * - POST api/TillMenu/FollowOnProducts
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2821,6 +3038,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till product information
 	 * - POST api/TillMenu/ProductInformation
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2846,6 +3064,7 @@ final class Eskimo_API {
 	/** 
 	 * Register till menu hardware token 
 	 * - GET api/TillMenu/RegisterHardwareToken
+	 * - Not Yet Implemented
 	 *
      * @param   string    		$token 
      * @return  array|boolean
@@ -2871,6 +3090,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till menu unit info
 	 * - POST api/TillMenu/UnitInfo
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2896,6 +3116,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till menu customer historic search
 	 * - POST api/TillMenu/CustomerHistoricSearch
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean
@@ -2921,6 +3142,7 @@ final class Eskimo_API {
 	/**
 	 * Get EskimoEPOS Till menu sent orders
 	 * - POST api/TillMenu/SendOrderItems
+	 * - Not Yet Implemented
      *
      * @param   array   		$api_opts 
      * @return  array|boolean

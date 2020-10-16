@@ -98,7 +98,7 @@ final class Eskimo_Admin {
         add_filter( 'woocommerce_settings_tabs_array', 				[ $this, 'add_settings_tab' ], 50 ); 
         add_action( 'woocommerce_settings_tabs_eskimo_settings', 	[ $this, 'set_tab_settings' ] ); 
         add_action( 'woocommerce_update_options_eskimo_settings', 	[ $this, 'update_tab_settings' ] ); 
-    
+
         // EPOS Product ID
         add_filter( 'woocommerce_product_data_tabs', 				[ $this, 'custom_product_tab' ] );        
         add_action( 'admin_head', 									[ $this, 'custom_product_style' ] );
@@ -108,10 +108,45 @@ final class Eskimo_Admin {
         add_filter( 'manage_product_posts_columns', 				[ $this, 'posts_columns' ] );
         add_action( 'manage_product_posts_custom_column', 			[ $this, 'custom_columns' ], 10, 2 );
 
-        // EPOS Product List
-//        add_filter( 'posts_join', 		[ $this, 'cf_search_join' ] );
-//        add_filter( 'posts_where', 		[ $this, 'cf_search_where' ] );
-//        add_filter( 'posts_distinct', 	[ $this, 'cf_search_distinct' ] );
+		// EPOS Account Password
+		add_filter( 'woocommerce_admin_settings_sanitize_option_eskimo_epos_password', [ $this, 'update_settings_password' ], 10, 3 );
+	}
+
+	/**
+	 * Check for & process password update
+	 *
+	 * @param	string	$value
+	 * @param	array	$option
+	 * @param	string	$raw_value
+	 * @return	string	$value
+	 */
+	public function update_settings_password( $value, $option, $raw_value ) {
+		eskimo_log( __CLASS__ . ' : ' . __METHOD__, 'api' );
+
+		// password only
+		if ( 'eskimo_epos_password' !== $option['id'] ) { return; }
+
+		// Get current password
+		$old_password = get_option( 'eskimo_epos_password', '' );		
+
+		// Test new password for length, reject if not OK 
+		if ( strlen( $value ) < 6 ) { return $old_password; }
+
+		// Test new password for structure, reject if not OK
+		if ( ! preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', $value ) ) {
+			return $old_password;
+		}
+
+		// Process API update? Check vs existing password
+		if ( $old_password === $value ) { return $value; }
+
+		// Initiate REST call to update EPOS order status
+		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/account-password/' . urlencode( $old_password ) . '/' . urlencode( $value );
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		// Get any message: no error, update succesful
+		return ( empty( $data['result'] ) ) ? $value : $old_password;
 	}
 
     /** 
@@ -141,6 +176,8 @@ final class Eskimo_Admin {
      */ 
     public function update_tab_settings() { 
         woocommerce_update_options( $this->get_tab_settings() ); 
+
+		// Check for updated
     } 
 
     /**
@@ -181,7 +218,7 @@ final class Eskimo_Admin {
             'password'      => [
                 'name'      => __( 'API Password', 'eskimo' ),
                 'type'      => 'text',
-                'desc'      => '',
+				'desc'      => 'Minimum 6 characters, maximum 100. Must contain one of each characters a-z, A-Z, 0-9<br />Can contain a-z, A-Z, 0-9, and special characters: ~ @ # $ % ^ & * + = ` | { } : ; , ! . ? \' " ( ) [ ] - _',
                 'id'        => 'eskimo_epos_password'
 			],
             'status'      	=> [

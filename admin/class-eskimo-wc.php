@@ -803,12 +803,6 @@ final class Eskimo_WC {
 
         if ( $this->debug ) { eskimo_log( 'Products[' . $the_query->found_posts . '] ProdID[' . $product->ID . '] Prefix[' . $web_prefix . ']', 'wc' ); }
 
-		// Construct web_id results
-//		return [
-//			'Eskimo_Identifier' => $prod_ref,
-//          'Web_ID'            => ( empty( $web_prefix ) ) ? $product->ID : $web_prefix . $product->ID
-//		];			
-
 		// Ok, update post meta
 		$update = update_post_meta( $product->ID, '_eskimo_product_id', $trade_ref );
 		if ( false === $update ) {
@@ -934,6 +928,48 @@ final class Eskimo_WC {
 		}
 
 		return $result;
+	}
+
+    /**
+     * Get EskimoEPOS API product by ID
+     *
+     * @param   string   		$prod_ref
+     * @param   string   		$trade_ref
+     * @return  object|array
+     */
+	public function get_products_stock( $path, $prod_id ) {
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Path[' . $path . '] ID[' . $prod_id . ']', 'wc' ); }
+
+		// Get product
+		$product = wc_get_product( $prod_id );
+		if ( ! $product ) {
+			return $this->api_error( 'Invalid Product for ID [' . $prod_id . ']' );
+		}
+	
+		// Process simple & multi
+		// if path === adjust / multi, split functions?
+		
+		// Get stock $ SKU
+		$product_sku = $product->get_sku();
+		$product_qty = $product->get_stock_quantity();
+		if ( $this->debug ) { eskimo_log( 'Product ID [' . $product_id . '] Stock: SKU[' . $product_sku . '] Qty[' . $product_qty . ']', 'wc' ); }
+
+		// No SKU?
+		if ( empty( $product_sku ) ) { 
+			return $this->api_error( 'Invalid SKU for ID [' . $prod_id . ']' );
+		}
+
+		// ok, done
+		return [
+			'Adjustment' => [
+				'SKU_Code' 			=> $product_sku,
+				'StockLocation'		=> 1, // 1,2,3
+				'AdjustmentType'	=> 1, // 1: Update total, 2: Update add to total
+				'Amount'			=> $product_qty,
+				'AdjustmentReason' 	=> 'Web Adjust'
+			],
+  			'ReturnStockLevels'		=> true
+		];			
 	}
 
     //----------------------------------------------
@@ -1487,39 +1523,39 @@ final class Eskimo_WC {
     /**
      * Get woocommerce order data for EPOS insert
      *
-     * @param   array   		$api_data
+ 	 * @param   array   		$order_id
      * @return  object|array
      */
-    public function get_orders_insert_ID( $id ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . ']', 'wc' ); }
+    public function get_orders_insert_ID( $order_id ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']', 'wc' ); }
 
 		// Validate API data
-		$id = absint( $id );
-		if ( $id === 0 ) {
+		$order_id = absint( $order_id );
+		if ( $order_id === 0 ) {
             return $this->api_error( 'Insert: Invalid Order ID' );
         }
 
         // Process data
-        if ( $this->debug ) { eskimo_log( 'Process Order ID[' . $id . ']', 'wc' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Order ID[' . $order_id . ']', 'wc' ); }
 
 		// Woocommerce order required
-		$order = wc_get_order( $id );
-		if ( false === $order ) { return $this->api_error( 'Invalid Order ID[' . $id . ']' ); }
+		$order = wc_get_order( $order_id );
+		if ( false === $order || ! is_a( $order, 'WC_Order' ) ) { return $this->api_error( 'Invalid Order ID[' . $order_id . ']' ); }
 
-		// OK, got user id
+		// OK, got order id
 		$order_id = absint( $order->get_id() );
 		if ( $order_id === 0 ) { return $this->api_error( 'Invalid WC Order ID[' . $order_id . ']' ); }
 
-		// First test... EPOS ID
+		// Get Order Status
+		$order_status = $order->get_status();
+		if ( ! in_array( $order_status, [ 'processing', 'completed' ] ) ) { return $this->api_error( 'Order status invalid[' . $order_status . ']' ); }
+
+		// Check if already sent: EPOS ID
 		$web_order_id = get_post_meta( $order_id, '_web_order_id', true );
 		if ( ! empty( $web_order_id ) ) { return $this->api_error( 'EPOS Order exists ID[' . $order_id . '] EPOS Web Order ID[' . $web_order_id . ']' ); }
 
-		// Get order items
-		$order_items = $order->get_items();
-		if ( $this->debug ) { eskimo_log( 'Order Items: ' . count( $order_items ), 'wc' ); }
-		
 		// Get the customer
-		$cust_id 	= $order->get_customer_id();
+		$cust_id = $order->get_customer_id();
 		if ( $this->debug ) { eskimo_log( 'Order User: ' . $cust_id, 'wc' ); }
 		
 		// Guest Checkout
@@ -1536,10 +1572,35 @@ final class Eskimo_WC {
 
 		// Order reference
 		$epos_ei = get_option( 'eskimo_api_customer' );
-		$epos_ei = ( empty( $epos_ei ) ) ? $epos_id . '-' . $cust_id . '-' . $order_id : $epos_ei . $epos_id . '-' . $cust_id . '-' . $order_id;  
+		$epos_ei = $epos_ei . $epos_id . '-' . $cust_id . '-' . $order_id;  
 		if ( $this->debug ) { eskimo_log( 'Customer ID: [' . $cust_id . '] EPOS Customer ID[' . $epos_id . '] EPOS API ID[' . $epos_ei . ']', 'wc' ); }
 
-		// Notes
+		// Get order items
+		$order_items = $order->get_items();
+		if ( $this->debug ) { eskimo_log( 'Order Items: ' . count( $order_items ), 'wc' ); }
+
+		// Get any order discounts
+		$order_discounts = $order->get_coupon_codes(); 
+
+		// Initiate coupons, normally one max, but can layer multiple
+		$order_coupons = [];
+
+		// Construct coupon list
+		foreach ( $order_discounts as $coupon_code ) {
+
+			// Retrieving the coupon ID
+    		$coupon_post_obj = get_page_by_title( $coupon_code, OBJECT, 'shop_coupon' );
+			$coupon_id       = $coupon_post_obj->ID;
+
+			// Get an instance of WC_Coupon
+			$coupon = new WC_Coupon( $coupon_id );
+			if ( $this->debug ) { eskimo_log( 'Coupon: Type[' . $coupon->get_discount_type() . '] Amount[' . $coupon->get_amount() . ']', 'wc' ); }
+		
+			// Add coupon to list
+			$order_coupons[] = $coupon;
+		}
+
+		// Order Notes
 		$order_notes = $order->get_customer_order_notes(); 
 		if ( is_array( $order_notes ) && ! empty( $order_notes ) ) {
 			$order_note = '';
@@ -1548,52 +1609,101 @@ final class Eskimo_WC {
 				$order_note .= $n->comment_content; 
 			}
 		} else {
-			$order_note = get_post( $id )->post_excerpt;
+			$order_note = get_post( $order_id )->post_excerpt;
 		}
 
-		// Set up data
+		// Set up invoice and order amount: vat respective
+		$order_invoice_amount = ( true ===  $order->get_prices_include_tax() ) ? $order->get_total() : $order->get_total() - $order->get_total_tax();
+		if ( $this->debug ) { eskimo_log( 'Order: Invoice[' . number_format( $order_invoice_amount, wc_get_price_decimals(), '.', '' ) . ']', 'wc' ); }
+
+		// Initiate order data
 		$data = [
 			'order_id' 				=> $order_id,
 			'ExternalIdentifier'	=> $epos_ei,
-			'OrderType'				=> 2, //WebOrder
+			'OrderType'				=> 2, // WebOrder
 			'eskimo_customer_id' 	=> $epos_id,
-			'order_date' 			=> $order->get_date_created()->date('c'),
-			'invoice_amount' 		=> number_format( $order->get_total() - $order->get_total_tax(), wc_get_price_decimals(), '.', '' ),
-			'amount_paid' 			=> $order->get_total()
+			'order_date' 			=> $order->get_date_created()->date('c')
 		];
+		if ( $this->debug ) { eskimo_log( 'Order: Data[' . print_r( $data, true ) . ']', 'wc' ); }
 
-		// Set up order items
+		// Set up order items & totals
 		$items = [];
+		$cart_total = $discount_total = 0;
 
 		// Iterating through each WC_Order_Item_Product objects
 		foreach ( $order_items as $k => $order_item ) {
+
+			// Set up item
 			$item = [];
- 			
+
+			// Get item product
 			$product_id = $order_item->get_product_id(); 
 			$product 	= $order_item->get_product(); 
-   
-			$item['sku_code'] 				= $product->get_sku();
+
+			// Requires a valid SKU
+			$product_sku = $product->get_sku();
+			if ( empty( $product_sku ) ) {
+				if ( $this->debug ) { eskimo_log( 'Product: ID[' . $product_id. '] Invalid SKU', 'wc' ); }
+				continue;
+			}
+
+			// Basic item details
+			$item['sku_code'] 				= $product_sku;
 			$item['qty_purchased']			= $order_item->get_quantity();
-			$item['unit_price']				= $product->get_price();
-			$item['line_discount_amount']	= number_format( $order_item->get_subtotal() - $order_item->get_total(), wc_get_price_decimals(), '.', '' );
 			$item['item_note']				= null;			
 			$item['item_description']		= null;			
+
+			// Any discounts?
+			if ( ! empty( $order_coupons ) ) {
+
+				// Apply sequentially?
+				$discount_sequential = get_option( 'woocommerce_calc_discounts_sequentially', 'no' );
+
+				// Get base price & discount
+				$item['unit_price']				= $product->get_price();
+				$item['line_discount_amount']	= 0;
+
+				// Iterate through coupons
+				foreach ( $order_coupons as $k => $coupon ) {
+
+					// How to apply multiple discounts					
+					$price_to_discount = ( 'yes' === $discount_sequential ) ? $item['unit_price'] : $product->get_price();
+
+					// Price based discount with rounding
+					if ( $coupon->get_discount_type() === 'percent' ) {
+						$price_to_discount = absint( round( wc_add_number_precision( $price_to_discount ) ) );
+						$discount = wc_remove_number_precision( wc_round_discount( $price_to_discount * ( $coupon->get_amount() / 100 ), 0 ) );
+					} else {
+						$discount = wc_round_discount( $price_to_discount - $coupon->get_amount() );
+					}
+
+					// Set up new price & running discount
+					$item['unit_price']				-= $discount;
+					$item['line_discount_amount']	+= $discount;
+				}
+			} else {				
+				$item['unit_price']				= $product->get_price();
+				$item['line_discount_amount']	= 0;
+			}
+
+			// Running order totals, price & qty
+			$cart_total 	+= ( $item['unit_price'] * $order_item->get_quantity() );
+			$discount_total += ( $item['line_discount_amount'] * $order_item->get_quantity() );
+
+			// Format item line totals
+			$item['unit_price']				= number_format( $item['unit_price'], wc_get_price_decimals(), '.', '' );
+			$item['line_discount_amount']	= number_format( $item['line_discount_amount'], wc_get_price_decimals(), '.', '' );
+			 
+			// Construct items
 			$items[] = $item;
 		}
 
-		// Set up shipping
-		$shipping = [
-			'FAO'			=>	$order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name() . ' ' . $order->get_shipping_company(),
-			'AddressLine1' 	=>	$order->get_shipping_address_1(),
-			'AddressLine2' 	=>	$order->get_shipping_address_2(),
-			'AddressLine3' 	=>	null,
-			'PostalTown'	=>	$order->get_shipping_city(),
-			'County'		=>	$order->get_shipping_state(),
-			'CountryCode'	=>	$order->get_shipping_country(),
-			'PostCode'		=>	$order->get_shipping_postcode()
-		];
+		// Set up invoice data: cart total + shipping total
+		$data['invoice_amount']	= number_format( $cart_total + $order->get_shipping_total(), wc_get_price_decimals(), '.', '' );
+		$data['amount_paid']	= number_format( $cart_total + $order->get_shipping_total(), wc_get_price_decimals(), '.', '' );
+		if ( $this->debug ) { eskimo_log( 'Invoice: [' . $order_invoice_amount . '][' . $data['invoice_amount'] . ']', 'wc' ); }
 
-		// Set up billing
+		// Set up billing address
 		$billing = [
 			'FAO'			=>	$order->get_billing_first_name() . ' ' . $order->get_billing_last_name() . ' ' . $order->get_billing_company(),
 			'AddressLine1' 	=>	$order->get_billing_address_1(),
@@ -1605,13 +1715,177 @@ final class Eskimo_WC {
 			'PostCode'		=>	$order->get_billing_postcode()
 		];
 
-		$data['DeliveryAddress']		= $shipping;
-		$data['InvoiceAddress']			= $billing;
+		// Set up shipping address
+		$shipping = [
+			'FAO'			=>	$order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name() . ' ' . $order->get_shipping_company(),
+			'AddressLine1' 	=>	$order->get_shipping_address_1(),
+			'AddressLine2' 	=>	$order->get_shipping_address_2(),
+			'AddressLine3' 	=>	null,
+			'PostalTown'	=>	$order->get_shipping_city(),
+			'County'		=>	$order->get_shipping_state(),
+			'CountryCode'	=>	$order->get_shipping_country(),
+			'PostCode'		=>	$order->get_shipping_postcode()
+		];
+
+		// Address checks
+		$billing_name 	= $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
+		$billing_addr 	= $order->get_billing_address_1();
+		$shipping_name 	= $order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name();
+		$shipping_addr 	= $order->get_shipping_address_1();
+
+		// Check if shipping & billing the same, only need invoice addr if true
+		if ( $billing_name == $shipping_name && $billing_addr == $shipping_addr ) {
+			$data['InvoiceAddress']		= $billing;
+		} else {
+			$data['DeliveryAddress']	= $shipping;
+			$data['InvoiceAddress']		= $billing;
+		}
+
+		// Get Order Shipping
+		$shipping_method 	= $order->get_shipping_method();
+		if ( $this->debug ) { eskimo_log( 'Shipping: [' . $shipping_method . ']', 'wc' ); }
+
 		$data['OrderedItems']			= $items;
 		$data['CustomerReference'] 		= null;
 		$data['DeliveryNotes'] 			= $order_note;
-		$data['ShippingRateID'] 		= 1; // 1: FlatRate 2: ClickAndCollect
+		$data['ShippingRateID'] 		= ( $shipping_method === 'Flat Rate' ) ? 2 : 1; // 1: Click&Collect 2: FlatRate 
 		$data['ShippingAmountGross'] 	= $order->get_shipping_total();
+
+        // OK, done
+        return $data;
+	}
+
+    /**
+     * Get woocommerce order data for EPOS return
+     *
+ 	 * @param   array   		$order_id
+ 	 * @param   array   		$refund_id
+     * @return  object|array
+     */
+    public function get_orders_return_ID( $order_id, $return_id ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID #[' . $order_id . '][' . $return_id . ']', 'wc' ); }
+
+		// Validate API data
+		$order_id 	= absint( $order_id );
+		$return_id 	= absint( $return_id );
+		if ( $order_id === 0 || $return_id === 0 ) {
+            return $this->api_error( 'Insert: Invalid Order or return ID #[' . $order_id . '][' . $return_id . ']' );
+        }
+
+        // Process data
+        if ( $this->debug ) { eskimo_log( 'Process Return ID #[' . $return_id . '] for Order #[' . $order_id . ']', 'wc' ); }
+
+		// Woocommerce order required
+		$order = wc_get_order( $order_id );
+		if ( false === $order || ! is_a( $order, 'WC_Order' ) ) { return $this->api_error( 'Invalid Order ID #[' . $order_id . ']' ); }
+
+		// OK, got order id
+		$order_id = absint( $order->get_id() );
+		if ( $order_id === 0 ) { return $this->api_error( 'Invalid WC Order ID #[' . $order_id . ']' ); }
+
+		// Verify Order Status: Refunded
+		$order_status = $order->get_status();
+		if ( 'refunded' !== $order_status ) { return $this->api_error( 'Order status invalid [' . $order_status . ']' ); }
+
+		// Get the order returns / refunds [ WC_Order_Refund ]
+		$order_returns = $order->get_refunds();
+		if ( $this->debug ) { eskimo_log( 'Order Returns: ' . count( $order_returns ), 'wc' ); }
+
+		// No returns? Should have if return_id is valid
+		if ( count( $order_returns ) === 0 ) { return $this->api_error( 'No Returns For Order ID #[' . $order_id . ']' ); }
+
+		// Woocommerce valid return required
+		$return = wc_get_order( $return_id );
+		if ( false === $return || ! is_a( $return, 'WC_Order_Refund' ) ) { return $this->api_error( 'Invalid Return ID #[' . $return_id . ']' ); }
+
+		// OK, got return id
+		$return_id = absint( $return->get_id() );
+		if ( $return_id === 0 ) { return $this->api_error( 'Invalid WC Return ID #[' . $return_id . ']' ); }
+
+		// Get Refund Status: Completed
+		$return_status = $return->get_status();
+		if ( 'completed' !== $return_status ) { return $this->api_error( 'Return status invalid [' . $order_status . ']' ); }
+
+		// Get the customer & guest checkout if needed
+		$cust_id = $order->get_customer_id();
+		if ( $cust_id === 0 ) {
+			$guest_user = get_user_by( 'email', apply_filters( 'eskimo_guest_user_email', 'guest@classworx.co.uk' ) );
+			if ( ! $guest_user ) { return $this->api_error( 'EskimoEPOS Invalid Customer' ); }
+			$cust_id = $guest_user->ID;
+		}
+		if ( $this->debug ) { eskimo_log( 'Order Customer: ' . $cust_id, 'wc' ); }
+
+		// Customer meta
+		$epos_id = get_user_meta( $cust_id, 'epos_id', true );
+		if ( empty( $epos_id ) ) { return $this->api_error( 'EskimoEPOS Customer ID Does Not Exist' ); }
+
+		// Order reference
+		$epos_ei = get_option( 'eskimo_api_customer' );
+		$epos_order_ei 	= $epos_ei . $epos_id . '-' . $cust_id . '-' . $order_id;  
+		$epos_return_ei = $epos_ei . $epos_id . '-' . $cust_id . '-' . $return_id;  
+		if ( $this->debug ) { eskimo_log( 'Customer ID: [' . $cust_id . '] EPOS Customer ID[' . $epos_id . '] EPOS API ID[' . $epos_ei . ']', 'wc' ); }
+
+		// Set return date
+		$dt = new DateTime();
+
+		// Initiate order data
+		$data = [
+			'GoodwillGestureAmount' 	=> 0,
+			'CarriageAmountGross' 		=> $order->get_shipping_total(),
+			'OrderExternalIdentifier'	=> $epos_order_ei,
+			'ReturnExternalIdentifier'	=> $epos_return_ei,
+			'ReturnDate' 				=> $dt->format('c'),
+			'Order_ID' 					=> $order_id,
+			'OrderType'					=> 2, // WebOrder
+		];
+
+		// Set up order items & totals
+		$items = [];
+
+		if ( $this->debug ) { eskimo_log( 'Items [' . count( $order->get_items() ) . ']' ); }
+
+		// Loop through the order refund line items
+   		foreach( $order->get_items() as $item_id => $order_item ) {
+
+			// Set up item
+			$item = [];
+
+			// Check if it has returns, convert to positive
+			$item_qty_refunded = abs( $order->get_qty_refunded_for_item( $item_id ) );
+			if ( $this->debug ) { eskimo_log( 'Refunded ID[' . $item_id . '] Qty [' . $item_qty_refunded . ']' ); }
+			if ( $item_qty_refunded === 0 ) { continue; }
+		
+			// First test, product must still be valid
+			$product_id = $order_item->get_product_id();
+			if ( $product_id === 0 ) {
+				if ( $this->debug ) { eskimo_log( 'Product for item ID [' . $item_id . '] invalid', 'wc' ); }
+				continue;
+			}
+
+			// Get product: WC_Product
+			$product = $order_item->get_product();
+			if ( $this->debug ) { eskimo_log( 'Product #[' . $product->get_id() . '][' . $product_id . '] Qty[' . $item_qty_refunded . '] SKU[' . $product->get_sku() . ']', 'wc' ); }
+
+			// Requires a valid SKU
+			$product_sku = $product->get_sku();
+			if ( empty( $product_sku ) ) {
+				if ( $this->debug ) { eskimo_log( 'Product: ID[' . $product_id. '] Invalid SKU [' . $product_sku . ']', 'wc' ); }
+				continue;
+			}
+
+			// Basic item details
+			$item['SKU'] = $product_sku;
+			$item['Qty'] = $item_qty_refunded;
+
+			// Construct items
+			$items[] = $item;
+	    }
+
+		// No returns?
+		if ( empty( $items ) ) { return $this->api_error( 'No Returns Items To Process' ); }
+			
+		// Set refund products: sku & qty
+		$data['RefundProducts']	= $items;
 
         // OK, done
         return $data;
@@ -1627,7 +1901,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     public function get_orders_epos_ID( $id, $data, $update = false, $return = false ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . '] Order[' . (int) $order . ']', 'wc' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . '] Order[' . $data->ExternalIdentifier . ']', 'wc' ); }
 
         // Validate API data
         if ( empty( $data ) ) {

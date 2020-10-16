@@ -92,6 +92,68 @@ final class Eskimo_Route extends WP_REST_Controller {
         $namespace = 'eskimo/v1';
 
 	    //----------------------------------------------
+    	// WordPress REST Routes - Account
+    	//----------------------------------------------
+
+        // Account: Retrieve EskimoEPOS Account Info
+        register_rest_route( $namespace, '/account', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_account_user_info' ],
+                'permission_callback'   => '__return_true',
+                'args'                  => []
+            ] 
+        ] );
+
+        // Account: Change Account ID Password, Old & New Required
+        register_rest_route( $namespace, '/account-password/(?P<old_password>.+)/(?P<new_password>.+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_account_password' ],
+                'permission_callback'   => '__return_true',
+                'args'                  => [
+					'required'	=> true,
+                    'old_password' => [
+						'validate_callback' => function( $param, $request, $key ) {
+							return (bool) preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', urldecode( $param ) );
+                        }
+                    ],
+                    'new_password' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+							return (bool) preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', urldecode( $param ) );
+                        }
+                    ]
+                ]
+            ] 
+        ] );
+
+        // Account: Register Account ID: Email, Password & Confirm Required
+        register_rest_route( $namespace, '/account-register/(?P<account_email>.+)/(?P<account_password>.+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_account_register' ],
+                'permission_callback'   => '__return_true',
+                'args'                  => [
+					'required'	=> true,
+                    'account_email' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return is_email( $param );
+                        }
+                    ],
+                    'account_password' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+							return (bool) preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', urldecode( $param ) );
+                        }
+                    ]
+                ]
+            ] 
+        ] );
+
+	    //----------------------------------------------
+    	// WordPress REST Routes - Category
+    	//----------------------------------------------
+
+	    //----------------------------------------------
     	// WordPress REST Routes - Category
     	//----------------------------------------------
 
@@ -100,8 +162,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_categories_all' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
             ] 
         ] );
@@ -111,8 +172,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_categories_new' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
 			]
 		] );
@@ -122,8 +182,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_categories_specific_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
 					'required'	=> true,
                     'cat_id' => [
@@ -145,8 +204,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_categories_child_categories' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
 					'required'	=> true,
                     'cat_id' => [
@@ -168,8 +226,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_categories_web_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
             ] 
 		] );
@@ -179,8 +236,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_categories_cart_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
             ] 
         ] );
@@ -190,8 +246,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_categories_meta_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
             ] 
 		] );
@@ -201,8 +256,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_category_cart_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'cat_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -232,8 +286,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_category_products' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'start' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -254,8 +307,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_category_products_specific_category_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
 					'required'	=> true,
                     'cat_id' => [
@@ -281,8 +333,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'start' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -303,8 +354,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_all' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
             ] 
 		] );
@@ -314,8 +364,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_new' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'route' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -336,8 +385,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_modified' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'route' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -364,12 +412,11 @@ final class Eskimo_Route extends WP_REST_Controller {
         ] );
 
         // Product: Retrieve Single EskimoEPOS Product By Prod ID
-        register_rest_route( $namespace, '/product/(?P<prod_id>[\d]+)/(?P<style_ref>[\w]+)/?(?P<trade_id>[\w\-_]*)/?(?P<import>[\d]*)', [
+        register_rest_route( $namespace, '/product/(?P<prod_id>[\d]+)/(?P<style_ref>[\w\-]+)/?(?P<trade_id>[\w\-_]*)/?(?P<import>[\d]*)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_specific_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
 					'prod_id' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -378,7 +425,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 					],
 					'style_ref' => [
 						'validate_callback' => function( $param, $request, $key ) {
-							return (bool) preg_match( '/^[a-zA-Z0-9]+$/', $param );
+							return (bool) preg_match( '/^[a-zA-Z0-9\-]+$/', $param );
 						}
 					],
 					'trade_id' => [
@@ -400,8 +447,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_products_web_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
             ] 
 		] );
@@ -411,8 +457,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_products_cart_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'start' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -429,12 +474,11 @@ final class Eskimo_Route extends WP_REST_Controller {
         ] );
 
         // Product: Update Single EskimoEPOS Product Web_ID From Woocommerce ID
-        register_rest_route( $namespace, '/product-update/(?P<prod_id>[\d]+)/(?P<style_ref>[\w]+)/?(?P<trade_id>[\w\-_]*)/?(?P<prod_value>[\w\-_]*)', [
+        register_rest_route( $namespace, '/product-update/(?P<prod_id>[\d]+)/(?P<style_ref>[\w\-]+)/?(?P<trade_id>[\w\-_]*)/?(?P<prod_value>[\w\-_]*)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'update_product_cart_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
 					'prod_id' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -443,7 +487,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 					],
 					'style_ref' => [
 						'validate_callback' => function( $param, $request, $key ) {
-							return (bool) preg_match( '/^[a-zA-Z0-9]+$/', $param );
+							return (bool) preg_match( '/^[a-zA-Z0-9\-]+$/', $param );
 						}
 					],
 					'trade_id' => [
@@ -461,12 +505,11 @@ final class Eskimo_Route extends WP_REST_Controller {
         ] );
 
         // Product: Update EskimoEPOS Product Data By Type And Prod ID 
-        register_rest_route( $namespace, '/product-import/(?P<prod_type>[\w]+)/(?P<prod_id>[\d]+)/(?P<style_ref>[\w]+)/?(?P<trade_id>[\w\-_]*)', [
+        register_rest_route( $namespace, '/product-import/(?P<prod_type>[\w]+)/(?P<prod_id>[\d]+)/(?P<style_ref>[\w\-]+)/?(?P<trade_id>[\w\-_]*)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_import_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
    					'prod_type' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -480,7 +523,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 					],
 					'style_ref' => [
 						'validate_callback' => function( $param, $request, $key ) {
-							return (bool) preg_match( '/^[a-zA-Z0-9]+$/', $param );
+							return (bool) preg_match( '/^[a-zA-Z0-9\-]+$/', $param );
 						}
 					],
 					'trade_id' => [
@@ -493,12 +536,11 @@ final class Eskimo_Route extends WP_REST_Controller {
 		] );
 		
         // Product: Update EskimoEPOS Product Data By Type And Prod ID 
-        register_rest_route( $namespace, '/product-adjust/(?P<prod_id>[\d]+)/(?P<style_ref>[\w]+)/?(?P<trade_id>[\w\-_]*)', [
+        register_rest_route( $namespace, '/product-adjust/(?P<prod_id>[\d]+)/(?P<style_ref>[\w\-]+)/?(?P<trade_id>[\w\-_]*)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_import_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
    					'prod_id' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -507,7 +549,7 @@ final class Eskimo_Route extends WP_REST_Controller {
 					],
 					'style_ref' => [
 						'validate_callback' => function( $param, $request, $key ) {
-							return (bool) preg_match( '/^[a-zA-Z0-9]+$/', $param );
+							return (bool) preg_match( '/^[a-zA-Z0-9\-]+$/', $param );
 						}
 					],
 					'trade_id' => [
@@ -520,12 +562,11 @@ final class Eskimo_Route extends WP_REST_Controller {
 		] );
 		
         // Product: Custom Update EskimoEPOS Product Trade Data By Type And Prod ID 
-        register_rest_route( $namespace, '/product-trade/(?P<prod_id>[\d]+)/(?P<style_ref>[\w]+)/(?P<trade_id>[\w\-_]+)', [
+        register_rest_route( $namespace, '/product-trade/(?P<prod_id>[\d]+)/(?P<style_ref>[\w\-]+)/(?P<trade_id>[\w\-_]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_products_trade_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'prod_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -534,7 +575,7 @@ final class Eskimo_Route extends WP_REST_Controller {
                     ],
    					'style_ref' => [
                         'validate_callback' => function( $param, $request, $key ) {
-                            return (bool) preg_match( '/^[a-zA-Z0-9]+$/', $param );
+							return (bool) preg_match( '/^[a-zA-Z0-9\-]+$/', $param );
                         }
                     ],
                     'trade_id' => [
@@ -546,6 +587,27 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
         ] );
 
+        // Product: Adjust stock by SKU
+        register_rest_route( $namespace, 'product-stock/(?P<path>[\w]+)/(?P<prod_id>[\d]+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_products_stock' ],
+                'permission_callback'   => '__return_true',
+                'args'                  => [
+                    'path' => [
+						'validate_callback' => function( $param, $request, $key ) {
+							return (bool) preg_match( '/^(adjust|multi)$/', $param );
+                        }
+                    ],
+                    'prod_id' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return is_numeric( $param );
+                        }
+                    ]
+                ]
+            ] 
+		] );
+
 	    //----------------------------------------------
     	// WordPress REST Routes - Customers
     	//----------------------------------------------
@@ -555,8 +617,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_customers_specific_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'cust_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -577,8 +638,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_customers_specific_email' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'cust_email' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -594,8 +654,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_customers_insert' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'cust_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -611,8 +670,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_customers_update' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'cust_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -628,8 +686,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_customers_titles' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
             ] 
         ] );
@@ -643,8 +700,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_orders_website_order' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'order_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -665,8 +721,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_orders_insert' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'order_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -677,15 +732,19 @@ final class Eskimo_Route extends WP_REST_Controller {
             ] 
 		] );
 		
-        // Order: Export Order To EskimoEPOS By Woocommerce Order ID
-        register_rest_route( $namespace, '/order-return/(?P<order_id>[\d]+)', [
+        // Order: Export Refund To EskimoEPOS By Woocommerce Order ID
+        register_rest_route( $namespace, '/order-return/(?P<order_id>[\d]+)/(?P<refund_id>[\d]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_orders_return' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'order_id' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return is_numeric( $param );
+                        }
+                    ],
+                    'refund_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
                             return is_numeric( $param );
                         }
@@ -699,8 +758,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_orders_fulfilment_methods' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => []
             ] 
 		] );
@@ -710,8 +768,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_orders_search_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
 				'args'                  => [
                     'cust_id' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -737,8 +794,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_orders_search_type' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
 				'args'                  => [
                     'type_id' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -764,8 +820,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_orders_search_date' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
 				'args'                  => [
                     'route' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -795,8 +850,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_skus' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'path' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -822,8 +876,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_skus_modified' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'path' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -864,8 +917,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_skus_orphan' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'start' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -886,8 +938,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_skus_specific_id' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
 					'prod_id' => [
 						'validate_callback' => function( $param, $request, $key ) {
@@ -918,8 +969,7 @@ final class Eskimo_Route extends WP_REST_Controller {
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_skus_specific_code' ],
-                //'permission_callback'   => [ $this, 'rest_permissions_check' ],
-                //'permission_callback'   => function() { return current_user_can( 'edit_posts' ); },
+                'permission_callback'   => '__return_true',
                 'args'                  => [
                     'sku_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
@@ -945,10 +995,7 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function rest_permissions_post_check( $request ) {
         $auth = $request->get_param( '_wp_rest_nonce' );
         return wp_verify_nonce( $auth, 'wp_rest' );
-        //return current_user_can( 'edit_posts' );
     }
-
-
 
     /**
      * Rest permissions check minimum: admin level access
@@ -960,7 +1007,6 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function rest_permissions_user_check( $request ) {
         $auth = $request->get_param( '_wp_rest_nonce' );
         return wp_verify_nonce( $auth, 'wp_rest' );
-        //return current_user_can( 'edit_posts' );
     }
 
     /**
@@ -983,6 +1029,113 @@ final class Eskimo_Route extends WP_REST_Controller {
     public function prepare_item_for_response( $item, $request ) {
         return [];
     }
+
+    //----------------------------------------------
+    // REST ImpEx CallBack Functions: Account
+    //----------------------------------------------
+
+    /**
+	 * Process EskimoEPOS account info
+	 * - Retrieve Current Account Info
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_account_user_info( WP_REST_Request $request ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Response data
+        $data = [
+            'route'     => 'account',
+            'params'    => 'info',
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_account_user_info();
+
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+
+		if ( $this->debug ) { eskimo_log( 'Response[' . print_r( $data, true ) . ']', 'rest' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    /**
+	 * Process EskimoEPOS account password update
+	 * - Update Current Account Password
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_account_password( WP_REST_Request $request ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get passwords
+        $old_password = sanitize_text_field( urldecode( $request->get_param( 'old_password' ) ) );
+        $new_password = sanitize_text_field( urldecode( $request->get_param( 'new_password' ) ) );
+
+        // Response data
+        $data = [
+            'route'     => 'account',
+            'params'    => 'password',
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_account_password( $old_password, $new_password );
+
+		// WP Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}
+
+		if ( $this->debug ) { eskimo_log( 'Response[' . print_r( $data, true ) . ']', 'rest' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+
+    /**
+	 * Process EskimoEPOS account register
+	 * - Not Yet Implemented
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_account_register( WP_REST_Request $request ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get passwords
+        $account_email 		= sanitize_text_field( $request->get_param( 'account_email' ) );
+        $account_password 	= sanitize_text_field( urldecode( $request->get_param( 'account_password' ) ) );
+
+        // Response data, with default result
+        $data = [
+            'route'     => 'account',
+            'params'    => 'register',
+			'nonce'     => wp_create_nonce( 'wp_rest' ),
+			'result'	=> 'Not Yet Implemented. Please contact Eskimo Support for details.'
+        ];
+
+		if ( $this->debug ) { eskimo_log( 'Response[' . print_r( $data, true ) . ']', 'rest' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
 
     //----------------------------------------------
     // REST ImpEx CallBack Functions: Categories
@@ -1655,16 +1808,15 @@ final class Eskimo_Route extends WP_REST_Controller {
 		$prod_id	= absint( $request->get_param( 'prod_id' ) );
         $style_ref 	= sanitize_text_field( $request->get_param( 'style_ref' ) );
 		$trade_id 	= sanitize_text_field( $request->get_param( 'trade_id' ) );
-		$import		= absint( $request->get_param( 'import' ) );
+		$import		= sanitize_text_field( $request->get_param( 'import' ) );
 
 		// Sanitize trade id
 		$trade_id 	= ( $trade_id === '0' ) ? '' : $trade_id;
-		$import		= ( $import === 0 ) ? false : true;
+		$import		= ( $import === '' ) ? true : (bool) absint( $import );
 
 		// Construct & sanitize prod id
 		$prod_epos_id = str_replace( ' ', '', $prod_id . ESKIMO_REST_DELIMINATOR . $style_ref . ESKIMO_REST_DELIMINATOR . $trade_id . ESKIMO_REST_DELIMINATOR );
-
-        if ( $this->debug ) { eskimo_log( 'Prod EPOS ID[' . $prod_epos_id . ']', 'rest' ); }
+        if ( $this->debug ) { eskimo_log( 'Prod EPOS ID[' . $prod_epos_id . '][' . (int) $import . ']', 'rest' ); }
 
         // Response data
         $data = [
@@ -1672,6 +1824,9 @@ final class Eskimo_Route extends WP_REST_Controller {
             'params'    => 'prod_epos_id: ' . $prod_epos_id,
             'nonce'     => wp_create_nonce( 'wp_rest' )
         ];
+
+        // REST output TEMP
+        return new WP_REST_Response( $data, 200 );
 
         // OK, process data
         $data['result'] = $this->rest->get_products_specific_ID( $prod_epos_id, $import );
@@ -1959,6 +2114,47 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // OK, process data import & update
         $data['result'] = $this->rest->get_products_import_ID( $trade_ref, 'adjust' );
+
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { eskimo_log( 'Response[' . print_r( $data, true ) . ']', 'rest' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
+	
+	/**
+	 * Process EskimoEPOS Product Stock adjust
+	 * - Update remote stock by SKU code
+     * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_products_stock( WP_REST_Request $request ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+        // Get Prod ID param
+        $path = sanitize_text_field( $request->get_param( 'path' ) );
+
+     	// Get Prod ID & Type params
+		$prod_id = absint( $request->get_param( 'prod_id' ) );
+
+        // Response data
+        $data = [
+			'route'     => 'product-stock',
+			'path'		=> $path,
+            'params'    => 'prod_id: ' . $prod_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+        ];
+
+        // OK, process data
+        $data['result'] = $this->rest->get_products_stock( $path, $prod_id );
 
 		// Error?
 		if ( is_wp_error( $data['result'] ) ) {
@@ -2270,18 +2466,19 @@ final class Eskimo_Route extends WP_REST_Controller {
         $this->api_set_timeout();
 
 		// Get ID param
-        $order_id  = absint( $request->get_param( 'order_id' ) );
-        if ( $this->debug ) { eskimo_log( 'Order ID #[' . $order_id . ']', 'rest' ); }
+        $order_id  	= absint( $request->get_param( 'order_id' ) );
+        $refund_id  = absint( $request->get_param( 'refund_id' ) );
+        if ( $this->debug ) { eskimo_log( 'Order ID #[' . $order_id . '][' . $refund_id . ']', 'rest' ); }
 
         // Response data
         $data = [
             'route'     => 'order-return',
-            'params'    => 'Order ID: #' . $order_id,
+            'params'    => 'Order ID: #' . $order_id . ':' . $refund_id,
             'nonce'     => wp_create_nonce( 'wp_rest' )
         ];
 
         // OK, process data
-        $data['result'] = $this->rest->get_orders_return( $order_id );
+        $data['result'] = $this->rest->get_orders_return( $order_id, $refund_id );
 
 		// Error?
 		if ( is_wp_error( $data['result'] ) ) {
@@ -2682,7 +2879,7 @@ final class Eskimo_Route extends WP_REST_Controller {
         // REST output
         return new WP_REST_Response( $data, 200 );
 	}
-	
+
     //----------------------------------------------
     // REST API Timeout
     //----------------------------------------------

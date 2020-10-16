@@ -27,7 +27,7 @@ class Eskimo_Log_Handler implements Eskimo_Log_Handler_Interface {
 	 *
 	 * @var array
 	 */
-	protected $levels = [ 'trace', 'rest', 'cart', 'api', 'cron', 'epos' ];
+	protected $levels = [ 'trace', 'rest', 'cart', 'api', 'cron', 'epos', 'wc' ];
 
     /**
      * File size limit for log files in bytes.

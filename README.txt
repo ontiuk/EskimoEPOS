@@ -634,6 +634,15 @@ Stripe","Size":"30","CostPrice":9,"SellPrice":20,"StockAmount":8,"TaxCodeID":2,"
 
 == Changelog ==
 
+= 1.4.0 =
+* Add returns order functionality
+* Various code optimisations and updates
+* Woocommerce version update: 4.6.0
+
+= 1.3.1 =
+* Various code optimisations and updates
+* Woocommerce version update: 4.5.x
+
 = 1.3 =
 * Move logging to internal functionality
 * Various code optimisations and updates

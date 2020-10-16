@@ -243,6 +243,13 @@ class Eskimo {
 		} else {
 			$this->loader->add_action( 'woocommerce_order_status_' . $order_status, $this->eskimo_cart, 'order_status_' . $order_status );
 		}
+
+		// Order refunded
+		$this->loader->add_action( 'woocommerce_order_refunded', $this->eskimo_cart, 'order_status_refunded', 10, 2 );
+
+		// Product updates
+//		$this->loader->add_action( 'woocommerce_variation_set_stock', 	$this->eskimo_cart, 'product_update_variation_stock', 10 );
+		$this->loader->add_action( 'woocommerce_product_set_stock' , 	$this->eskimo_cart, 'product_update_simple_stock', 10 );
 	}
 
 	/**

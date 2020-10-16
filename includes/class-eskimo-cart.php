@@ -1,4 +1,5 @@
 <?php 
+
 /**
  * The plugin woocommerce eskimoEPOS class 
  *
@@ -170,24 +171,35 @@ final class Eskimo_Cart {
 	 */
 	public function order_status_processing( $order_id ) {
    		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']', 'cart' ); }
-		
-		$order 		 = wc_get_order( $order_id );
-		$order_items = $order->get_items();  
-		$user 		 = $order->get_user();
-		$user_id 	 = $order->get_user_id();
 
-		// We don't do anything for guest checkout
-		if ( false === $user ) {
-			// OK, get dummy guest account
-			$guest_user = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@classworx.co.uk' ) );
-			if ( false ===  $guest_user ) {
-				return ( $this->debug ) ? eskimo_log( 'No user for this order[' . $order_id . ']', 'cart' ) : '';
+		// Get valid order details		
+		$order = wc_get_order( $order_id );
+		if ( false === $order || ! is_a( $order, 'WC_Order' ) ) { 
+			return ( $this->debug ) ? eskimo_log( 'Invalid Order ID[' . $id . ']', 'cart' ) : '';
+		}
+
+		// Get customer ID
+		$customer_id = $order->get_customer_id();
+
+		// Guest checkout via dummy guest account, or valid customer ID
+		if ( $customer_id === 0 ) {
+			$customer = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@classworx.co.uk' ) );
+			if ( false ===  $customer ) {
+				return ( $this->debug ) ? eskimo_log( 'No guest user for this order[' . $order_id . ']', 'cart' ) : '';
+			}
+		} else {
+			$customer = get_user_by( 'ID', $customer_id );
+			if ( false ===  $customer ) {
+				return ( $this->debug ) ? eskimo_log( 'Invalid customer for this order[' . $order_id . ']', 'cart' ) : '';
 			}
 		}
-		if ( $this->debug ) { eskimo_log( 'order_status_processing id[' . $order_id . '] user[' . $user_id . ']items[' . count( $order_items ) . ']status[' . $order->get_status() . ']', 'cart' ); }
+
+		if ( $this->debug ) { eskimo_log( 'order_status_processing ID[' . $order_id . '] user[' . $customer->user_email . '] items[' . count( $order->get_items() ) . '] status[' . $order->get_status() . ']', 'cart' ); }
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-insert/' . $order_id;
+		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
+
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
@@ -202,26 +214,137 @@ final class Eskimo_Cart {
 	public function order_status_completed( $order_id ) {
 		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']', 'cart' ); }
 		
-		$order 		 = wc_get_order( $order_id );
-		$order_items = $order->get_items();  
-		$user 		 = $order->get_user();
-		$user_id 	 = $order->get_user_id();
+		// Get valid order details		
+		$order = wc_get_order( $order_id );
+		if ( false === $order || ! is_a( $order, 'WC_Order' ) ) { 
+			return ( $this->debug ) ? eskimo_log( 'Invalid Order ID[' . $id . ']', 'cart' ) : '';
+		}
+		
+		// Get customer ID
+		$customer_id = $order->get_customer_id();
 
-		// We don't do anything for guest checkout
-		if ( false === $user ) {
-			// OK, get dummy guest account
-			$guest_user = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@classworx.co.uk' ) );
-			if ( false ===  $guest_user ) {
-				return ( $this->debug ) ? eskimo_log( 'No user for this order[' . $order_id . ']', 'cart' ) : '';
+		// Guest checkout via dummy guest account, or valid customer ID
+		if ( $customer_id === 0 ) {
+			$customer = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@classworx.co.uk' ) );
+			if ( false ===  $customer ) {
+				return ( $this->debug ) ? eskimo_log( 'No guest user for this order[' . $order_id . ']', 'cart' ) : '';
+			}
+		} else {
+			$customer = get_user_by( 'ID', $customer_id );
+			if ( false ===  $customer ) {
+				return ( $this->debug ) ? eskimo_log( 'Invalid customer for this order[' . $order_id . ']', 'cart' ) : '';
 			}
 		}
-		if ( $this->debug ) { eskimo_log( 'order_status_completed id[' . $order_id . '] user[' . $user_id . ']items[' . count( $order_items ) . ']status[' . $order->get_status() . ']', 'cart' ); }
+
+		if ( $this->debug ) { eskimo_log( 'order_status_processing ID[' . $order_id . '] user[' . $customer->user_email . '] items[' . count( $order->get_items() ) . '] status[' . $order->get_status() . ']', 'cart' ); }
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-insert/' . $order_id;
+		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
+
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+	}
+
+	/**
+	 * Trigger automatic export of order data to EskimoEPOS on order refunded ( post refund )
+	 *
+	 * @param integer $order_id
+	 * @param integer $refund_id
+	 */
+	public function order_status_refunded( $order_id, $refund_id ) {
+   		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . '][' . $refund_id . ']', 'cart' ); }
+
+		// Get valid order details		
+		$order = wc_get_order( $order_id );
+		if ( false === $order || ! is_a( $order, 'WC_Order' ) ) { 
+			return ( $this->debug ) ? eskimo_log( 'Invalid Order ID[' . $id . ']', 'cart' ) : '';
+		}
+
+		// Get customer ID
+		$customer_id = $order->get_customer_id();
+
+		// Guest checkout via dummy guest account, or valid customer ID
+		if ( $customer_id === 0 ) {
+			$customer = get_user_by( 'email', apply_filters( 'ipress_guest_user_email', 'guest@classworx.co.uk' ) );
+			if ( false ===  $customer ) {
+				return ( $this->debug ) ? eskimo_log( 'No guest user for this order[' . $order_id . ']', 'cart' ) : '';
+			}
+		} else {
+			$customer = get_user_by( 'ID', $customer_id );
+			if ( false ===  $customer ) {
+				return ( $this->debug ) ? eskimo_log( 'Invalid customer for this order[' . $order_id . ']', 'cart' ) : '';
+			}
+		}
+
+		if ( $this->debug ) { eskimo_log( 'order_status_refunded ID[' . $order_id . '][' . $refund_id . '] user[' . $customer->user_email . '] items[' . count( $order->get_items() ) . '] status[' . $order->get_status() . ']', 'cart' ); }
+
+		// Initiate REST call to update EPOS order status
+		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-return/' . $order_id . '/' . $refund_id;
+		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
+
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( $this->debug ) { eskimo_log( 'EPOS Refund: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+	}
+
+	/**
+	 * Product update stock
+	 *
+	 * @param	object	$product	WC_Product
+	 */
+	public function	product_update_variation_stock ( WC_Product $product ) {
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $product->get_id() . '] Type[' . $product->get_type() . ']', 'cart' ); }
+		
+		// Simple or Variable?
+		if ( 'variation' !== $product->get_type() ) {
+			if ( $this->debug ) { eskimo_log( 'Product ID [' . $product->get_id() . '] Type[' . $product->get_type() . ']', 'cart' ); }
+		}
+
+		// Set product ID
+		$product_id = $product->get_id();
+		
+	}
+
+	/**
+	 * Product update stock
+	 *
+	 * @param	object	$product	WC_Product
+	 */
+	public function	product_update_simple_stock ( WC_Product $product ) {
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $product->get_id() . '] Type[' . $product->get_type() . ']', 'cart' ); }
+
+		// Simple or Variable?
+		if ( 'simple' !== $product->get_type() ) {
+			if ( $this->debug ) { eskimo_log( 'Product ID [' . $product->get_id() . '] Type[' . $product->get_type() . ']', 'cart' ); }
+		}
+		
+		// Set product ID
+		$product_id = $product->get_id();
+		
+		// Check stock management
+		$stock_manage = $product->get_manage_stock();
+		if ( $this->debug ) { eskimo_log( 'Stock [' . (int)$stock_manage . ']', 'cart' ); }
+		if ( false === $stock_manage ) { return; }
+
+		// Get stock $ SKU
+		$product_sku = $product->get_sku();
+		$product_qty = $product->get_stock_quantity();
+		if ( $this->debug ) { eskimo_log( 'Product ID [' . $product_id . '] Stock: SKU[' . $product_sku . '] Qty[' . $product_qty . ']', 'cart' ); }
+
+		// No SKU?
+		if ( empty( $product_sku ) ) { return; }
+
+		// Initiate REST call to update EPOS order status
+		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product-stock/adjust/' . $product_id;
+		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
+
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( $this->debug ) { eskimo_log( 'EPOS Stock Adjust: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
 	}
 }

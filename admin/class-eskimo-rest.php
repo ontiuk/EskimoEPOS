@@ -75,6 +75,85 @@ final class Eskimo_REST {
     	$this->base_dir	= plugin_dir_url( __FILE__ ); 
 	}
 
+
+    //----------------------------------------------
+    // EPOS Account Updates & Info
+    //----------------------------------------------
+
+	/**
+	 * Get remote API account info
+	 *
+	 * @return string
+	 */
+	public function get_account_user_info() {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
+
+        // Test API connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+        
+        // Get remote data
+		$api_data = $this->api->account_user_info();
+
+        // Validate API data
+        if ( false === $api_data ) {
+            return $this->api_rest_error();
+		}
+
+		// Return account details
+		return ( empty( $api_data ) ) ? $this->api_error( 'No Account Info Found' ) : $api_data;
+	}
+	
+	/**
+	 * Update remote API account password
+	 *
+	 * @param	string	$old_password
+	 * @param	string	$new_password
+	 * @return 	string
+	 */
+	public function get_account_password( $old_password, $new_password ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' Old [' . $old_password . '] New [' . $new_password . ']', 'rest' ); }
+
+        // Test API connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+		// Initial check
+		if ( $old_password === $new_password ) {
+            return $this->api_error( 'Current and New Passwords Identical' );
+		}
+
+		// Check string length: Old Password
+		if ( strlen( $old_password ) < 6 || strlen( $old_password ) > 100 ) {
+            return $this->api_error( 'Old Password Wrong Length 6-100 [' . strlen( $old_password ) . ']' );
+		}
+
+		// Check string length: New Password
+		if ( strlen( $new_password ) < 6 || strlen( $new_password ) > 100 ) {
+            return $this->api_error( 'New Password Wrong Length 6-100 [' . strlen( $old_password ) . ']' );
+		}
+
+		// Construct API data
+		$api_opts = [
+			'OldPassword' 		=> $old_password,
+			'NewPassword'		=> $new_password,	
+			'ConfirmPassword'	=> $new_password
+		];
+
+        // Get remote data
+        $api_data = $this->api->account_password( $api_opts );
+
+        // Validate API data
+        if ( false === $api_data ) {
+            return $this->api_rest_error();
+		}
+
+		// Return response: empty return deemed successful
+		return $api_data;
+	}
+
     //----------------------------------------------
     // Woocommerce Category Import
     //----------------------------------------------
@@ -712,6 +791,44 @@ final class Eskimo_REST {
         return $this->wc->get_products_trade_ID( $prod_ref, $trade_ref );
 	}
 
+    /**
+     * Update remote API SKU stock
+     *
+     * @param   string  		$path_id  
+     * @param   string  		$prod_id  
+     * @return  object|array
+     */
+    public function get_products_stock( $path, $prod_id ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Product Stock: Path[' . $path . '] ID[' . $prod_id . ']', 'rest' ); }
+
+        // Test Product
+        if ( empty( $prod_id ) ) {
+            return $this->api_error( 'Invalid SKU IDs' );
+        }
+
+        // Process Woocommerce stock by product ID
+        $api_opts = $this->wc->get_products_stock( $path, $prod_id ); 
+        if ( is_wp_error( $api_opts ) ) { return $api_opts; }
+
+		if ( $this->debug ) { eskimo_log( 'Stock [' . print_r( $api_opts, true ) . ']', 'cart' ); }
+
+        // Test API connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+        // Get remote data
+        $api_data = ( $path === 'adjust' ) ? $this->api->stock_adjust( $api_opts ) : $this->api->stock_multi_adjust( $api_opts ); 
+
+        // Validate API data
+        if ( false === $api_data ) {
+            return $this->api_rest_error();
+        }
+
+        // Return data
+        return $api_data;
+    }
+	
     //----------------------------------------------
     // Woocommerce Category & Product WebID Export
     //----------------------------------------------
@@ -1208,18 +1325,18 @@ final class Eskimo_REST {
     /**
      * Export Woocommerce order to EskimoEPOS WebOrder
      *
-     * @param   array   		$id
+     * @param   array   		$order_id
      * @return  object|array
      */
-    public function get_orders_insert( $id ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
+    public function get_orders_insert( $order_id ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Order ID #[' . $order_id . ']', 'rest' ); }
 
 		// Sanitize
-		$id = absint( $id );
-	 	if ( $id === 0 ) { return $this->api_error( 'Invalid Order ID[' . $id . ']' ); }
+		$order_id = absint( $order_id );
+	 	if ( $order_id === 0 ) { return $this->api_error( 'Invalid Order ID #[' . $order_id . ']' ); }
 
         // Get Order Data
-		$api_opts = $this->wc->get_orders_insert_ID( $id );
+		$api_opts = $this->wc->get_orders_insert_ID( $order_id );
 		if ( is_wp_error( $api_opts ) ) { return $api_opts;	}
 
 		if ( $this->debug ) { eskimo_log( 'Order Data: ' . print_r( $api_opts, true ), 'rest' ); }
@@ -1231,15 +1348,16 @@ final class Eskimo_REST {
 
         // Insert order to EPOS
         $api_data = $this->api->orders_insert( $api_opts );
+		if ( $this->debug ) { eskimo_log( 'API Data: ' . print_r( $api_data, true ), 'rest' ); }
 
-        // Validate API data
+		// Validate API data
         if ( false === $api_data ) {
             return $this->api_rest_error();
         }
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { eskimo_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
+        if ( $this->debug ) { eskimo_log( 'Web Order: ID [' . $order_id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
@@ -1247,27 +1365,29 @@ final class Eskimo_REST {
         }
 
         // Generate woocommerce meta data reference 
-        return $this->wc->get_orders_epos_ID( $id, $api_data, true );
+        return $this->wc->get_orders_epos_ID( $order_id, $api_data, true );
 	}
 	
     /**
      * Export Woocommerce return to EskimoEPOS WebOrder
      *
-     * @param   array   		$id
+     * @param   array   		$order_id
+     * @param   array   		$return_id
      * @return  object|array
      */
-    public function get_orders_return( $id ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
+    public function get_orders_return( $order_id, $return_id ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID #[' . $order_id . '][' . $return_id . ']', 'rest' ); }
 
 		// Sanitize
-		$id = absint( $id );
-	 	if ( $id === 0 ) { return $this->api_error( 'Invalid Order ID[' . $id . ']' ); }
+		$order_id 	= absint( $order_id );
+		$return_id 	= absint( $return_id );
+	 	if ( $order_id === 0 || $return_id === 0 ) { return $this->api_error( 'Invalid Order or Return ID #[' . $order_id . '][' . $return_id . ']' ); }
 
         // Get Order Data
-		$api_opts = $this->wc->get_orders_return_ID( $id );
+		$api_opts = $this->wc->get_orders_return_ID( $order_id, $return_id );
 		if ( is_wp_error( $api_opts ) ) { return $api_opts;	}
 
-		if ( $this->debug ) { eskimo_log( 'Order Data: ' . print_r( $api_opts, true ), 'rest' ); }
+		if ( $this->debug ) { eskimo_log( 'Return Data: ' . print_r( $api_opts, true ), 'rest' ); }
 
         // Test API connection
         if ( false === $this->api->init() ) {
@@ -1284,15 +1404,14 @@ final class Eskimo_REST {
 
         // OK process data
         $api_data = $this->api_has_data( $api_data );
-        if ( $this->debug ) { eskimo_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
 
 		// No API data or invalid
         if ( false === $api_data ) {
             return $this->api_error( 'No Results Returned' );
         }
 
-        // Generate woocommerce meta data reference 
-        return $this->wc->get_orders_epos_ID( $id, $api_data, true, true );
+        // Return API data 
+        return $api_data;
 	}
 
     /**
