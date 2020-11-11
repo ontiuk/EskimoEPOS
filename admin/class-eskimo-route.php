@@ -1825,9 +1825,6 @@ final class Eskimo_Route extends WP_REST_Controller {
             'nonce'     => wp_create_nonce( 'wp_rest' )
         ];
 
-        // REST output TEMP
-        return new WP_REST_Response( $data, 200 );
-
         // OK, process data
         $data['result'] = $this->rest->get_products_specific_ID( $prod_epos_id, $import );
 

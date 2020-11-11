@@ -288,7 +288,7 @@ final class Eskimo_Cart {
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { eskimo_log( 'EPOS Refund: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+		if ( $this->debug ) { eskimo_log( 'EPOS Refund: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . print_r( $data['result'], true ) . ']', 'cart' ); }
 	}
 
 	/**
@@ -345,6 +345,17 @@ final class Eskimo_Cart {
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { eskimo_log( 'EPOS Stock Adjust: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+		// Valid result
+		if ( $this->debug ) { 
+			$result = $data['result'];
+
+			// Check result type		
+			if ( array_key_exists( 'identifier', $result ) ) {
+				eskimo_log( 'EPOS Stock Adjust: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . print_r( $data['result'], true ) . ']', 'cart' ); 
+			} else {
+				$msg = $result->message . ': ' . print_r( $result->ModelState, true ); 
+				eskimo_log( 'EPOS Stock Adjust: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' );
+			}
+		}
 	}
 }

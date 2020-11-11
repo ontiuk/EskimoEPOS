@@ -634,6 +634,10 @@ Stripe","Size":"30","CostPrice":9,"SellPrice":20,"StockAmount":8,"TaxCodeID":2,"
 
 == Changelog ==
 
+= 1.4.1 =
+* Bugfix for cart order insert
+* Woocommerce version update: 4.7.0
+
 = 1.4.0 =
 * Add returns order functionality
 * Various code optimisations and updates

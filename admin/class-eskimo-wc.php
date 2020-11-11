@@ -933,17 +933,17 @@ final class Eskimo_WC {
     /**
      * Get EskimoEPOS API product by ID
      *
-     * @param   string   		$prod_ref
-     * @param   string   		$trade_ref
+     * @param   string   		$path
+     * @param   string   		$product_id
      * @return  object|array
      */
-	public function get_products_stock( $path, $prod_id ) {
-		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Path[' . $path . '] ID[' . $prod_id . ']', 'wc' ); }
+	public function get_products_stock( $path, $product_id ) {
+		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': Path[' . $path . '] ID[' . $product_id . ']', 'wc' ); }
 
 		// Get product
-		$product = wc_get_product( $prod_id );
+		$product = wc_get_product( $product_id );
 		if ( ! $product ) {
-			return $this->api_error( 'Invalid Product for ID [' . $prod_id . ']' );
+			return $this->api_error( 'Invalid Product for ID [' . $product_id . ']' );
 		}
 	
 		// Process simple & multi
@@ -956,7 +956,7 @@ final class Eskimo_WC {
 
 		// No SKU?
 		if ( empty( $product_sku ) ) { 
-			return $this->api_error( 'Invalid SKU for ID [' . $prod_id . ']' );
+			return $this->api_error( 'Invalid SKU for ID [' . $product_id . ']' );
 		}
 
 		// ok, done
@@ -1901,7 +1901,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     public function get_orders_epos_ID( $id, $data, $update = false, $return = false ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . '] Order[' . $data->ExternalIdentifier . ']', 'wc' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . '] Order[' . $data['ExternalIdentifier'] . ']', 'wc' ); }
 
         // Validate API data
         if ( empty( $data ) ) {
@@ -1909,13 +1909,13 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { eskimo_log( 'Process Order ID[' . $id . ']EPOS ID[' . $data->ExternalIdentifier . ']', 'wc' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Order ID[' . $id . ']EPOS ID[' . $data['ExternalIdentifier'] . ']', 'wc' ); }
 
 		// Set field
 		$web_field = ( true === $return ) ? '_web_return_id' : '_web_order_id';
 
 		// Process update
-		return ( $update === true ) ? ( update_post_meta( $id, $web_field, $data->ExternalIdentifier ) ) ? 'ID[' . $id . '] EPOS WebOrder ID[' . $data->ExternalIdentifier . ']' : false : $data->ExternalIdentifier;
+		return ( $update === true ) ? ( update_post_meta( $id, $web_field, $data['ExternalIdentifier'] ) ) ? 'ID[' . $id . '] EPOS WebOrder ID[' . $data['ExternalIdentifier'] . ']' : false : $data['ExternalIdentifier'];
 	}
 
     //----------------------------------------------
