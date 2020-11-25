@@ -4,7 +4,7 @@
  * Plugin Name:       EskimoEPOS
  * Plugin URI:        https://github.com/ontiuk
  * Description:       Connect to Eskimo EPOS via Eskimo API and resistered Eskimo Reporting / EPOS account
- * Version:           1.4.1
+ * Version:           1.4.2
  * Author:            Stephen Betley
  * Author URI:        https://on.tinternet.co.uk
  * License:           GPL-2.0+
@@ -16,7 +16,7 @@
  * @package           Eskimo
  *
  * WC requires at least: 4.4.0
- * WC tested up to: 4.7.0
+ * WC tested up to: 4.7.1
  * 
 EskimoEPOS is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

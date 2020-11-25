@@ -1765,6 +1765,9 @@ final class Eskimo_WC {
     public function get_orders_return_ID( $order_id, $return_id ) {
         if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID #[' . $order_id . '][' . $return_id . ']', 'wc' ); }
 
+		// Valid order status: full and partial refunds allowed post-payment
+		$order_statusses = [ 'refunded', 'processing', 'completed' ];
+
 		// Validate API data
 		$order_id 	= absint( $order_id );
 		$return_id 	= absint( $return_id );
@@ -1785,7 +1788,7 @@ final class Eskimo_WC {
 
 		// Verify Order Status: Refunded
 		$order_status = $order->get_status();
-		if ( 'refunded' !== $order_status ) { return $this->api_error( 'Order status invalid [' . $order_status . ']' ); }
+		if ( ! in_array( $order_status, $order_statusses ) ) { return $this->api_error( 'Order status invalid [' . $order_status . ']' ); }
 
 		// Get the order returns / refunds [ WC_Order_Refund ]
 		$order_returns = $order->get_refunds();
