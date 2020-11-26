@@ -635,6 +635,9 @@ Stripe","Size":"30","CostPrice":9,"SellPrice":20,"StockAmount":8,"TaxCodeID":2,"
 == Changelog ==
 
 = 1.4.2 =
+* Fix: External identifier for order insert
+
+= 1.4.2 =
 * Add processing and completed order status to returns order functionality
 
 = 1.4.1 =

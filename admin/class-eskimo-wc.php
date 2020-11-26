@@ -1904,7 +1904,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     public function get_orders_epos_ID( $id, $data, $update = false, $return = false ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . '] Order[' . $data['ExternalIdentifier'] . ']', 'wc' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $id . '] UPD[' . (int) $update . '] Order[' . $data->ExternalIdentifier . ']', 'wc' ); }
 
         // Validate API data
         if ( empty( $data ) ) {
@@ -1912,13 +1912,13 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { eskimo_log( 'Process Order ID[' . $id . ']EPOS ID[' . $data['ExternalIdentifier'] . ']', 'wc' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Order ID[' . $id . ']EPOS ID[' . $data->ExternalIdentifier . ']', 'wc' ); }
 
 		// Set field
 		$web_field = ( true === $return ) ? '_web_return_id' : '_web_order_id';
 
 		// Process update
-		return ( $update === true ) ? ( update_post_meta( $id, $web_field, $data['ExternalIdentifier'] ) ) ? 'ID[' . $id . '] EPOS WebOrder ID[' . $data['ExternalIdentifier'] . ']' : false : $data['ExternalIdentifier'];
+		return ( $update === true ) ? ( update_post_meta( $id, $web_field, $data->ExternalIdentifier ) ) ? 'ID[' . $id . '] EPOS WebOrder ID[' . $data->ExternalIdentifier . ']' : false : $data->ExternalIdentifier;
 	}
 
     //----------------------------------------------
