@@ -133,20 +133,34 @@ final class Eskimo_Admin {
 		if ( strlen( $value ) < 6 ) { return $old_password; }
 
 		// Test new password for structure, reject if not OK
-		if ( ! preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', $value ) ) {
-			return $old_password;
-		}
+		if ( ! preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', $value ) ) { return $old_password; }
 
 		// Process API update? Check vs existing password
 		if ( $old_password === $value ) { return $value; }
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/account-password/' . urlencode( $old_password ) . '/' . urlencode( $value );
+		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'api' ); }
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Account Password Old [' . $old_password . '] New [' . $value . '] API Error', 'api' ) : '';
+		}
+
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Empty Password Old [' . $old_password . '] New [' . $value . '] Account', 'api' ) : '';
+		}			
+
+		// Get the body data
+		$data = json_decode( $body );
 
 		// Get any message: no error, update succesful
-		return ( empty( $data['result'] ) ) ? $value : $old_password;
+		return ( empty( $data->result ) ) ? $value : $old_password;
 	}
 
     /** 

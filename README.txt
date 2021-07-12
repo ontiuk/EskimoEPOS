@@ -634,6 +634,15 @@ Stripe","Size":"30","CostPrice":9,"SellPrice":20,"StockAmount":8,"TaxCodeID":2,"
 
 == Changelog ==
 
+= 1.4.6 =
+* Refactor Cart EPOS order insert API call
+
+= 1.4.5 =
+* Add additional debugging for API calls
+
+= 1.4.3 =
+* Fix: Coupons for order insert via api
+
 = 1.4.2 =
 * Fix: External identifier for order insert
 

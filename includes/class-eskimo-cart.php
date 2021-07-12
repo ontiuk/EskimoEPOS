@@ -93,21 +93,53 @@ final class Eskimo_Cart {
 
 			// Check it exists...
 			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-exists/' . $user_email;
+			if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
 			$response = wp_remote_get( $rest_url );
-			$data = $response['body'];
-			if ( $data === true ) {
-				return ( $this->debug ) ? eskimo_log( 'Customer ID [' . $cust_id . '] Email[' . $user_email . '] Exists', 'cart' ) : '';
+
+			// Check the call worked
+			if ( is_wp_error( $response ) ) {
+				return ( $this->debug ) ? eskimo_log( 'Exists Customer ID [' . $cust_id . '] Email[' . $user_email . '] API Error', 'cart' ) : '';
+			}
+
+			// Get the response body
+			$body = wp_remote_retrieve_body( $response );
+
+			// Check contents and parse
+			if ( empty( $body ) ) {
+				return ( $this->debug ) ? eskimo_log( 'Empty Customer ID [' . $cust_id . '] Email[' . $user_email . '] API Error', 'cart' ) : '';
 			} else {
-				$data = json_decode( $response['body'] );
+
+				// Get the body data
+				$data = json_decode( $body );
 				if ( $this->debug ) { eskimo_log( 'Customer EPOS [' . $data->params . '] Result[' . $data->result . ']', 'cart' ); }
+
+				// Check if exists?
+				if ( true === (bool) $data->result ) {
+					return ( $this->debug ) ? eskimo_log( 'Customer ID [' . $cust_id . '] Email[' . $user_email . '] Exists', 'cart' ) : '';
+				}
 			}
 
 			// Create it if not...
 			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-insert/' . $cust_id;
+			if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
-			$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-			if ( $this->debug ) { eskimo_log( 'EPOS Customer:  Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+			// Check the call worked
+			if ( is_wp_error( $response ) ) {
+				return ( $this->debug ) ? eskimo_log( 'Insert Customer ID [' . $cust_id . '] Email[' . $user_email . '] API Error', 'cart' ) : '';
+			}
+
+			// Get the response body
+			$body = wp_remote_retrieve_body( $response );
+
+			// Check contents and parse
+			if ( empty( $body ) ) {
+				return ( $this->debug ) ? eskimo_log( 'Empty Customer ID [' . $cust_id . '] Email[' . $user_email . '] Insert', 'cart' ) : '';
+			}			
+
+			// Get the body data
+			$data = json_decode( $body );
+			if ( $this->debug ) { eskimo_log( 'EPOS Customer:  Route[' . $data->route . '] Params[' . $data->params . '] Result[' . $data->result . ']', 'cart' ); }
 		}
 	}
 	
@@ -124,11 +156,28 @@ final class Eskimo_Cart {
 		
 		// Initiate REST call to update EPOS order status
 		if ( $user_role === 'customer' ) {
-			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-update/' . $cust_id;
-			$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
-			$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-			if ( $this->debug ) { eskimo_log( 'EPOS Customer: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+			// Set up the customer call
+			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-update/' . $cust_id;
+			if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
+			$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
+
+			// Check the call worked
+			if ( is_wp_error( $response ) ) {
+				return ( $this->debug ) ? eskimo_log( 'Updated Customer ID [' . $cust_id . '] API Error', 'cart' ) : '';
+			}
+
+			// Get the response body
+			$body = wp_remote_retrieve_body( $response );
+
+			// Check contents and parse
+			if ( empty( $body ) ) {
+				return ( $this->debug ) ? eskimo_log( 'Empty Customer ID [' . $cust_id . '] Updated', 'cart' ) : '';
+			}			
+
+			// Get the body data
+			$data = json_decode( $body );
+			if ( $this->debug ) { eskimo_log( 'EPOS Customer: Route[' . $data->route . '] Params[' . $data->params . '] Result[' . $data->result . ']', 'cart' ); }
 		}
 	}
 
@@ -144,6 +193,7 @@ final class Eskimo_Cart {
 	public function new_order_created( $order_id ) {
 		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' Order ID[' . $order_id . ']', 'cart' ); }
 
+		// Get order & user details
 		$order	= wc_get_order( $order_id );
 		$user 	= $order->get_user();
 
@@ -158,10 +208,25 @@ final class Eskimo_Cart {
 
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-insert/' . $user_id;
+		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Created Order ID [' . $order_id . '] UserID [' . $user_id . '] API Error', 'cart' ) : '';
+		}
+
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Empty Order ID [' . $order_id . '] UserID [' . $user_id . '] Created', 'cart' ) : '';
+		}			
+
+		// Get the body data
+		$data = json_decode( $body );
+		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data->route . '] Params[' . $data->params . '] Result[' . $data->result . ']', 'cart' ); }
 	}
 
 	/**
@@ -199,11 +264,24 @@ final class Eskimo_Cart {
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-insert/' . $order_id;
 		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
-
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Created Order ID [' . $order_id . '] Cust ID [' . $customer_id . '] API Error', 'cart' ) : '';
+		}
+
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Empty Order ID [' . $order_id . '] Cust ID [' . $customer_id . '] Created', 'cart' ) : '';
+		}			
+
+		// Get the body data
+		$data = json_decode( $body );
+		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data->route . '] Params[' . $data->params . '] Result[' . $data->result . ']', 'cart' ); }
 	}	
 
 	/**
@@ -241,11 +319,24 @@ final class Eskimo_Cart {
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-insert/' . $order_id;
 		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
-
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' ); }
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Completed Order ID [' . $order_id . '] Cust ID [' . $customer_id . '] API Error', 'cart' ) : '';
+		}
+
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Empty Order ID [' . $order_id . '] Cust ID [' . $customer_id . '] Completed', 'cart' ) : '';
+		}			
+
+		// Get the body data
+		$data = json_decode( $body );
+		if ( $this->debug ) { eskimo_log( 'EPOS Order: Route[' . $data->route . '] Params[' . $data->params . '] Result[' . $data->result . ']', 'cart' ); }
 	}
 
 	/**
@@ -284,11 +375,24 @@ final class Eskimo_Cart {
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-return/' . $order_id . '/' . $refund_id;
 		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
-
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $this->debug ) { eskimo_log( 'EPOS Refund: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . print_r( $data['result'], true ) . ']', 'cart' ); }
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Return Order ID [' . $order_id . '] Refund ID [' . $refund_id . '] Cust ID [' . $customer_id . '] API Error', 'cart' ) : '';
+		}
+
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Empty Order ID [' . $order_id . '] Refund ID [' . $refund_id . '] Cust ID [' . $customer_id . '] Return', 'cart' ) : '';
+		}			
+
+		// Get the body data
+		$data = json_decode( $body );
+		if ( $this->debug ) { eskimo_log( 'EPOS Refund: Route[' . $data->route . '] Params[' . $data->params . '] Result[' . print_r( $data->result, true ) . ']', 'cart' ); }
 	}
 
 	/**
@@ -305,8 +409,7 @@ final class Eskimo_Cart {
 		}
 
 		// Set product ID
-		$product_id = $product->get_id();
-		
+		$product_id = $product->get_id();		
 	}
 
 	/**
@@ -341,20 +444,34 @@ final class Eskimo_Cart {
 		// Initiate REST call to update EPOS order status
 		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/product-stock/adjust/' . $product_id;
 		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
-
 		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Stock Product ID [' . $product_id . '] Stock: SKU[' . $product_sku . '] Qty[' . $product_qty . '] API Error', 'cart' ) : '';
+		}
+
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Empty Product ID [' . $product_id . '] Stock: SKU[' . $product_sku . '] Qty[' . $product_qty . '] Stock', 'cart' ) : '';
+		}			
+
+		// Get the body data
+		$data = json_decode( $body );
 
 		// Valid result
 		if ( $this->debug ) { 
-			$result = $data['result'];
+			$result = $data->result;
 
 			// Check result type		
 			if ( array_key_exists( 'identifier', $result ) ) {
-				eskimo_log( 'EPOS Stock Adjust: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . print_r( $data['result'], true ) . ']', 'cart' ); 
+				eskimo_log( 'EPOS Stock Adjust: Route[' . $data->route . '] Params[' . $data->params . '] Result[' . print_r( $data->result, true ) . ']', 'cart' ); 
 			} else {
 				$msg = $result->message . ': ' . print_r( $result->ModelState, true ); 
-				eskimo_log( 'EPOS Stock Adjust: Route[' . $data['route'] . '] Params[' . $data['params'] . '] Result[' . $data['result'] . ']', 'cart' );
+				eskimo_log( 'EPOS Stock Adjust: Route[' . $data->route . '] Params[' . $data->params . '] Result[' . $data->result . ']', 'cart' );
 			}
 		}
 	}

@@ -1564,7 +1564,6 @@ final class Eskimo_WC {
 			if ( ! $guest_user ) { return $this->api_error( 'EskimoEPOS Invalid Customer' ); }
 			$cust_id = $guest_user->ID;
 		}
-		if ( $this->debug ) { eskimo_log( 'Order User UPD: ' . $cust_id, 'wc' ); }
 
 		// Customer meta
 		$epos_id = get_user_meta( $cust_id, 'epos_id', true );
@@ -1575,17 +1574,18 @@ final class Eskimo_WC {
 		$epos_ei = $epos_ei . $epos_id . '-' . $cust_id . '-' . $order_id;  
 		if ( $this->debug ) { eskimo_log( 'Customer ID: [' . $cust_id . '] EPOS Customer ID[' . $epos_id . '] EPOS API ID[' . $epos_ei . ']', 'wc' ); }
 
-		// Get order items
+		// Get order items & discount
 		$order_items = $order->get_items();
-		if ( $this->debug ) { eskimo_log( 'Order Items: ' . count( $order_items ), 'wc' ); }
-
-		// Get any order discounts
 		$order_discounts = $order->get_coupon_codes(); 
-
+		if ( $this->debug ) { eskimo_log( 'Order: Items [' . count( $order_items ) . '] Coupons [' . count( $order_discounts ) . ']', 'wc' ); }
+	
 		// Initiate coupons, normally one max, but can layer multiple
-		$order_coupons = [];
+		$order_discount = 0;
 
-		// Construct coupon list
+		// Apply sequentially?
+		$order_discount_sequential = get_option( 'woocommerce_calc_discounts_sequentially', 'no' );
+
+		// Construct coupon list & discount total
 		foreach ( $order_discounts as $coupon_code ) {
 
 			// Retrieving the coupon ID
@@ -1595,26 +1595,38 @@ final class Eskimo_WC {
 			// Get an instance of WC_Coupon
 			$coupon = new WC_Coupon( $coupon_id );
 			if ( $this->debug ) { eskimo_log( 'Coupon: Type[' . $coupon->get_discount_type() . '] Amount[' . $coupon->get_amount() . ']', 'wc' ); }
-		
-			// Add coupon to list
-			$order_coupons[] = $coupon;
+
+			// Add discount value to running total		
+			$order_discount += $coupon->get_amount();
+
+			// Not sequential? Use first coupon only
+			if ( 'no' === $order_discount_sequential ) { break; }
 		}
+		$order_total_discount = $order->get_total_discount();
+		if ( $this->debug ) { eskimo_log( 'Order Discount Total[' . $order_discount . ']['. $order_total_discount . ']', 'wc' ); }
 
 		// Order Notes
 		$order_notes = $order->get_customer_order_notes(); 
 		if ( is_array( $order_notes ) && ! empty( $order_notes ) ) {
 			$order_note = '';
 			foreach ( $order_notes as $n ) {
-				eskimo_log( 'Note: [' . gettype( $n ) . '][' . print_r( $n, true ) . ']', 'wc' );
+				if ( $this->debug ) { eskimo_log( 'Note: [' . gettype( $n ) . '][' . print_r( $n, true ) . ']', 'wc' ); }
 				$order_note .= $n->comment_content; 
 			}
 		} else {
 			$order_note = get_post( $order_id )->post_excerpt;
 		}
 
-		// Set up invoice and order amount: vat respective
-		$order_invoice_amount = ( true ===  $order->get_prices_include_tax() ) ? $order->get_total() : $order->get_total() - $order->get_total_tax();
-		if ( $this->debug ) { eskimo_log( 'Order: Invoice[' . number_format( $order_invoice_amount, wc_get_price_decimals(), '.', '' ) . ']', 'wc' ); }
+		// TEMP
+		if ( $this->debug ) {
+			eskimo_log( 'IncTax[' . $order->get_prices_include_tax() . '] Total[' . $order->get_total() . '] Subtotal [' . $order->get_subtotal() . '] Tax[' . $order->get_total_tax() . ']', 'wc' );
+			eskimo_log( 'Discount: [' . $order->get_total_discount() . '][' . $order->get_discount_to_display() . '][' . $order->get_discount_total() . '][' . $order->get_discount_tax() . ']', 'wc' );
+			eskimo_log( 'Shipping: [' . $order->get_shipping_total() . '][' . $order->get_shipping_tax() . ']', 'wc' );
+		}
+
+		// Set up invoice and order amount: vat respective. Required? 
+		$order_total = ( true ===  $order->get_prices_include_tax() ) ? $order->get_total() : $order->get_total() - $order->get_total_tax();
+		if ( $this->debug ) { eskimo_log( 'Order: Paid Total[' . number_format( $order_total, wc_get_price_decimals(), '.', '' ) . ']', 'wc' ); }
 
 		// Initiate order data
 		$data = [
@@ -1628,8 +1640,8 @@ final class Eskimo_WC {
 
 		// Set up order items & totals
 		$items = [];
-		$cart_total = $discount_total = 0;
-
+		$order_discount_total = $order_line_total = 0;
+			
 		// Iterating through each WC_Order_Item_Product objects
 		foreach ( $order_items as $k => $order_item ) {
 
@@ -1646,62 +1658,35 @@ final class Eskimo_WC {
 				if ( $this->debug ) { eskimo_log( 'Product: ID[' . $product_id. '] Invalid SKU', 'wc' ); }
 				continue;
 			}
-
+			if ( $this->debug ) { eskimo_log( 'Item Price[' . $product->get_price() . '] Total[' . $order_item->get_total() . '] Subtotal [' . $order_item->get_subtotal() . '] Tax[' . $order_item->get_total_tax() . '] SubtotalTax[' . $order_item->get_subtotal_tax() . ']', 'wc' ); }
+						
 			// Basic item details
 			$item['sku_code'] 				= $product_sku;
 			$item['qty_purchased']			= $order_item->get_quantity();
 			$item['item_note']				= null;			
 			$item['item_description']		= null;			
-
+			
 			// Any discounts?
-			if ( ! empty( $order_coupons ) ) {
+			if ( $order_total_discount > 0 ) {
+				$item['line_discount_amount'] = number_format( $order_item->get_subtotal() - $order_item->get_total(), wc_get_price_decimals(), '.', '' );
+				$order_discount_total += $item['line_discount_amount'];
+			} else { $item['line_discount_amount'] = 0; }
 
-				// Apply sequentially?
-				$discount_sequential = get_option( 'woocommerce_calc_discounts_sequentially', 'no' );
+			// Set line total after discount & applied VAT
+			$item_line_total = $order_item->get_total() + $order_item->get_total_tax();
+			if ( $this->debug ) { eskimo_log( 'Item Line Total: [' . $item_line_total . ']', 'wc' ); }
 
-				// Get base price & discount
-				$item['unit_price']				= $product->get_price();
-				$item['line_discount_amount']	= 0;
+			$item['unit_price']	= number_format( $item_line_total / $order_item->get_quantity(), 4, '.', '' );
+			$order_line_total += number_format( $item_line_total, 4, '.', '' );
+			if ( $this->debug ) { eskimo_log( 'Item Product: ' . print_r( $item, true ) . ']', 'wc' ); }
 
-				// Iterate through coupons
-				foreach ( $order_coupons as $k => $coupon ) {
-
-					// How to apply multiple discounts					
-					$price_to_discount = ( 'yes' === $discount_sequential ) ? $item['unit_price'] : $product->get_price();
-
-					// Price based discount with rounding
-					if ( $coupon->get_discount_type() === 'percent' ) {
-						$price_to_discount = absint( round( wc_add_number_precision( $price_to_discount ) ) );
-						$discount = wc_remove_number_precision( wc_round_discount( $price_to_discount * ( $coupon->get_amount() / 100 ), 0 ) );
-					} else {
-						$discount = wc_round_discount( $price_to_discount - $coupon->get_amount() );
-					}
-
-					// Set up new price & running discount
-					$item['unit_price']				-= $discount;
-					$item['line_discount_amount']	+= $discount;
-				}
-			} else {				
-				$item['unit_price']				= $product->get_price();
-				$item['line_discount_amount']	= 0;
-			}
-
-			// Running order totals, price & qty
-			$cart_total 	+= ( $item['unit_price'] * $order_item->get_quantity() );
-			$discount_total += ( $item['line_discount_amount'] * $order_item->get_quantity() );
-
-			// Format item line totals
-			$item['unit_price']				= number_format( $item['unit_price'], wc_get_price_decimals(), '.', '' );
-			$item['line_discount_amount']	= number_format( $item['line_discount_amount'], wc_get_price_decimals(), '.', '' );
-			 
 			// Construct items
 			$items[] = $item;
 		}
 
 		// Set up invoice data: cart total + shipping total
-		$data['invoice_amount']	= number_format( $cart_total + $order->get_shipping_total(), wc_get_price_decimals(), '.', '' );
-		$data['amount_paid']	= number_format( $cart_total + $order->get_shipping_total(), wc_get_price_decimals(), '.', '' );
-		if ( $this->debug ) { eskimo_log( 'Invoice: [' . $order_invoice_amount . '][' . $data['invoice_amount'] . ']', 'wc' ); }
+		$data['invoice_amount']	= $data['amount_paid'] = number_format( $order_line_total + $order->get_shipping_total(), wc_get_price_decimals(), '.', '' );
+		if ( $this->debug ) { eskimo_log( 'Invoice: [' . $data['invoice_amount'] . '] Paid[' . $data['amount_paid'] . ']', 'wc' ); }
 
 		// Set up billing address
 		$billing = [
@@ -1743,16 +1728,22 @@ final class Eskimo_WC {
 
 		// Get Order Shipping
 		$shipping_method 	= $order->get_shipping_method();
-		if ( $this->debug ) { eskimo_log( 'Shipping: [' . $shipping_method . ']', 'wc' ); }
+		if ( $this->debug ) { eskimo_log( 'Shipping Method: [' . $shipping_method . ']', 'wc' ); }
 
 		$data['OrderedItems']			= $items;
 		$data['CustomerReference'] 		= null;
 		$data['DeliveryNotes'] 			= $order_note;
 		$data['ShippingRateID'] 		= ( $shipping_method === 'Flat Rate' ) ? 2 : 1; // 1: Click&Collect 2: FlatRate 
-		$data['ShippingAmountGross'] 	= $order->get_shipping_total();
 
-        // OK, done
-        return $data;
+		// Set shipping
+		$data['ShippingAmountGross'] = $order->get_shipping_total();
+		if ( $this->debug ) { eskimo_log( 'Shipping Gross: [' . $data['ShippingAmountGross'] . ']', 'wc' ); }
+
+		// Error check remaining discount
+		if ( $this->debug ) { eskimo_log( 'Discount: Coupon [' . $order_discount . '] Order[' . $order_total_discount . '] Total[' . $order_discount_total . ']', 'wc' ); }
+
+		// OK, done
+		return $data;
 	}
 
     /**

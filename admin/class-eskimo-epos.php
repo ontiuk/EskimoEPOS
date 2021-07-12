@@ -160,15 +160,23 @@ final class Eskimo_EPOS {
         $access_token_url = $oauth_data['domain'] . 'token';
 
 		// Remote request for access token & expiry
-		$res = wp_remote_post( $access_token_url, [ 'body' => $oauth_data ] );
+		$response = wp_remote_post( $access_token_url, [ 'body' => $oauth_data ] );
 
-		// Bad response
-		if ( is_wp_error( $res ) ) {
-            return $this->api_error( $res );
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+            return $this->api_error( $response );
 		}
 
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+            return $this->api_error( 'Empty Access Token' );
+		}			
+
 		// Set up token and details
-		$access_response = json_decode( $res['body'] );
+		$access_response = json_decode( $body );
 
 		// Retrieve expiry time in secs
 		$api_expiry = absint( $access_response->expires_in );
@@ -178,14 +186,14 @@ final class Eskimo_EPOS {
         $api_timeout = absint( ini_get('session.gc_maxlifetime') );
         $api_timeout = ( $api_timeout > 0 ) ? $api_timeout : 1440;
 
-		// Last override
+		// Last override with api data
 		$api_timeout = ( $api_expiry > 0 ) ? $api_expiry : $api_timeout;
 		
         if ( $this->debug ) { 
             eskimo_log( 'API Timeout[' . $api_timeout . '] API Token[' . $api_token . ']', 'epos' );
         }
 
-        // Set WordPress transients        
+        // Set API transients
         set_transient( 'eskimo_access_token', $api_token, $api_timeout );
         set_transient( 'eskimo_access_authenticated', true, $api_timeout );
 
