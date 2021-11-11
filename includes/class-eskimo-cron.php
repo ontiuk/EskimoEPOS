@@ -99,6 +99,7 @@ final class Eskimo_Cron {
 		// Get category list
 		$response 	= wp_remote_get( $rest_url, [ 'timeout' => 60 ] );
 		$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( is_null( $data ) ) { return; }
 		$categories	= $data['result'];
 
 		// Bad call?

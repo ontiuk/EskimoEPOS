@@ -77,7 +77,13 @@ final class Eskimo_WC {
         // Validate API data
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
-        }
+		}
+		
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Categories[' . count( $api_data ) . ']', 'wc' ); }
@@ -240,6 +246,12 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
+
         // Web_ID
         $web_prefix = get_option( 'eskimo_api_category' ); 
         if ( $this->debug ) { eskimo_log( 'Web Prefix[' . $web_prefix . ']', 'wc' ); }
@@ -312,6 +324,12 @@ final class Eskimo_WC {
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
         }
+
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Categories ID[' . count( $api_data ) . ']', 'wc' ); }
@@ -405,6 +423,12 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
+
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Categories ID[' . count( $api_data ) . ']', 'wc' ); }
 
@@ -472,6 +496,12 @@ final class Eskimo_WC {
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
         }
+
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Products All[' . count( $api_data ) . ']', 'wc' ); }
@@ -580,6 +610,12 @@ final class Eskimo_WC {
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
         }
+
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Products New[' . count( $api_data ) . ']', 'wc' ); }
@@ -724,6 +760,12 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
+
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Product SKUs[' . count( $api_prod->sku ) . '] path[' . $path . ']', 'wc' ); }
 
@@ -831,6 +873,12 @@ final class Eskimo_WC {
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
         }
+
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Products Cart ID[' . count( $api_data ) . ']', 'wc' ); }
@@ -946,9 +994,6 @@ final class Eskimo_WC {
 			return $this->api_error( 'Invalid Product for ID [' . $product_id . ']' );
 		}
 	
-		// Process simple & multi
-		// if path === adjust / multi, split functions?
-		
 		// Get stock $ SKU
 		$product_sku = $product->get_sku();
 		$product_qty = $product->get_stock_quantity();
@@ -1237,7 +1282,13 @@ final class Eskimo_WC {
          // Validate API data
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
-        }
+		}
+
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process SKUs All[' . count( $api_data ) . '] Import[' . (int) $import . ']', 'wc' ); }
@@ -1303,6 +1354,12 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
+
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process SKUs Orphan[' . count( $api_data ) . ']', 'wc' ); }
 
@@ -1356,6 +1413,12 @@ final class Eskimo_WC {
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
         }
+
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process SKUs All[' . count( $api_data ) . ']', 'wc' ); }
@@ -1422,6 +1485,12 @@ final class Eskimo_WC {
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
         }
+
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process SKUs ID[' . count( $api_data ) . ']', 'wc' ); }
@@ -1494,7 +1563,7 @@ final class Eskimo_WC {
         }
 
         // Process data
-        if ( $this->debug ) { eskimo_log( 'Process Order[' . count( $api_data ) . ']', 'wc' ); }
+        if ( $this->debug ) { eskimo_log( 'Process Order', 'wc' ); }
 
 		// Validate content? order, customer
 		return $this->api_error( 'Order Import Not Yet Implemented' );
@@ -1626,7 +1695,7 @@ final class Eskimo_WC {
 
 		// Set up invoice and order amount: vat respective. Required? 
 		$order_total = ( true ===  $order->get_prices_include_tax() ) ? $order->get_total() : $order->get_total() - $order->get_total_tax();
-		if ( $this->debug ) { eskimo_log( 'Order: Paid Total[' . number_format( $order_total, wc_get_price_decimals(), '.', '' ) . ']', 'wc' ); }
+		if ( $this->debug ) { eskimo_log( 'Order: Paid Total[' . $order_total . ']', 'wc' ); }
 
 		// Initiate order data
 		$data = [
@@ -1668,7 +1737,7 @@ final class Eskimo_WC {
 			
 			// Any discounts?
 			if ( $order_total_discount > 0 ) {
-				$item['line_discount_amount'] = number_format( $order_item->get_subtotal() - $order_item->get_total(), wc_get_price_decimals(), '.', '' );
+				$item['line_discount_amount'] = $order_item->get_subtotal() - $order_item->get_total();
 				$order_discount_total += $item['line_discount_amount'];
 			} else { $item['line_discount_amount'] = 0; }
 
@@ -1676,8 +1745,8 @@ final class Eskimo_WC {
 			$item_line_total = $order_item->get_total() + $order_item->get_total_tax();
 			if ( $this->debug ) { eskimo_log( 'Item Line Total: [' . $item_line_total . ']', 'wc' ); }
 
-			$item['unit_price']	= number_format( $item_line_total / $order_item->get_quantity(), 4, '.', '' );
-			$order_line_total += number_format( $item_line_total, 4, '.', '' );
+			$item['unit_price']	= $item_line_total / $order_item->get_quantity();
+			$order_line_total += $item_line_total;
 			if ( $this->debug ) { eskimo_log( 'Item Product: ' . print_r( $item, true ) . ']', 'wc' ); }
 
 			// Construct items
@@ -1685,7 +1754,7 @@ final class Eskimo_WC {
 		}
 
 		// Set up invoice data: cart total + shipping total
-		$data['invoice_amount']	= $data['amount_paid'] = number_format( $order_line_total + $order->get_shipping_total(), wc_get_price_decimals(), '.', '' );
+		$data['invoice_amount']	= $data['amount_paid'] = $order_line_total + $order->get_shipping_total();
 		if ( $this->debug ) { eskimo_log( 'Invoice: [' . $data['invoice_amount'] . '] Paid[' . $data['amount_paid'] . ']', 'wc' ); }
 
 		// Set up billing address
@@ -1930,6 +1999,12 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
+
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Image Links[' . count( $api_data ) . ']', 'wc' ); }
 
@@ -1950,6 +2025,12 @@ final class Eskimo_WC {
         if ( empty( $api_data ) ) {
             return $this->api_rest_error();
         }
+
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
 
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Images All[' . count( $api_data ) . ']', 'wc' ); }
@@ -1976,6 +2057,12 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
+
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Tax Codes[' . count( $api_data ) . ']', 'wc' ); }
 
@@ -1997,6 +2084,12 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
+		
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Shops All[' . count( $api_data ) . ']', 'wc' ); }
 
@@ -2018,7 +2111,13 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
-        // Process data
+		// Must be an array or object implementing countable
+		if ( ! is_countable( $api_data ) ) {
+			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
+            return $this->api_rest_error();
+		}
+
+		// Process data
         if ( $this->debug ) { eskimo_log( 'Process Shops ID[' . count( $api_data ) . ']', 'wc' ); }
 
         // OK, done

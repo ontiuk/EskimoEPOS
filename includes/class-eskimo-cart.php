@@ -85,15 +85,30 @@ final class Eskimo_Cart {
 
 		// Get user & role
 		$user = get_user_by( 'ID', $cust_id );
-		$user_email = $user->email; 
+
+		// Check for failure
+		if ( false === $user ) {
+			if ( $this->debug ) { eskimo_log( 'Failed Customer: ID[' . $cust_id . ']', 'cart' ); }
+			return;
+		}
+
+		// Get details if OK
+		$user_email = $user->user_email; 
 		$user_role 	= $user->roles[0];
+		if ( $this->debug ) { eskimo_log( 'Customer: ID[' . $cust_id . '] Email[' . $user_email . '] Role[' . $user_role . ']', 'cart' ); }
+
+		// Need email, should have one at this point
+		if ( empty( $user_email ) ) {
+			if ( $this->debug ) { eskimo_log( 'No email[' . $cust_id . ']', 'cart' ); }
+			return;
+		}
 
 		// Initiate REST call to update EPOS order status
 		if ( $user_role === 'customer' ) {
 
 			// Check it exists...
 			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/customer-exists/' . $user_email;
-			if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
+			if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . '] Email[' . $user_email . ']', 'cart' ); }
 			$response = wp_remote_get( $rest_url );
 
 			// Check the call worked

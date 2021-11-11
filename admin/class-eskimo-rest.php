@@ -1364,6 +1364,19 @@ final class Eskimo_REST {
             return $this->api_error( 'No Results Returned' );
         }
 
+		// Check for API error message
+		if ( true === $this->api_has_message( $api_data ) ) {
+
+			// Construct error
+			$message = $api_data->message;
+			if ( property_exists( $api_data, 'ModelState' ) && property_exists( $api_data->ModelState, 'Error Message' ) ) {
+				$error_message = $api_data->ModelState->{'Error Message'};
+				$message .= ' ' . $error_message[0];
+			}
+
+            return $this->api_error( $message );
+		}
+
         // Generate woocommerce meta data reference 
         return $this->wc->get_orders_epos_ID( $order_id, $api_data, true );
 	}
@@ -2354,6 +2367,17 @@ final class Eskimo_REST {
 	 */	
 	private function api_has_status( $api_status ) {
 		return ( $api_status === 200 ) ? true : false;
+	}
+
+	/**
+	 * Check if the returned API call has an error message
+	 * - Test for the message property
+	 *
+	 * @param	object	$api_data
+	 * @return 	boolean
+	 */
+	private function api_has_message( $api_data ) {
+		return property_exists( $api_data, 'Message' );
 	}
 
 	/**
