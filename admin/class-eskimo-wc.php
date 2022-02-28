@@ -760,12 +760,6 @@ final class Eskimo_WC {
             return $this->api_rest_error();
         }
 
-		// Must be an array or object implementing countable
-		if ( ! is_countable( $api_data ) ) {
-			if ( $this->debug ) { eskimo_log( 'Bad API Data', 'wc' ); }
-            return $this->api_rest_error();
-		}
-
         // Process data
         if ( $this->debug ) { eskimo_log( 'Process Product SKUs[' . count( $api_prod->sku ) . '] path[' . $path . ']', 'wc' ); }
 
@@ -3042,7 +3036,7 @@ final class Eskimo_WC {
         
         // Set SKU count
         $sku_count = count( $data->sku );
-        if ( $this->debug) { eskimo_log( 'SKU Product[' . $data->eskimo_identifier . '] Count[' . count( $data->sku ) . ']', 'wc' ); }
+        if ( $this->debug) { eskimo_log( 'SKU Product[' . $data->eskimo_identifier . '] Count[' . $sku_count . ']', 'wc' ); }
 
         // Bad SKU
         if ( 0 === $sku_count ) { return false; }

@@ -634,6 +634,9 @@ Stripe","Size":"30","CostPrice":9,"SellPrice":20,"StockAmount":8,"TaxCodeID":2,"
 
 == Changelog ==
 
+= 1.4.8 =
+* Minor bug fixes
+
 = 1.4.7 =
 * Enhanced error checking when API call fails. Updated versioning
 

@@ -319,13 +319,15 @@ final class Eskimo_Cron {
 		// Retrieve SKU list
 		$response 	= wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
 		$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
-		$skus 		= $data['result'];
 
 		// Bad call
-		if ( ! is_array( $skus ) || empty( $skus ) ) {
-			if ( $this->debug ) {				
-				return ( empty( $skus ) ) ? eskimo_log( 'REST SKUs not found', 'cron' ) : eskimo_log( 'REST Result [' . $skus . ']', 'cron' );
-			} else { return; }
+		if ( is_null( $data ) ) {
+			return ( $this->debug ) ? eskimo_log( 'REST API call error', 'cron' ) : '';
+		} else {
+			$skus = $data['result'];
+			if ( ! is_array( $skus ) || empty( $skus ) ) {
+				return ( $this->debug ) ? eskimo_log( 'REST SKUs not found', 'cron' ) : '';
+			}
 		}
 
 		// Get unique products

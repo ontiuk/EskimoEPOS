@@ -766,6 +766,8 @@ final class Eskimo_REST {
 
         // Add Product SKU
         $api_data->sku = $this->get_skus_specific_ID( $api_data->eskimo_identifier, false );
+		if ( is_wp_error( $api_data->sku ) ) { return $api_data->sku; }
+
         if ( $this->debug ) { eskimo_log( print_r( $api_data, true ), 'rest' ); }
 
         // Process Woocommerce Import
@@ -1368,7 +1370,7 @@ final class Eskimo_REST {
 		if ( true === $this->api_has_message( $api_data ) ) {
 
 			// Construct error
-			$message = $api_data->message;
+			$message = ( property_exists( $api_data, 'message' ) ) ? $api_data->message : '';
 			if ( property_exists( $api_data, 'ModelState' ) && property_exists( $api_data->ModelState, 'Error Message' ) ) {
 				$error_message = $api_data->ModelState->{'Error Message'};
 				$message .= ' ' . $error_message[0];
