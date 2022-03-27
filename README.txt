@@ -634,6 +634,9 @@ Stripe","Size":"30","CostPrice":9,"SellPrice":20,"StockAmount":8,"TaxCodeID":2,"
 
 == Changelog ==
 
+= 1.4.9 =
+* Additional cron API return checking
+
 = 1.4.8 =
 * Minor bug fixes
 

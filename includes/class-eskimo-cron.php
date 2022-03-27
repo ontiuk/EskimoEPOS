@@ -97,8 +97,8 @@ final class Eskimo_Cron {
 		if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 		// Get category list
-		$response 	= wp_remote_get( $rest_url, [ 'timeout' => 60 ] );
-		$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 60 ] );
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( is_null( $data ) ) { return; }
 		$categories	= $data['result'];
 
@@ -122,10 +122,11 @@ final class Eskimo_Cron {
 
 			// Get update response
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 60 ] );
-			$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
-			$result 	= $data['result'];
+			$data = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_null( $data ) ) { continue; }
 
-			$results[] = $result;
+			// Get result... assume ok from schema
+			$results[] = $data['result'];
 		}
 
 		if ( $this->debug ) { eskimo_log( 'Category UPD[' . print_r( $results, true ) . ']', 'cron' ); }
@@ -195,9 +196,12 @@ final class Eskimo_Cron {
 		if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 		// Retrieve product list
-		$response 	= wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
-		$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
-		$products 	= $data['result'];
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( is_null( $data ) ) { return; }
+
+		// Retrieve products, assume ok from schema
+		$products = $data['result'];
 
 		// Bad call
 		if ( ! is_array( $products ) || empty( $products ) ) {
@@ -222,10 +226,11 @@ final class Eskimo_Cron {
 
 			// Retrieve 
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
-			$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
-			$result 	= $data['result'];
+			$data = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_null( $data ) ) { continue; }
 
-			$results[] = $result;
+			// Retrieve result, assume ok from schema
+			$results[] = $data['result'];
 		}
 
 		if ( $this->debug ) { eskimo_log( 'Product UPD[' . print_r( $results, true ) . ']', 'cron' ); }
@@ -317,8 +322,8 @@ final class Eskimo_Cron {
 		if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
 		// Retrieve SKU list
-		$response 	= wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
-		$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		// Bad call
 		if ( is_null( $data ) ) {
@@ -352,10 +357,13 @@ final class Eskimo_Cron {
 
 			// Retrieve import result
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 900 ] );
-			$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
-			$result 	= $data['result'];
+			$data = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_null( $data ) ) { continue; }
 
-			$results[] = $result;
+			// Check result 
+			$results[] = $data['result'];
+
+			// Don't overload the system
 			sleep(6);
 		}
 
@@ -414,9 +422,12 @@ final class Eskimo_Cron {
 			$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/skus-modified/' . $path . '/' . $route . '/' . $modified . '/' . $start . '/' . $records;
 			if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']', 'cron' ); }
 
-			$response 	= wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
-			$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
-			$result 	= $data['result'];
+			$response = wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
+			$data = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_null( $data ) ) { break; }
+
+			// Retrieve result, assume ok from schema
+			$result	= $data['result'];
 
 			// Trigger end of loop
 			if ( ! is_array( $result ) || empty( $result ) ) { break; }
@@ -454,11 +465,13 @@ final class Eskimo_Cron {
 			if ( $this->debug ) { eskimo_log( 'REST URL [' . $rest_url . ']' ); }
 
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 900 ] );
-			$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
-			$result 	= $data['result'];
+			$data = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_null( $data ) ) { continue; }
 
-			$results[] = $result;
+			// Retrieve result, assume ok from schema
+			$results[] = $data['result'];
 
+			// Don't overload the system
 			sleep(6);
 		}
 		
@@ -533,10 +546,11 @@ final class Eskimo_Cron {
 
 			// Process product import
 			$response = wp_remote_get( $rest_url, [ 'timeout' => 120 ] );
-			$data 		= json_decode( wp_remote_retrieve_body( $response ), true );
-			$result 	= $data['result'];
+			$data = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_null( $data ) ) { continue; }
 
-			$results[] = $result;
+			// Retrieve result, assume ok from schema
+			$results[] = $data['result'];
 		}
 		
 		if ( $this->debug ) { eskimo_log( 'Products UPD[' . print_r( $results, true ) . ']', 'cron' ); }
