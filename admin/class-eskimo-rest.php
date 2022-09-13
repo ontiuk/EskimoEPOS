@@ -1281,17 +1281,17 @@ final class Eskimo_REST {
     //----------------------------------------------
 
     /**
-	 * Import EskimoEPOS WebOrder into Woocommerce
+	 * Retrieve EskimoEPOS WebOrder 
+	 * - post export from WooCommerce
      *
 	 * @param   array   		$id
-	 * @param	boolean			$import	default false
      * @return  object|array
      */
-    public function get_orders_website_order( $id, $import = false ) {
+    public function get_orders_website_order( $id ) {
         if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
 
         // Test Options
-        if ( empty( $id )) {
+        if ( empty( $id ) ) {
             return $this->api_error( 'Invalid Order ID' );
         }
 
@@ -1320,8 +1320,64 @@ final class Eskimo_REST {
             return $this->api_error( 'No Results Returned' );
         }
 
+		// Check for API error message
+		if ( true === $this->api_has_message( $api_data ) ) {
+
+			// Construct error
+			$message = ( property_exists( $api_data, 'message' ) ) ? $api_data->message : '';
+			if ( property_exists( $api_data, 'ModelState' ) && property_exists( $api_data->ModelState, 'Error Message' ) ) {
+				$error_message = $api_data->ModelState->{'Error Message'};
+				$message .= ' ' . $error_message[0];
+			}
+
+            return $this->api_error( $message );
+		}
+
         // Process order update
-        return ( true === $import ) ? $this->wc->get_orders_website_order( $api_data, true ) : $api_data;
+        return $api_data;
+    }
+
+    /**
+	 * Validates if EskimoEPOS WebOrder exists 
+     *
+	 * @param   array   		$id
+     * @return  object|array
+     */
+    public function get_orders_website_order_exists( $id ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': ID[' . $id . ']', 'rest' ); }
+
+        // Test Options
+        if ( empty( $id ) ) {
+            return $this->api_error( 'Invalid Order ID' );
+        }
+
+        // Test API connection
+        if ( false === $this->api->init() ) {
+            return $this->api_connect_error();
+        }
+
+		// Final sanity
+		$id = sanitize_text_field( $id );
+
+        // Get remote data
+        $api_data = $this->api->orders_website_order( $id );
+
+        // Validate API data
+        if ( false === $api_data ) {
+            return $this->api_rest_error();
+        }
+
+        // OK process data
+        $api_data = $this->api_has_data( $api_data );
+        if ( $this->debug ) { eskimo_log( 'Web Order: ID [' . $id . '] Data[' . gettype( $api_data ) . ']', 'rest' ); }
+
+		// No API data or invalid
+        if ( false === $api_data ) {
+            return $this->api_error( 'No Results Returned' );
+        }
+
+		// Check for API error message, assume order ID is false if true
+		return ( true === $this->api_has_message( $api_data ) ) ? false : true;
     }
 
     /**

@@ -185,6 +185,7 @@ final class Eskimo_EPOS {
         // Set token data. Default to standard PHP.ini session timeout value
         $api_timeout = absint( ini_get('session.gc_maxlifetime') );
         $api_timeout = ( $api_timeout > 0 ) ? $api_timeout : 1440;
+		if ( $this->debug ) { eskimo_log( 'API: Expiry[' . $api_expiry . '] Timeout[' . $api_timeout . ']', 'epos' ); }
 
 		// Last override with api data
 		$api_timeout = ( $api_expiry > 0 ) ? $api_expiry : $api_timeout;

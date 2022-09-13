@@ -252,6 +252,33 @@ final class Eskimo_Cart {
 	public function order_status_processing( $order_id ) {
    		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']', 'cart' ); }
 
+		// Initiate REST call to check on EPOS order status
+		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-exists/' . $order_id;
+		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
+		
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Exists Order ID [' . $order_id . '] API Error', 'cart' ) : '';
+		}
+
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Empty Order ID [' . $order_id . '] Exists', 'cart' ) : '';
+		}			
+
+		// Get the body data
+		$data = json_decode( $body );
+
+		// Get result
+		$result = ( property_exists( $data, 'result' ) ) ? (bool) $data->result : false;
+		if ( true === $result ) { return; }
+
+		if ( $this->debug ) { eskimo_log( 'Web Order ID [' . $order_id . '] Create', 'cart' ); }
+
 		// Get valid order details		
 		$order = wc_get_order( $order_id );
 		if ( false === $order || ! is_a( $order, 'WC_Order' ) ) { 
@@ -260,6 +287,7 @@ final class Eskimo_Cart {
 
 		// Get customer ID
 		$customer_id = $order->get_customer_id();
+		if ( $this->debug ) { eskimo_log( 'Customer ID[' . $customer_id . ']', 'cart' ); }
 
 		// Guest checkout via dummy guest account, or valid customer ID
 		if ( $customer_id === 0 ) {
@@ -306,7 +334,34 @@ final class Eskimo_Cart {
 	 */
 	public function order_status_completed( $order_id ) {
 		if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' ID[' . $order_id . ']', 'cart' ); }
+
+		// Initiate REST call to check on EPOS order status
+		$rest_url = esc_url( home_url( '/wp-json' ) ) . '/eskimo/v1/order-exists/' . $order_id;
+		if ( $this->debug ) { eskimo_log( 'Rest URL[' . $rest_url . ']', 'cart' ); }
+		$response = wp_remote_get( $rest_url, [ 'timeout' => 12 ] );
 		
+		// Check the call worked
+		if ( is_wp_error( $response ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Exists Order ID [' . $order_id . '] API Error', 'cart' ) : '';
+		}
+
+		// Get the response body
+		$body = wp_remote_retrieve_body( $response );
+
+		// Check contents and parse
+		if ( empty( $body ) ) {
+			return ( $this->debug ) ? eskimo_log( 'Empty Order ID [' . $order_id . '] Exists', 'cart' ) : '';
+		}			
+
+		// Get the body data
+		$data = json_decode( $body );
+
+		// Get result
+		$result = ( property_exists( $data, 'result' ) ) ? (bool) $data->result : false;
+		if ( true === $result ) { return; }
+
+		if ( $this->debug ) { eskimo_log( 'Web Order ID [' . $order_id . '] Create', 'cart' ); }
+
 		// Get valid order details		
 		$order = wc_get_order( $order_id );
 		if ( false === $order || ! is_a( $order, 'WC_Order' ) ) { 

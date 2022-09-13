@@ -695,8 +695,8 @@ final class Eskimo_Route extends WP_REST_Controller {
     	// WordPress REST Routes - Orders
     	//----------------------------------------------
 
-        // Order: Import EskimoEPOS Order To Woocommerce By ID
-        register_rest_route( $namespace, '/order/(?P<order_id>[\w\-]+)/?(?P<import>[\d]*)', [
+        // Order: Retrieve EskimoEPOS WebOrder by Order ID
+        register_rest_route( $namespace, '/order/(?P<order_id>[\w\-]+)', [
             [
                 'methods'               => WP_REST_Server::READABLE,
                 'callback'              => [ $this, 'get_orders_website_order' ],
@@ -706,15 +706,26 @@ final class Eskimo_Route extends WP_REST_Controller {
                         'validate_callback' => function( $param, $request, $key ) {
                             return preg_match( '/^[a-zA-Z0-9\-]+$/', $param );
                         }
-                    ],
-                    'import' => [
-                        'validate_callback' => function( $param, $request, $key ) {
-                            return ( empty( $param ) ) ? true : is_numeric( $param );
-                        }
                     ]    						
                 ]
             ] 
 		] );
+
+        // Order: Check If An EskimoEPOS WebOrder Exists By Order ID
+        register_rest_route( $namespace, '/order-exists/(?P<order_id>[\w\-]+)', [
+            [
+                'methods'               => WP_REST_Server::READABLE,
+                'callback'              => [ $this, 'get_orders_website_order_exists' ],
+                'permission_callback'   => '__return_true',
+                'args'                  => [
+                    'order_id' => [
+                        'validate_callback' => function( $param, $request, $key ) {
+                            return preg_match( '/^[a-zA-Z0-9\-]+$/', $param );
+                        }
+                    ]    						
+                ]
+            ] 
+        ] );
 
         // Order: Export Order To EskimoEPOS By Woocommerce Order ID
         register_rest_route( $namespace, '/order-insert/(?P<order_id>[\d]+)', [
@@ -2370,8 +2381,8 @@ final class Eskimo_Route extends WP_REST_Controller {
     //----------------------------------------------
 
     /**
-	 * Process EskimoEPOS WebOrder for Woocommerce import
-	 * - Retrieve remote website order for import, not currently used
+	 * Retrieve EskimoEPOS WebOrder by Order ID
+	 * - Post WooCommerce export
 	 * 
      * @param   WP_REST_Request     $request Request object
      * @return  WP_REST_Response    Response object
@@ -2383,9 +2394,8 @@ final class Eskimo_Route extends WP_REST_Controller {
         $this->api_set_timeout();
 
 		// Get ID param
-        $order_id  	= sanitize_text_field( $request->get_param( 'order_id' ) );
-        $import  	= absint( $request->get_param( 'import' ) );
-        if ( $this->debug ) { eskimo_log( 'Order ID[' . $order_id . '] Import[' . $import . ']', 'rest' ); }
+        $order_id = sanitize_text_field( $request->get_param( 'order_id' ) );
+        if ( $this->debug ) { eskimo_log( 'Order ID[' . $order_id . ']', 'rest' ); }
 
         // Response data
         $data = [
@@ -2394,11 +2404,8 @@ final class Eskimo_Route extends WP_REST_Controller {
             'nonce'     => wp_create_nonce( 'wp_rest' )
 		];
 
-		// Sanity
-		$import = ( $import === 1 ) ? true : false;
-
         // OK, process data
-		$data['result'] = $this->rest->get_orders_website_order( $order_id, $import );
+		$data['result'] = $this->rest->get_orders_website_order( $order_id );
 		
 		// Error?
 		if ( is_wp_error( $data['result'] ) ) {
@@ -2409,7 +2416,45 @@ final class Eskimo_Route extends WP_REST_Controller {
 
         // REST output
         return new WP_REST_Response( $data, 200 );
-    }
+	}
+
+    /**
+	 * Check if EskimoEPOS WebOrder exists by Order ID
+	 * - Post WooCommerce export
+	 * 
+     * @param   WP_REST_Request     $request Request object
+     * @return  WP_REST_Response    Response object
+     */
+    public function get_orders_website_order_exists( WP_REST_Request $request ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'rest' ); }
+
+        // Force timeout limit 0
+        $this->api_set_timeout();
+
+		// Get ID param
+        $order_id = sanitize_text_field( $request->get_param( 'order_id' ) );
+        if ( $this->debug ) { eskimo_log( 'Order ID[' . $order_id . ']', 'rest' ); }
+
+        // Response data
+        $data = [
+            'route'     => 'order-exists',
+            'params'    => 'Order ID: ' . $order_id,
+            'nonce'     => wp_create_nonce( 'wp_rest' )
+		];
+
+        // OK, process data
+		$data['result'] = $this->rest->get_orders_website_order_exists( $order_id );
+		
+		// Error?
+		if ( is_wp_error( $data['result'] ) ) {
+			return $this->rest_error( $data['result'], $data );
+		}		
+
+		if ( $this->debug ) { eskimo_log( 'Response[' . print_r( $data, true ) . ']', 'rest' ); }
+
+        // REST output
+        return new WP_REST_Response( $data, 200 );
+	}
 
     /**
 	 * Process Web Order into EskimoEPOS order

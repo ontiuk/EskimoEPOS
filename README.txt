@@ -634,6 +634,17 @@ Stripe","Size":"30","CostPrice":9,"SellPrice":20,"StockAmount":8,"TaxCodeID":2,"
 
 == Changelog ==
 
+= 1.4.12 =
+* Add category product validation to the update category product process.
+
+= 1.4.11 =
+* Refactor WebsiteOrder API call. Add WebsiteOrder exists API call. Add
+  website order exists check to the cart processed payment order insert
+  functionality. Paypal sometimes does double processing due to IPN issue.
+
+= 1.4.10 =
+* Re-arrange checks in product update. Put web product check first to save on remote sku retrieval if not an imported product.
+
 = 1.4.9 =
 * Additional cron API return checking
 

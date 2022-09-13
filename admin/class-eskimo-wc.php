@@ -790,6 +790,10 @@ final class Eskimo_WC {
             return $this->api_error( 'Prod ID[' . $api_prod->eskimo_category_id . '] Title NOT Exists' );
         }
 
+		// Validate Web Product by type
+		$validated = $this->validate_category_product_rest( $api_prod, $path );
+        if ( false === $validated || is_wp_error ( $validated ) ) { return $this->api_error( 'Category Product Not Available' ); }
+
 		// Due process by path  
         $prod = $this->update_category_product_rest( $api_prod, $path );
         if ( false === $prod || is_wp_error ( $prod ) ) { return $this->api_error( 'Category Product Update Error' ); }
@@ -1541,47 +1545,6 @@ final class Eskimo_WC {
     //----------------------------------------------
     // Woocommerce Orders Import & Export
     //----------------------------------------------
-
-    /**
-	 * Get EskimoEPOS API web order data
-     *
-     * @param   array   		$api_data
-     * @return  object|array
-     */
-    public function get_orders_website_order( $api_data ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
-
-        // Validate API data
-        if ( empty( $api_data ) ) {
-            return $this->api_rest_error();
-        }
-
-        // Process data
-        if ( $this->debug ) { eskimo_log( 'Process Order', 'wc' ); }
-
-		// Validate content? order, customer
-		return $this->api_error( 'Order Import Not Yet Implemented' );
-		
-		// Set up order 	
-		if ( $this->debug ) { eskimo_log( 'Order [' . ']', 'wc' ); }
-
-		// Set up customer
-		$username = $api_data->Forename . '.' . $api_data->Surname;
-			
-		// Generate WC user if possible - autogenerate password
-		$order_id = wc_create_order( $email, $username );
-		if ( is_wp_error( $user_id ) ) {
-			return $this->api_error( $order_id->get_error_message() );
-		}
-
-     	if ( $this->debug ) { eskimo_log( 'OK Order ID[' . $order_id . ']', 'wc' ); }
-
-		// Order meta
-		add_post_meta( $user_id, 'epos_id', $api_data->ID );
-
-		// OK, done
-        return 'Order ID[' . $order_id . ']';
-	}
 
     /**
      * Get woocommerce order data for EPOS insert
@@ -2356,6 +2319,64 @@ final class Eskimo_WC {
 	}
 
     /**
+     * Validate category product by product type
+     *
+	 * @param   object  $data
+	 * @param	string	$path
+     * @param   boolean $parent
+     * @return  object  new term or error
+     */
+    protected function validate_category_product_rest( $data, $path ) {
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']', 'wc' ); }
+
+        // Set product type: simple or variable by sku count
+        $type = $this->get_product_type( $data );
+        if ( $this->debug ) { eskimo_log( 'Type[' . $type . ']', 'wc' ); }
+
+        // Treat simple & variable products a bit differently
+        switch( $type ) {
+            case 'simple':
+                return $this->validate_category_product_simple( $data );
+            case 'variable':
+                return $this->validate_category_product_variable( $data );
+            default: // Bad SKU
+                return false;                
+        }
+    }
+
+	/**
+	 * Validate web available product: simple
+	 *
+	 * @param object $data
+	 * @return boolean
+	 */
+	private function validate_category_product_simple( $data ) {
+	
+        // Get single SKU
+        $sku = array_shift( $data->sku );
+        if ( $this->debug ) { eskimo_log( 'SKU:' . print_r( $sku, true ), 'wc' ); }
+
+		// Get product, pre-validated
+		$product_id = $this->get_product_by_sku( $sku->sku_code, false );
+		return ( false === $product_id ) ? false : true;	
+	}
+
+	/**
+	 * Validate web available product: variable
+	 *
+	 * @param object $data
+	 * @return boolean
+	 */
+	private function validate_category_product_variable( $data ) {
+
+		// Get product
+		$product_id = $this->get_product_by_id( $data->eskimo_identifier, false );
+        if ( $this->debug ) { eskimo_log( 'product ID[' . $product_id . '][' . $data->eskimo_identifier . ']', 'wc' ); }
+		return ( false === $product_id ) ? false : true;	
+	}
+
+
+    /**
      * Insert category into WooCommerce and return the new term details
      *
 	 * @param   object  $data
@@ -2391,15 +2412,17 @@ final class Eskimo_WC {
     protected function update_category_product_simple( $data, $path ) {
         if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']', 'wc' ); }
 
-        // Single SKU OK?
+        // Get single SKU
         $sku = array_shift( $data->sku );
         if ( $this->debug ) { eskimo_log( 'SKU:' . print_r( $sku, true ), 'wc' ); }
-        if ( false === $this->get_product_check_sku( $sku->sku_code ) ) { return false; }        
 
-		// Get product
+		// Get product, pre-validated
 		$product_id = $this->get_product_by_sku( $sku->sku_code, false );
-        if ( $this->debug ) { eskimo_log( 'product ID[' . $product_id . ']', 'wc' ); }
+		if ( $this->debug ) { eskimo_log( 'product ID[' . $product_id . '] SKU[' . $sku->sku_code . ']', 'wc' ); }
 		if ( false === $product_id ) { return false; }
+
+        // Single SKU OK?
+        if ( false === $this->get_product_check_sku( $sku->sku_code ) ) { return false; }        
 		
 		// Update product attributes, sku, stock for Simple products
 		$args = $this->update_category_product_simple_args( $path, $data, $sku, $product_id );
@@ -2419,7 +2442,7 @@ final class Eskimo_WC {
     }
 
     /**
-     * Add category product: Simple Product
+     * Add category product: Variable Product
      *
 	 * @param   object  		$data
 	 * @param	string			$path
@@ -2428,15 +2451,15 @@ final class Eskimo_WC {
     protected function update_category_product_variable( $data, $path ) {
         if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ': path[' . $path . ']', 'wc' ); }
        
-        // Initial check. Already posted SKU?
-        $skus = array_map( function( $sku ) { return $sku->sku_code; }, $data->sku );
-        if ( $this->debug ) { eskimo_log( 'SKUs[' . print_r( $skus, true ) . ']', 'wc' ); }
-        if ( false === $this->get_product_check_sku( $skus, true ) ) { return false; }
-
 		// Get product
 		$product_id = $this->get_product_by_id( $data->eskimo_identifier, false );
         if ( $this->debug ) { eskimo_log( 'product ID[' . $product_id . '][' . $data->eskimo_identifier . ']', 'wc' ); }
 		if ( false === $product_id ) { return false; }
+
+        // Initial check. Already posted SKU?
+        $skus = array_map( function( $sku ) { return $sku->sku_code; }, $data->sku );
+        if ( $this->debug ) { eskimo_log( 'SKUs[' . print_r( $skus, true ) . ']', 'wc' ); }
+        if ( false === $this->get_product_check_sku( $skus, true ) ) { return false; }
 
         // Set term args
 		if ( $path === 'all' ) {
@@ -2629,7 +2652,7 @@ final class Eskimo_WC {
      * @return  boolean
      */
     protected function get_product_by_sku( $code, $variation = false ) {
-        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__, 'wc' ); }
+        if ( $this->debug ) { eskimo_log( __CLASS__ . ':' . __METHOD__ . ' Code: ' . $code . ' Variation: ' . (int) $variation, 'wc' ); }
         
         // Set up query
         $args = [
@@ -2650,6 +2673,7 @@ final class Eskimo_WC {
 
         // Process query
         $the_query = new WP_Query( $args );
+		if ( $this->debug ) { eskimo_log( 'SKUs[' . $the_query->found_posts . ']' ); }
 
         // Found post sku?
         return ( $the_query->found_posts > 0 ) ? $the_query->posts[0]->ID : false;
