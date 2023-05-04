@@ -634,6 +634,9 @@ Stripe","Size":"30","CostPrice":9,"SellPrice":20,"StockAmount":8,"TaxCodeID":2,"
 
 == Changelog ==
 
+= 1.4.13 =
+* Fix WP6.x notices for REST API args.
+
 = 1.4.12 =
 * Add category product validation to the update category product process.
 
