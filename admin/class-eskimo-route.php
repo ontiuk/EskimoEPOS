@@ -112,17 +112,16 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'callback'              => [ $this, 'get_account_password' ],
                 'permission_callback'   => '__return_true',
                 'args'                  => [
+					'required'	=> true,
                     'old_password' => [
 						'validate_callback' => function( $param, $request, $key ) {
 							return (bool) preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', urldecode( $param ) );
-                        },
-						'required'	=> true
+                        }
                     ],
                     'new_password' => [
                         'validate_callback' => function( $param, $request, $key ) {
 							return (bool) preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', urldecode( $param ) );
-                        },
-						'required'	=> true
+                        }
                     ]
                 ]
             ] 
@@ -135,17 +134,16 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'callback'              => [ $this, 'get_account_register' ],
                 'permission_callback'   => '__return_true',
                 'args'                  => [
-                 'account_email' => [
+					'required'	=> true,
+                    'account_email' => [
                         'validate_callback' => function( $param, $request, $key ) {
                             return is_email( $param );
-                        },
-						'required'	=> true
+                        }
                     ],
                     'account_password' => [
                         'validate_callback' => function( $param, $request, $key ) {
 							return (bool) preg_match( '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w~@#$%^&*+=`|{}:;!,.?\'\"()\[\]-_]+$/', urldecode( $param ) );
-                        },
-						'required'	=> true
+                        }
                     ]
                 ]
             ] 
@@ -186,17 +184,16 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'callback'              => [ $this, 'get_categories_specific_id' ],
                 'permission_callback'   => '__return_true',
                 'args'                  => [
+					'required'	=> true,
                     'cat_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
                             return is_numeric( $param );
-                        },
-						'required'	=> true
+                        }
                     ],
 					'cat_type' 	=> [
                         'validate_callback' => function( $param, $request, $key ) {
                             return (bool) preg_match( '/^[a-zA-Z0-9]+$/', $param );
-                        },
-						'required'	=> true
+                        }
                     ]
                 ]
             ] 
@@ -209,17 +206,16 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'callback'              => [ $this, 'get_categories_child_categories' ],
                 'permission_callback'   => '__return_true',
                 'args'                  => [
+					'required'	=> true,
                     'cat_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
                             return is_numeric( $param );
-                        },
-						'required'	=> true
+                        }
                     ],
 					'cat_type' 	=> [
                         'validate_callback' => function( $param, $request, $key ) {
                             return (bool) preg_match( '/^[a-zA-Z0-9]+$/', $param );
-                        },
-						'required'	=> true
+                        }
                     ]
                 ]
             ] 
@@ -313,17 +309,16 @@ final class Eskimo_Route extends WP_REST_Controller {
                 'callback'              => [ $this, 'get_category_products_specific_category_id' ],
                 'permission_callback'   => '__return_true',
                 'args'                  => [
+					'required'	=> true,
                     'cat_id' => [
                         'validate_callback' => function( $param, $request, $key ) {
                             return is_numeric( $param );
-                        },
-						'required'	=> true
+                        }
                     ],
 					'cat_type' 	=> [
                         'validate_callback' => function( $param, $request, $key ) {
                             return (bool) preg_match( '/^[a-zA-Z0-9\-_]+$/', $param );
-                        },
-						'required'	=> true
+                        }
                     ]
                 ]
             ] 
